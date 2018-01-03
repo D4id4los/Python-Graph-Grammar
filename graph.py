@@ -1,7 +1,8 @@
+import abc
 from typing import List, Dict, Any, AnyStr
 
 
-class GraphElement:
+class GraphElement(abc.ABC):
     """
     Base class from which all elements of a graph derive.
 
@@ -11,6 +12,21 @@ class GraphElement:
     def __init__(self):
         self.attr: Dict[AnyStr, Any] = {}
 
+    @abc.abstractmethod
+    def matches(self, graph_element):
+        """
+
+        :param graph_element: The graph element to test for matching
+        attributes.
+        :return: True if the attributes of the two elements are matching.
+        """
+        shared_attrs = [attr_key for attr_key in self.attr.keys()
+                        if attr_key in graph_element.attr.keys()]
+        for attr_key in shared_attrs:
+            if self.attr[attr_key] != graph_element.attr[attr_key]:
+                return False
+        return True
+
 
 class Vertex(GraphElement):
     """
@@ -18,6 +34,11 @@ class Vertex(GraphElement):
     """
     def __init__(self):
         super().__init__()
+
+    def matches(self, graph_element):
+        if isinstance(graph_element, Vertex):
+            return False
+        super().matches(graph_element)
 
 
 class Edge(GraphElement):
@@ -29,6 +50,10 @@ class Edge(GraphElement):
         self.vertex1: Vertex = vertex1
         self.vertex2: Vertex = vertex2
 
+    def matches(self, graph_element):
+        if isinstance(graph_element, Edge):
+            return False
+        super().matches(graph_element)
 
 class Face(GraphElement):
     """
@@ -39,6 +64,10 @@ class Face(GraphElement):
         self._vertices: List[Vertex] = vertices
         self._edges: List[Vertex] = edges
 
+    def matches(self, graph_element):
+        if isinstance(graph_element, Face):
+            return False
+        super().matches(graph_element)
 
 class Graph:
     """
