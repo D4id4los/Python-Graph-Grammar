@@ -148,7 +148,7 @@ class Graph:
             else:
                 last_element = self._marked[-1]
                 #TODO: Find a nicer pattern to solve this problem.
-                if type(last_element) is Edge:
+                if isinstance(last_element, Edge):
                     if not last_element.vertex1 in self._marked:
                         self._unchecked_vertices.remove(last_element.vertex1)
                         return last_element.vertex1
