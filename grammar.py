@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Sized
 
 from productions import *
 from utils import *
@@ -8,8 +8,8 @@ class Grammar:
     """
     A grammar is a collection of productions that can be applied on a graph.
     """
-    def __init__(self, productions: List[Production]):
-        self._productions: List[Production] = productions
+    def __init__(self, productions: Iterable[Production]):
+        self._productions: Iterable[Production] = productions
 
     def apply(self, target_graph: Graph, max_steps: int = 0):
         """
@@ -58,7 +58,7 @@ class Grammar:
         return result
 
     @staticmethod
-    def _select_match(matches: List[Graph]):
+    def _select_match(matches: Sized and Iterable[Graph]):
         """
         Select a singe match out of a list of possible matches.
 
@@ -66,4 +66,5 @@ class Grammar:
         :return: The selected match
         :rtype: Graph
         """
-        raise NotImplementedError
+        i = random.randint(0, len(matches))
+        return matches[i]

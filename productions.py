@@ -1,3 +1,4 @@
+from typing import Iterable
 from graph import *
 
 
@@ -10,7 +11,7 @@ class Mapping:
     """
 
     def __init__(self):
-        self._mapping: Dict[GraphElement, GraphElement] = {}
+        self.mapping: Iterable[None | GraphElement, GraphElement] = {}
 
 
 class Production:
@@ -26,28 +27,31 @@ class Production:
     source graph according to the matching defined in the production.
     """
 
-    def __init__(self, left_graph: Graph, right_graph: Graph,
-                 mapping: Mapping):
-        self._left_graph: Graph = left_graph
-        self._right_graph: Graph = right_graph
-        self._mapping: Mapping = mapping
+    def __init__(self, mother_graph: Graph, daughter_mappings: Iterable[Iterable[Mapping, Graph, int]]):
+        self._mother_graph: Graph = mother_graph
+        self._daughter_mappings: Iterable[Iterable[Mapping, Graph, int]] = daughter_mappings
 
-    def match(self, target_graph: Graph):
+    def match(self, host_graph: Graph):
         """
         Tries to match the production against a target Graph.
 
+        :param host_graph: The host graph against which the production is matched.
         :return: All possible matching subgraphs of the target graph.
         :rtype: List[Graph]
         """
+        for mother_element in self._mother_graph:
+            for host_element in host_graph:
+                if host_element.matches(mother_element):
+                    pass
         raise NotImplementedError
 
-    def apply(self, target_graph: Graph, matching_subgraph: Graph):
+    def apply(self, host_graph: Graph, matching_subgraph: Graph):
         """
-        Applies a production to a specific subgraph of the target graph and
+        Applies a production to a specific subgraph of the host graph and
         returns the result graph.
 
-        :param target_graph: The graph to which the production is applied.
-        :param matching_subgraph: The specific subgraph of the target graph
+        :param host_graph: The graph to which the production is applied.
+        :param matching_subgraph: The specific subgraph of the host graph
         to which the production will be applied.
         :return: The graph resulting from applying the production.
         :rtype: Graph

@@ -1,5 +1,5 @@
 import abc
-from typing import List, Dict, Any, AnyStr
+from typing import MutableSet, Dict, Any, AnyStr
 
 
 class GraphElement(abc.ABC):
@@ -15,6 +15,7 @@ class GraphElement(abc.ABC):
     @abc.abstractmethod
     def matches(self, graph_element):
         """
+        Test if the two graph elements match based on their attributes.
 
         :param graph_element: The graph element to test for matching
         attributes.
@@ -59,10 +60,10 @@ class Face(GraphElement):
     """
     Represents a face inside a graph.
     """
-    def __init__(self, vertices: List[Vertex], edges: List[Edge]):
+    def __init__(self, vertices: MutableSet[Vertex], edges: MutableSet[Edge]):
         super().__init__()
-        self._vertices: List[Vertex] = vertices
-        self._edges: List[Vertex] = edges
+        self._vertices: MutableSet[Vertex] = vertices
+        self._edges: MutableSet[Vertex] = edges
 
     def matches(self, graph_element):
         if isinstance(graph_element, Face):
@@ -76,9 +77,9 @@ class Graph:
     Saves lists of all elements contained inside the graph.
     """
     def __init__(self):
-        self.vertices: List[Vertex] = []
-        self.edges: List[Edge] = []
-        self.faces: List[Face] = []
+        self.vertices: MutableSet[Vertex] = []
+        self.edges: MutableSet[Edge] = []
+        self.faces: MutableSet[Face] = []
 
     def __iter__(self):
         return self.AllElemIter(self)
@@ -90,7 +91,7 @@ class Graph:
         element that came before them.
         """
         def __init__(self, graph: Graph):
-            self._marked: List[GraphElement] = []
+            self._marked: MutableSet[GraphElement] = []
             self._unchecked_vertices = list(graph.vertices)
             self._unchecked_edges = list(graph.edges)
             self._unchecked_faces = list(graph.faces)
@@ -105,7 +106,7 @@ class Graph:
                 element = self._get_first_element()
             else:
                 element = self._get_connecting_element()
-            self._marked.append(element)
+            self._marked.add(element)
             return element
 
         def _get_first_element(self):

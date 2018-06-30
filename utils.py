@@ -1,6 +1,7 @@
 import random
-from typing import Sequence
+from typing import Iterable
 
-def randomly(seq: Sequence):
-    shuffled = random.shuffle(list(seq))
+
+def randomly(objects: Iterable):
+    shuffled = random.shuffle(list(objects))
     return shuffled
