@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Tuple
 from graph import *
 
 
@@ -11,7 +11,7 @@ class Mapping:
     """
 
     def __init__(self):
-        self.mapping: Iterable[None | GraphElement, GraphElement] = {}
+        self.mapping: Iterable[Sequence[GraphElement, GraphElement]] = []
 
 
 class Production:
@@ -27,7 +27,7 @@ class Production:
     source graph according to the matching defined in the production.
     """
 
-    def __init__(self, mother_graph: Graph, daughter_mappings: Iterable[Iterable[Mapping, Graph, int]]):
+    def __init__(self, mother_graph: Graph, daughter_mappings: Iterable[Tuple[Mapping, Graph, int]]):
         self._mother_graph: Graph = mother_graph
         self._daughter_mappings: Iterable[Iterable[Mapping, Graph, int]] = daughter_mappings
 
@@ -39,11 +39,13 @@ class Production:
         :return: All possible matching subgraphs of the target graph.
         :rtype: List[Graph]
         """
-        for mother_element in self._mother_graph:
-            for host_element in host_graph:
-                if host_element.matches(mother_element):
-                    pass
-        raise NotImplementedError
+        matches = []
+        mother_elements = self._mother_graph.element_list()
+        start_element = mother_elements[0]
+        for host_element in host_graph:
+            if host_element.matches(start_element):
+                matches.extend(host_graph.match_at(start_element, mother_elements))
+        return matches
 
     def apply(self, host_graph: Graph, matching_subgraph: Graph):
         """
