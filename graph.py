@@ -1,6 +1,7 @@
 import abc
 import itertools
-from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, MutableSequence, Sized
+import copy
+from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, MutableSequence, Sized, Tuple, Callable
 
 
 class GraphElement(abc.ABC):
@@ -62,6 +63,17 @@ class GraphElement(abc.ABC):
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']) -> None:
+        """
+        Replace all connected elements with results returned by replacement function.
+
+        If the function returns None, no replacement is performed.
+
+        :param get_replacement: The function deciding if and by what a GraphElement is to be replaced.
+        """
+        raise NotImplementedError()
+
 
 class Vertex(GraphElement):
     """
@@ -70,7 +82,23 @@ class Vertex(GraphElement):
 
     def __init__(self):
         super().__init__()
-        self.edges: MutableSet = set()
+        self.edges: MutableSet['Edge'] = set()
+
+    def __deepcopy__(self, memodict={}):
+        """
+        Return a deep copy of the Vertex where connecting edges are only present
+        if they have a corresponding deepcopy in memodict.
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for key, value in self.__dict__.items():
+            setattr(result, key, copy.deepcopy(value, memodict))
+        result.edges = set()
+        for old_edge in self.edges:
+            if id(old_edge) in memodict:
+                result.edges.add(memodict[id(old_edge)])
+        return result
 
     def matches(self, graph_element):
         if not isinstance(graph_element, Vertex):
@@ -86,6 +114,19 @@ class Vertex(GraphElement):
     def neighbours(self):
         return self.edges
 
+    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']):
+        to_add = []
+        to_remove = []
+        for edge in self.edges:
+            result = get_replacement(edge)
+            if result is not None:
+                to_add.append(result)
+                to_remove.append(edge)
+        for edge in to_remove:
+            self.edges.remove(edge)
+        for edge in to_add:
+            self.edges.add(edge)
+
 
 class Edge(GraphElement):
     """
@@ -94,8 +135,22 @@ class Edge(GraphElement):
 
     def __init__(self, vertex1: Vertex, vertex2: Vertex):
         super().__init__()
-        self.vertex1: Vertex = vertex1
-        self.vertex2: Vertex = vertex2
+        self.vertex1 = vertex1
+        self.vertex2 = vertex2
+
+    def __deepcopy__(self, memodict={}):
+        """
+        Return a deepcopy of the edge where the vertices are only present if
+        they have a corresponding deepcopy in memodict.
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for key, value in self.__dict__.items():
+            setattr(result, key, copy.deepcopy(value, memodict))
+        result.vertex1 = memodict[id(self.vertex1)] if id(self.vertex1) in memodict else None
+        result.vertex2 = memodict[id(self.vertex2)] if id(self.vertex2) in memodict else None
+        return result
 
     def matches(self, graph_element):
         if not isinstance(graph_element, Edge):
@@ -114,6 +169,28 @@ class Edge(GraphElement):
 
     def neighbours(self):
         return [self.vertex1, self.vertex2]
+
+    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']):
+        result = get_replacement(self.vertex1)
+        if result is not None:
+            self.vertex1 = result
+        result = get_replacement(self.vertex2)
+        if result is not None:
+            self.vertex2 = result
+
+    def get_other_vertex(self, vertex: Vertex) -> Vertex:
+        """
+        Given one of the two vertices the edge connects to, return the second one.
+
+        :param vertex: One of the two vertices the edge connects to.
+        :return: The second vertex this edge connects to.
+        """
+        if vertex == self.vertex1:
+            return self.vertex2
+        elif vertex == self.vertex2:
+            return self.vertex1
+        else:
+            raise ValueError
 
 
 class Face(GraphElement):
@@ -194,6 +271,24 @@ class Graph(MutableSet):
     def __len__(self):
         return len(self.vertices) + len(self.edges) + len(self.faces)
 
+    def __deepcopy__(self, memodict={}):
+        """
+        Return a deep copy of the graph with all connections still remaining.
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memodict[id(self)] = result
+        for key, value in self.__dict__.items():
+            setattr(result, key, copy.deepcopy(value, memodict))
+        result.vertices = copy.deepcopy(self.vertices, memodict)
+        result.edges = []
+        result.faces = []
+        for edge in self.edges:
+            result.add(copy.deepcopy(edge, memodict))
+        for face in self.faces:
+            result.add(copy.deepcopy(face, memodict))
+        return result
+
     def add(self, element: GraphElement):
         element.add_to(self)
 
@@ -209,17 +304,46 @@ class Graph(MutableSet):
         for element in elements:
             self.add(element)
 
-    def element_list(self) -> Sequence[GraphElement]:
+    def element_list(self, order: str='connected') -> Sequence[GraphElement]:
         """
         A list of the elements of the graph in order of the all element iterator.
 
-        The order is such that first all vertices and edges are returned in a manner that always leads to a single
-        connected graph. Afterwards the faces, if any, are returned.
+        Possible values for `order` are:
+
+        * `'connected'`: The order is such that first all vertices and edges are returned in a manner that always
+                         leads to a single connected graph. Afterwards the faces, if any, are returned.
+        * `'vef'`: First return all vertices, then all edges, then all faces
+
+        :param order: A string specifying the order of element. Possible are: connected, vef
         """
-        element_list = []
-        for element in self:
-            element_list.append(element)
-        return element_list
+        if order == 'connected':
+            element_list = []
+            for element in self:
+                element_list.append(element)
+            return element_list
+        elif order == 'vef':
+            return list(itertools.chain(self.vertices, self.edges, self.faces))
+        else:
+            raise ValueError
+
+    def get_by_id(self, object_id: int) -> GraphElement:
+        """
+        Return the GraphElement whose object ID is passed as argument.
+
+        If no corresponding GraphElement can be found a KeyError is raised.
+
+        :param object_id: The id of the GraphElement object you want to retrieve.
+        :return: The requestend GraphElement
+        """
+        for vertex in self.vertices:
+            if object_id == id(vertex):
+                return vertex
+        for edge in self.edges:
+            if object_id == id(edge):
+                return edge
+        for face in self.faces:
+            if object_id == id(face):
+                return face
 
     def neighbours(self) -> Iterable[GraphElement]:
         """
@@ -238,7 +362,7 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
-    def match_at(self, start: GraphElement, target_elements: Sequence) -> Iterable['Graph']:
+    def match_at(self, start: GraphElement, target_elements: Sequence) -> Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
         """
         Try to find a match for the graph defined by the list of target elements at the specific starting element of
         this graph.
@@ -247,12 +371,13 @@ class Graph(MutableSet):
         :param target_elements: The elements of the graph that is to be matched in such an order that it always builds into a connected graph.
         :return: The matching subgraphs if any exist, an empty list otherwise.
         """
-        problems = [(Graph(elements=[start]), 1)]
+        problems: Iterable[Tuple[Graph, int, Dict[GraphElement, GraphElement]]] = \
+            [(Graph(elements=[start]), 1, {target_elements[0]: start})]
         solutions = []
         while len(problems) > 0:
-            subgraph, index = problems.pop()
+            subgraph, index, matching = problems.pop()
             if index == len(target_elements):
-                solutions.append(subgraph)
+                solutions.append((subgraph, matching))
                 break
             candidates = subgraph.neighbours()
             target = target_elements[index + 1]
@@ -260,7 +385,10 @@ class Graph(MutableSet):
                 if candidate.matches(target):
                     new_subgraph = Graph(subgraph)
                     new_subgraph.add(candidate)
-                    problems.append((new_subgraph, index + 1))
+                    # TODO: Currently Graph.add() will only work for edges if the graph already contains both vertices. Fix this.
+                    new_matching = matching.copy()
+                    new_matching[target] = candidate
+                    problems.append((new_subgraph, index + 1, new_matching))
         return solutions
 
     class AllElemIter:

@@ -254,15 +254,16 @@ class GraphPanel(wx.Panel):
             :param pos: The position adjacent to which new spaces will be searched.
             :param free_spaces: The list to which new free spaces will be added
             """
+            offset = 2
             possible_positions = [
-                (pos[0] + 1, pos[1] + 1),
-                (pos[0] + 1, pos[1]),
-                (pos[0] + 1, pos[1] - 1),
-                (pos[0], pos[1] - 1),
-                (pos[0] - 1, pos[1] - 1),
-                (pos[0] - 1, pos[1]),
-                (pos[0] - 1, pos[1] + 1),
-                (pos[0], pos[1] + 1)
+                (pos[0] + offset, pos[1] + offset),
+                (pos[0] + offset, pos[1]),
+                (pos[0] + offset, pos[1] - offset),
+                (pos[0], pos[1] - offset),
+                (pos[0] - offset, pos[1] - offset),
+                (pos[0] - offset, pos[1]),
+                (pos[0] - offset, pos[1] + offset),
+                (pos[0], pos[1] + offset)
             ]
             for candidate in possible_positions:
                 if candidate not in free_spaces:
@@ -279,11 +280,20 @@ class GraphPanel(wx.Panel):
             circle.register_events()
             i += 1
         for edge in self.graph.edges:
-            pos1 = self.circles[edge.vertex1].center
-            pos2 = self.circles[edge.vertex2].center
-            line = plt.Line2D((pos1[0], pos2[0]), (pos1[1], pos2[1]), c='k')
+            try:
+                pos1 = self.circles[edge.vertex1].center
+            except KeyError:
+                print(f'ERROR: Edge {edge} has incorrect vertex1: {edge.vertex1}')
+                pos1 = (0, 0)
+            try:
+                pos2 = self.circles[edge.vertex2].center
+            except KeyError:
+                print(f'ERROR: Edge {edge} has incorrect vertex2: {edge.vertex2}')
+                pos2 = (0, 0)
+            line = EdgeLine((pos1[0], pos2[0]), (pos1[1], pos2[1]), update_func=self.redraw, label_func=self.get_edge_desc, c='k')
             self.lines[edge] = line
             self.subplot.add_artist(line)
+            line.register_events()
 
     def load_graph(self, graph: Graph) -> None:
         """
@@ -303,8 +313,22 @@ class GraphPanel(wx.Panel):
         :return: The description of the corresponding vertex
         """
         vertex = self.circles.inverse[circle][0]
+        # TODO: Create a attr_desc function in GraphElement
         text = ''
         for name, value in vertex.attr.items():
+            text += f'{name}: {value}\n'
+        return text[:-1]
+
+    def get_edge_desc(self, line: plt.Line2D) -> str:
+        """
+        Get a textual description of the attributes of the edge represented by line given as argument.
+
+        :param line: The line to which the corresponding attributes are required.
+        :return: A string containing a description of all attributes of the corresponding edge.
+        """
+        edge = self.lines.inverse[line][0]
+        text = ''
+        for name, value in edge.attr.items():
             text += f'{name}: {value}\n'
         return text[:-1]
 
@@ -323,7 +347,7 @@ class GraphPanel(wx.Panel):
 
 
 class DraggableCircle(plt.Circle):
-    def __init__(self, *args, update_func=None, label_func=None, **kwargs):
+    def __init__(self, *args, update_func, label_func, **kwargs):
         super().__init__(*args, **kwargs)
         self.update_func = update_func
         self.label_func = label_func
@@ -373,6 +397,50 @@ class DraggableCircle(plt.Circle):
                     text = self.label_func(self)
                     self.annotation = axis.annotate(text,
                                                     xy=self.center,
+                                                    xytext=(10, 10),
+                                                    textcoords='offset pixels',
+                                                    arrowprops=dict(arrowstyle='->'),
+                                                    bbox=dict(boxstyle='round', fc='w'),
+                                                    zorder=20)
+                self.annotation.set_visible(True)
+                self.update_func()
+        else:
+            if self.hovered:
+                self.hovered = False
+                if self.annotation is not None:
+                    self.annotation.set_visible(False)
+                    self.update_func()
+
+
+class EdgeLine(plt.Line2D):
+    """
+    This class is a specialization of a line that offers mouseover labels.
+    """
+    def __init__(self, *args, update_func, label_func, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update_func = update_func
+        self.label_func = label_func
+        self.on_hover_cid = None
+        self.hovered = False
+        self.annotation = None
+
+    def register_events(self):
+        self.on_hover_cid = self.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
+
+    def on_motion(self, event):
+        if event.inaxes != self.axes:
+            return
+        if self.contains(event)[0]:
+            if not self.hovered:
+                self.hovered = True
+                if self.annotation is None:
+                    axis = self.figure.gca()
+                    text = self.label_func(self)
+                    x1, x2 = self.get_xdata()
+                    y1, y2 = self.get_ydata()
+                    center = (x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2)
+                    self.annotation = axis.annotate(text,
+                                                    xy=center,
                                                     xytext=(10, 10),
                                                     textcoords='offset pixels',
                                                     arrowprops=dict(arrowstyle='->'),
