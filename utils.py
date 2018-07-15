@@ -1,5 +1,5 @@
 import random
-from typing import Iterable
+from typing import Iterable, Sized
 
 
 class Bidict(dict):
@@ -27,6 +27,8 @@ class Bidict(dict):
         super(Bidict, self).__delitem__(key)
 
 
-def randomly(objects: Iterable):
+def randomly(objects: Sized and Iterable):
+    if len(objects) == 1:
+        return objects
     shuffled = random.shuffle(list(objects))
     return shuffled

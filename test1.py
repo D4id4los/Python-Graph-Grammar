@@ -33,8 +33,8 @@ e1[mv1_1] = dv1_1
 dm1 = DaughterMapping(m1, e1, d1)
 p1 = Production(m1, [dm1])
 productions['Production 1'] = p1
-match1 = p1.match(h1)
-for i, match in enumerate(match1):
-    result_graphs[f'Match {i}'] = match[0]
-    res = p1.apply(h1, match[1])
-    result_graphs['Result'] = res
+g1 = Grammar([p1])
+results = g1.apply(h1, 2)
+for i, result in enumerate(results):
+    result_graphs[f'Derivation {i}'] = result
+
