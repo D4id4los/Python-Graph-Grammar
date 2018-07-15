@@ -74,6 +74,25 @@ class GraphElement(abc.ABC):
         """
         raise NotImplementedError()
 
+    def to_yaml(self) -> Iterable:
+        """
+        Serialize the GraphElement into a list or dict which can be used to create a yaml export.
+
+        :return: A list or dict representing the GraphElement.
+        """
+        fields = {}
+        fields['attr'] = self.attr
+        fields['id'] = id(self)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping = {}):
+        """
+        Create a GraphElement for the serialized list or dict from a yaml import.
+
+        :return: A GraphElement corresponding to the list or dict.
+        """
+        raise NotImplementedError
 
 class Vertex(GraphElement):
     """
@@ -127,6 +146,13 @@ class Vertex(GraphElement):
         for edge in to_add:
             self.edges.add(edge)
 
+    @staticmethod
+    def from_yaml(data, mapping = {}):
+        result = Vertex()
+        result.attr = data['attr']
+        mapping[data['id']] = result
+        return result
+
 
 class Edge(GraphElement):
     """
@@ -177,6 +203,21 @@ class Edge(GraphElement):
         result = get_replacement(self.vertex2)
         if result is not None:
             self.vertex2 = result
+
+    def to_yaml(self):
+        fields = super().to_yaml()
+        fields['vertex1'] = id(self.vertex1)
+        fields['vertex2'] = id(self.vertex2)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping = {}):
+        vertex1 = mapping[data['vertex1']]
+        vertex2 = mapping[data['vertex2']]
+        result = Edge(vertex1, vertex2)
+        result.attr = data['attr']
+        mapping[data['id']] = result
+        return result
 
     def get_other_vertex(self, vertex: Vertex) -> Vertex:
         """
@@ -390,6 +431,39 @@ class Graph(MutableSet):
                     new_matching[target] = candidate
                     problems.append((new_subgraph, index + 1, new_matching))
         return solutions
+
+    def to_yaml(self):
+        """
+        Serialize the graph into a list or dict which can be exported into a yaml string.
+
+        :return: A list or dict representing the graph fit for yaml export.
+        """
+        vertices = [x.to_yaml() for x in self.vertices]
+        edges = [x.to_yaml() for x in self.edges]
+        fields = {}
+        fields['vertices'] = vertices
+        fields['edges'] = edges
+        fields['id'] = id(self)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping = {}) -> 'Graph':
+        """
+        Deserialize a graph from a list or dict which was saved in a yaml file.
+
+        The mapping argument does not need to be specified, it will be filled automatically unless
+        you have a specific requirement.
+
+        :param data: The list or dict containing the graph data.
+        :param mapping: A dictionary which will be used to recreate references between objects.
+        """
+        result = Graph()
+        for vertex_data in data['vertices']:
+            result.add(Vertex.from_yaml(vertex_data, mapping))
+        for edge_data in data['edges']:
+            result.add(Edge.from_yaml(edge_data, mapping))
+        mapping[data['id']] = result
+        return result
 
     class AllElemIter:
         """

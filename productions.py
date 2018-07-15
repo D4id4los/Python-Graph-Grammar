@@ -15,6 +15,36 @@ class Mapping(Bidict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def to_yaml(self) -> Iterable:
+        """
+        Return a dict or list giving a representation of the mapping fit for export with yaml.
+
+        In this case this means use object ids rather than objects themselves.
+
+        :return: A representation of a Match in list or dict.
+        """
+        fields = {}
+        fields['dict'] = {id(k): id(v) for k, v in self.items()}
+        fields['id'] = id(self)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping = {}) -> 'Mapping':
+        """
+        Deserialize a Mapping from a list or dict which was saved in a yaml file.
+
+        The mapping argument does not need to be specified, it will be filled automatically unless
+        you have a specific requirement.
+
+        :param data: The list or dict containing the Mapping data.
+        :param mapping: A dictionary which will be used to recreate references between objects.
+        """
+        result = Mapping()
+        for key, value in data['dict'].items():
+            result[mapping[key]] = mapping[value]
+        mapping[data['id']] = result
+        return result
+
 
 class DaughterMapping():
     """
@@ -38,6 +68,39 @@ class DaughterMapping():
             else:
                 self.to_remove.append(element)
         self.to_add = [element for element in daughter_elements if element not in mapping.inverse]
+
+    def to_yaml(self) -> Iterable:
+        """
+        Return a list or dict representing the DaughterMapping which can be exported to yaml.
+
+        :return: A list or dict representing the DaughterMapping.
+        """
+        fields = {}
+        fields['mother_graph'] = id(self.mother_graph)
+        fields['mapping'] = self.mapping.to_yaml()
+        fields['daughter_graph'] = self.daughter_graph.to_yaml()
+        fields['weight'] = self.weight
+        fields['id'] = id(self)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping = {}) -> 'DaughterMapping':
+        """
+        Deserialize a DaughterMapping from a list or dict which was saved in a yaml file.
+
+        The mapping argument does not need to be specified, it will be filled automatically unless
+        you have a specific requirement.
+
+        :param data: The list or dict containing the DaughterMapping data.
+        :param mapping: A dictionary which will be used to recreate references between objects.
+        """
+        mother_graph = mapping[data['mother_graph']]
+        mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
+        daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping)
+        weight = data['weight']
+        result = DaughterMapping(mother_graph, mother_to_daughter_map, daughter_graph, weight)
+        mapping[data['id']] = result
+        return result
 
 
 class Production:
@@ -138,3 +201,32 @@ class Production:
             else:
                 lower_bound += self._mappings[index].weight
                 index += 1
+
+    def to_yaml(self) -> Iterable:
+        """
+        Serialize the Production into a list or dict which can be exported into yaml.
+
+        :return: A list or dict representing the Production.
+        """
+        fields = {}
+        fields['mother_graph'] = self._mother_graph.to_yaml()
+        fields['mappings'] = [x.to_yaml() for x in self._mappings]
+        fields['id'] = id(self)
+        return fields
+
+    @staticmethod
+    def from_yaml(data, mapping={}) -> 'Production':
+        """
+        Deserialize a Production from a list or dict which was saved in a yaml file.
+
+        The mapping argument does not need to be specified, it will be filled automatically unless
+        you have a specific requirement.
+
+        :param data: The list or dict containing the Production data.
+        :param mapping: A dictionary which will be used to recreate references between objects.
+        """
+        mother_graph = Graph.from_yaml(data['mother_graph'], mapping)
+        mappings = [DaughterMapping.from_yaml(x, mapping) for x in data['mappings']]
+        result = Production(mother_graph, mappings)
+        mapping[data['id']] = result
+        return result

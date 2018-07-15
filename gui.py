@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import wx
+import yaml
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -43,10 +44,14 @@ class GraphUI(wx.Frame):
         menubar = wx.MenuBar()
         file_menu = wx.Menu()
         file_quit = file_menu.Append(wx.ID_EXIT, item='Quit', helpString='Quit Model Gen')
+        file_export = file_menu.Append(wx.ID_ANY, item='Export\tCtrl+e', helpString='Export all Graphs to YAML file')
+        file_import = file_menu.Append(wx.ID_ANY, item='Import\tCtrl+i', helpString='Import Graphs from YAML file')
         menubar.Append(file_menu, title='&File')
         self.SetMenuBar(menubar)
 
         self.Bind(wx.EVT_MENU, self.on_quit, file_quit)
+        self.Bind(wx.EVT_MENU, self.export_graphs, file_export)
+        self.Bind(wx.EVT_MENU, self.import_graphs, file_import)
 
     def load_graphs(self, host_graphs: Dict[str, Graph], productions: Dict[str, Production],
                     result_graphs: Dict[str, Graph]) -> None:
@@ -55,6 +60,45 @@ class GraphUI(wx.Frame):
         self.result_graphs = result_graphs
         self.notebook.host_graph_panel.load_data(self.host_graphs)
         self.notebook.result_panel.load_data(self.result_graphs)
+
+    def export_graphs(self, _) -> None:
+        """
+        Export all currently loaded graphs as a yaml file.
+        """
+        with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = file_dialog.GetPath()
+            data = {}
+            data['host_graphs'] = {k: v.to_yaml() for k, v in self.host_graphs.items()}
+            data['productions'] = {k: v.to_yaml() for k, v in self.productions.items()}
+            data['result_graphs'] = {k: v.to_yaml() for k, v in self.result_graphs.items()}
+            try:
+                with open(path, 'w') as stream:
+                    yaml.dump(data, stream)
+            except IOError:
+                wx.LogError(f'Cannot save export to file {path}.')
+
+    def import_graphs(self, _) -> None:
+        """
+        Import graphs for display from a yaml file.
+        """
+        with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = file_dialog.GetPath()
+            try:
+                with open(path, 'r') as stream:
+                    data = yaml.load(stream)
+                    mapping = {}
+                    host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['host_graphs'].items()}
+                    productions = {k: Production.from_yaml(v, mapping) for k, v in data['productions'].items()}
+                    result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['result_graphs'].items()}
+                    self.load_graphs(host_graphs, productions, result_graphs)
+            except IOError:
+                wx.LogError(f'Cannot open file {path}.')
 
     def on_quit(self, _) -> None:
         self.Close()
@@ -274,7 +318,8 @@ class GraphPanel(wx.Panel):
         for vertex in self.graph.vertices:
             position = free_spaces[i]
             add_new_free_spaces(position, free_spaces)
-            circle = DraggableCircle(position, 0.5, update_func=self.redraw, label_func=self.get_vertex_desc, color='w', ec='k', zorder=10)
+            circle = DraggableCircle(position, 0.5, update_func=self.redraw, label_func=self.get_vertex_desc, color='w',
+                                     ec='k', zorder=10)
             self.circles[vertex] = circle
             self.subplot.add_artist(circle)
             circle.register_events()
@@ -290,7 +335,8 @@ class GraphPanel(wx.Panel):
             except KeyError:
                 print(f'ERROR: Edge {edge} has incorrect vertex2: {edge.vertex2}')
                 pos2 = (0, 0)
-            line = EdgeLine((pos1[0], pos2[0]), (pos1[1], pos2[1]), update_func=self.redraw, label_func=self.get_edge_desc, c='k')
+            line = EdgeLine((pos1[0], pos2[0]), (pos1[1], pos2[1]), update_func=self.redraw,
+                            label_func=self.get_edge_desc, c='k')
             self.lines[edge] = line
             self.subplot.add_artist(line)
             line.register_events()
@@ -416,6 +462,7 @@ class EdgeLine(plt.Line2D):
     """
     This class is a specialization of a line that offers mouseover labels.
     """
+
     def __init__(self, *args, update_func, label_func, **kwargs):
         super().__init__(*args, **kwargs)
         self.update_func = update_func
@@ -456,10 +503,9 @@ class EdgeLine(plt.Line2D):
                     self.update_func()
 
 
-data = (['name1'], ['name2'])
 app = wx.App()
 main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(600, 400))
-main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
+#main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
 # plot = GraphPanel(main_frame)
 # plot.load_data(data)
 # main_frame.Show()

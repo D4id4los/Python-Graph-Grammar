@@ -1,5 +1,3 @@
-from typing import Sized
-
 from productions import *
 from utils import *
 
@@ -9,7 +7,7 @@ class Grammar:
     A grammar is a collection of productions that can be applied on a graph.
     """
     def __init__(self, productions: Iterable[Production]):
-        self._productions: Iterable[Production] = productions
+        self.productions: Iterable[Production] = productions
 
     def apply(self, target_graph: Graph, max_steps: int = 0) -> Iterable[Graph]:
         """
@@ -52,7 +50,7 @@ class Grammar:
         :rtype: Tupel[Production|None, List[Graph]]
         """
         result = (None, [])
-        for production in randomly(self._productions):
+        for production in randomly(self.productions):
             matching_subgraphs = production.match(target_graph)
             if len(matching_subgraphs) == 0:
                 continue
@@ -72,3 +70,14 @@ class Grammar:
         """
         i = random.randint(0, len(matches) - 1)
         return matches[i]
+
+    def to_yaml(self) -> Iterable:
+        """
+        Serialize the grammar into a list or dict which can be exported into a yaml file.
+
+        :return: The grammar as a list or dict.
+        """
+        data = {}
+        data['productions'] = [x.to_yaml() for x in self.productions]
+        return data
+
