@@ -258,7 +258,7 @@ class GraphList(wx.ListCtrl):
         self.DeleteAllItems()
         self.graphs.clear()
         if len(data) > 0:
-            self.active = 1
+            self.active = 0
         i = 0
         for name, graph_data in data.items():
             index = self.InsertItem(i, name)
@@ -282,7 +282,8 @@ class GraphList(wx.ListCtrl):
         :return: The currently active Graph
         """
         if self.active is not None:
-            return self.graphs[self.active][1]
+            _, active_graph = self.graphs[self.active]
+            return active_graph
         return None
 
     def on_select(self, event) -> None:

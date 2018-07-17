@@ -28,7 +28,6 @@ class Bidict(dict):
 
 
 def randomly(objects: Sized and Iterable):
-    if len(objects) == 1:
-        return objects
-    shuffled = random.shuffle(list(objects))
+    shuffled = list(objects)
+    random.shuffle(shuffled)
     return shuffled
