@@ -154,19 +154,21 @@ class Production:
         :rtype: Graph
         """
 
-        def get_daughtercopy_to_host(mother_to_host, mother_to_daughter, copy_to_daughterID, daughter_graph):
+        def get_daughtercopy_to_result(map_host_to_result, mother_to_host, mother_to_daughter, copy_to_daughterID, daughter_graph):
             def map_daughtercopy_to_host(x):
                 try:
                     daughter_id = copy_to_daughterID[x]
                     daughter_element = daughter_graph.get_by_id(daughter_id)
                     mother_element = mother_to_daughter.inverse[daughter_element][0]
                     host_element = mother_to_host[mother_element]
-                    return host_element
+                    result_element = map_host_to_result[id(host_element)]
+                    return result_element
                 except KeyError:
                     return None
             return map_daughtercopy_to_host
 
-        result_graph = Graph(graph=host_graph)
+        map_hostID_to_result = {}
+        result_graph = copy.deepcopy(host_graph, map_hostID_to_result)
         daughter_mapping = self._select_mapping()
         daughter_graph = daughter_mapping.daughter_graph
         map_mother_to_daughter = daughter_mapping.mapping
@@ -174,19 +176,20 @@ class Production:
         daughter_copy = copy.deepcopy(daughter_graph, map_daughterID_to_copy)
         map_copy_to_daughterID = {value: key for key, value in map_daughterID_to_copy.items() if
                                   isinstance(value, GraphElement)}
-        daughtercopy_to_host = get_daughtercopy_to_host(map_mother_to_host,
+        daughtercopy_to_result = get_daughtercopy_to_result(map_hostID_to_result,
+                                                        map_mother_to_host,
                                                         map_mother_to_daughter,
                                                         map_copy_to_daughterID,
                                                         daughter_graph)
         for element in daughter_mapping.to_remove:
-            result_graph.remove(map_mother_to_host[element])
+            result_graph.remove(map_hostID_to_result[id(map_mother_to_host[element])])
         for element in daughter_mapping.to_change:
-            orig_element = map_mother_to_host[element]
-            for name, value in element.attr.items():
+            orig_element = map_hostID_to_result[id(map_mother_to_host[element])]
+            for name, value in map_mother_to_daughter[element].attr.items():
                 orig_element.attr[name] = value
         for element in daughter_mapping.to_add:
             new_element = map_daughterID_to_copy[id(element)]
-            new_element.replace_connection(daughtercopy_to_host)
+            new_element.replace_connection(daughtercopy_to_result)
             result_graph.add(new_element)
         return result_graph
 
