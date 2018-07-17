@@ -148,6 +148,8 @@ class Vertex(GraphElement):
 
     @staticmethod
     def from_yaml(data, mapping = {}):
+        if data['id'] in mapping:
+            return mapping[data['id']]
         result = Vertex()
         result.attr = data['attr']
         mapping[data['id']] = result
@@ -212,6 +214,8 @@ class Edge(GraphElement):
 
     @staticmethod
     def from_yaml(data, mapping = {}):
+        if data['id'] in mapping:
+            return mapping[data['id']]
         vertex1 = mapping[data['vertex1']]
         vertex2 = mapping[data['vertex2']]
         result = Edge(vertex1, vertex2)
@@ -457,6 +461,8 @@ class Graph(MutableSet):
         :param data: The list or dict containing the graph data.
         :param mapping: A dictionary which will be used to recreate references between objects.
         """
+        if data['id'] in mapping:
+            return mapping[data['id']]
         result = Graph()
         for vertex_data in data['vertices']:
             result.add(Vertex.from_yaml(vertex_data, mapping))

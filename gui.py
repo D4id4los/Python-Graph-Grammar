@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import wx
+import wx.lib.newevent
 import yaml
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -10,10 +11,12 @@ from functools import wraps
 from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
 from graph import Graph
 from productions import Production, Mapping
+from grammar import Grammar
 from utils import Bidict
-import test1
 
 T = TypeVar('T')
+
+RunGrammarEvent, EVT_RUN_GRAMMAR_EVENT = wx.lib.newevent.NewCommandEvent()
 
 
 class GraphUI(wx.Frame):
@@ -51,6 +54,8 @@ class GraphUI(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_quit, file_quit)
         self.Bind(wx.EVT_MENU, self.export_graphs, file_export)
         self.Bind(wx.EVT_MENU, self.import_graphs, file_import)
+
+        self.Bind(EVT_RUN_GRAMMAR_EVENT, self.run_grammar)
 
     def load_graphs(self, host_graphs: Dict[str, Graph], productions: Dict[str, Production],
                     result_graphs: Dict[str, Graph]) -> None:
@@ -101,6 +106,22 @@ class GraphUI(wx.Frame):
             except IOError:
                 wx.LogError(f'Cannot open file {path}.')
 
+    def run_grammar(self, _) -> None:
+        """
+        Run the grammar defined by the productions on the active hostgraph and add
+        the result to result graphs.
+        """
+        grammar = Grammar(self.productions.values())
+        host_graph = self.notebook.host_graph_panel.get_active()
+        if host_graph is None:
+            wx.LogError('Error: No host graphs loaded/defined.')
+            return
+        results = grammar.apply(host_graph, 3)
+        offset = len(self.result_graphs) - 1
+        for i, result in enumerate(results):
+            self.result_graphs[f'Result {i + offset}'] = result
+            self.notebook.result_panel.load_data(self.result_graphs)
+
     def on_quit(self, _) -> None:
         self.Close()
 
@@ -142,6 +163,14 @@ class HostGraphPanel(wx.Panel):
         """
         self.list.load_data(data)
 
+    def get_active(self) -> Graph or None:
+        """
+        Return the currently active host graph.
+
+        :return: The currently active host graph
+        """
+        return self.list.get_active()
+
 
 class ProductionPanel(wx.Panel):
     """
@@ -175,8 +204,17 @@ class ResultGraphPanel(wx.Panel):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.graph_panel = GraphPanel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
         self.list = GraphList(self, graph_panel=self.graph_panel)
-        hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.del_button = wx.Button(self, label='Delete')
+        self.run_button = wx.Button(self, label='Run')
+        self.run_button.Bind(wx.EVT_BUTTON, self.on_run_button)
+        hbox2.Add(self.del_button, proportion=0, flag=wx.ALIGN_LEFT)
+        hbox2.Add(self.run_button, proportion=0, flag=wx.ALIGN_LEFT)
+        vbox.Add(self.list, proportion=1, flag=wx.EXPAND)
+        vbox.Add(hbox2, proportion=0, flag=wx.EXPAND)
+        hbox.Add(vbox, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.graph_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
 
@@ -187,6 +225,13 @@ class ResultGraphPanel(wx.Panel):
         :param data: The result graphs to load
         """
         self.list.load_data(data)
+
+    def on_run_button(self, _) -> None:
+        """
+        Post a RunGrammarEvent wx Event when the button is clicked.
+        """
+        event = RunGrammarEvent(wx.ID_ANY)
+        wx.PostEvent(self, event)
 
 
 class GraphList(wx.ListCtrl):
@@ -200,6 +245,7 @@ class GraphList(wx.ListCtrl):
         self.InsertColumn(0, 'name', width=150)
         self.graphs: Dict[int, Tuple[str, Graph]] = {}
         self.selected = None
+        self.active = None
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
 
@@ -211,6 +257,8 @@ class GraphList(wx.ListCtrl):
         """
         self.DeleteAllItems()
         self.graphs.clear()
+        if len(data) > 0:
+            self.active = 1
         i = 0
         for name, graph_data in data.items():
             index = self.InsertItem(i, name)
@@ -227,12 +275,23 @@ class GraphList(wx.ListCtrl):
         self.graphs.pop(self.selected)
         self.graph_panel.load_graph(Graph())
 
+    def get_active(self) -> Graph or None:
+        """
+        Return the currently active host graph.
+
+        :return: The currently active Graph
+        """
+        if self.active is not None:
+            return self.graphs[self.active][1]
+        return None
+
     def on_select(self, event) -> None:
         """
         Display the selected graph in the connected graph panel.
         """
         item_index = event.GetIndex()
         self.selected = item_index
+        self.active = item_index
         graph = self.graphs[item_index][1]
         self.graph_panel.load_graph(graph)
 

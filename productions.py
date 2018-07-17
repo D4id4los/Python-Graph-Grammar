@@ -39,6 +39,8 @@ class Mapping(Bidict):
         :param data: The list or dict containing the Mapping data.
         :param mapping: A dictionary which will be used to recreate references between objects.
         """
+        if data['id'] in mapping:
+            return mapping[data['id']]
         result = Mapping()
         for key, value in data['dict'].items():
             result[mapping[key]] = mapping[value]
@@ -94,6 +96,8 @@ class DaughterMapping():
         :param data: The list or dict containing the DaughterMapping data.
         :param mapping: A dictionary which will be used to recreate references between objects.
         """
+        if data['id'] in mapping:
+            return mapping[data['id']]
         mother_graph = mapping[data['mother_graph']]
         mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
         daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping)
@@ -225,6 +229,8 @@ class Production:
         :param data: The list or dict containing the Production data.
         :param mapping: A dictionary which will be used to recreate references between objects.
         """
+        if data['id'] in mapping:
+            return mapping[data['id']]
         mother_graph = Graph.from_yaml(data['mother_graph'], mapping)
         mappings = [DaughterMapping.from_yaml(x, mapping) for x in data['mappings']]
         result = Production(mother_graph, mappings)
