@@ -117,11 +117,11 @@ class Production:
     """
 
     def __init__(self, mother_graph: Graph, mappings: Sized and Iterable[DaughterMapping]):
-        self._mother_graph: Graph = mother_graph
-        self._mappings: Sized and Iterable[DaughterMapping] = mappings
-        self._total_weight = 0
-        for mapping in self._mappings:
-            self._total_weight += mapping.weight
+        self.mother_graph: Graph = mother_graph
+        self.mappings: Sized and Iterable[DaughterMapping] = mappings
+        self.total_weight = 0
+        for mapping in self.mappings:
+            self.total_weight += mapping.weight
 
     def match(self, host_graph: Graph) -> Iterable[Tuple[Graph, Dict[GraphElement, GraphElement]]]:
         """
@@ -131,7 +131,7 @@ class Production:
         :return: All possible matching subgraphs of the target graph.
         """
         matches = []
-        mother_elements = self._mother_graph.element_list()
+        mother_elements = self.mother_graph.element_list()
         start_element = mother_elements[0]
         for host_element in host_graph:
             if host_element.matches(start_element):
@@ -192,14 +192,14 @@ class Production:
 
         :return: A tuple containing the mapping between mother and daughter graphs and the corresponding daughter graph.
         """
-        rand_num = random.randint(0, len(self._mappings) - 1)
+        rand_num = random.randint(0, len(self.mappings) - 1)
         index = 0
         lower_bound = 0
         while True:
-            if lower_bound <= rand_num < lower_bound + self._mappings[index].weight:
-                return self._mappings[index]
+            if lower_bound <= rand_num < lower_bound + self.mappings[index].weight:
+                return self.mappings[index]
             else:
-                lower_bound += self._mappings[index].weight
+                lower_bound += self.mappings[index].weight
                 index += 1
 
     def to_yaml(self) -> Iterable:
@@ -209,8 +209,8 @@ class Production:
         :return: A list or dict representing the Production.
         """
         fields = {}
-        fields['mother_graph'] = self._mother_graph.to_yaml()
-        fields['mappings'] = [x.to_yaml() for x in self._mappings]
+        fields['mother_graph'] = self.mother_graph.to_yaml()
+        fields['mappings'] = [x.to_yaml() for x in self.mappings]
         fields['id'] = id(self)
         return fields
 

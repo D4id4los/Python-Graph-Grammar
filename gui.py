@@ -7,10 +7,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 from functools import wraps
-from typing import TypeVar, Dict, Tuple, MutableSequence
-from collections import deque
+from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
 from graph import Graph
-from productions import Production
+from productions import Production, Mapping
 from utils import Bidict
 import test1
 
@@ -59,6 +58,7 @@ class GraphUI(wx.Frame):
         self.productions = productions
         self.result_graphs = result_graphs
         self.notebook.host_graph_panel.load_data(self.host_graphs)
+        self.notebook.production_panel.load_data(self.productions)
         self.notebook.result_panel.load_data(self.result_graphs)
 
     def export_graphs(self, _) -> None:
@@ -70,10 +70,11 @@ class GraphUI(wx.Frame):
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
             path = file_dialog.GetPath()
-            data = {}
-            data['host_graphs'] = {k: v.to_yaml() for k, v in self.host_graphs.items()}
-            data['productions'] = {k: v.to_yaml() for k, v in self.productions.items()}
-            data['result_graphs'] = {k: v.to_yaml() for k, v in self.result_graphs.items()}
+            data = {
+                'host_graphs': {k: v.to_yaml() for k, v in self.host_graphs.items()},
+                'productions': {k: v.to_yaml() for k, v in self.productions.items()},
+                'result_graphs': {k: v.to_yaml() for k, v in self.result_graphs.items()}
+            }
             try:
                 with open(path, 'w') as stream:
                     yaml.dump(data, stream)
@@ -112,7 +113,7 @@ class MainNotebook(wx.Notebook):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.host_graph_panel = HostGraphPanel(self)
-        self.production_panel = GraphPanel(self)
+        self.production_panel = ProductionPanel(self)
         self.result_panel = ResultGraphPanel(self)
         self.AddPage(self.host_graph_panel, 'Host Graphs')
         self.AddPage(self.production_panel, 'Productions')
@@ -127,15 +128,11 @@ class HostGraphPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        self.list = wx.ListCtrl(self, style=wx.LC_REPORT)
-        self.list.InsertColumn(0, 'name', width=150)
-        self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.graph_panel = GraphPanel(self)
+        self.list = GraphList(self, graph_panel=self.graph_panel)
         hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.graph_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
-
-        self.host_graphs: Dict[int, Tuple[str, Graph]] = {}
 
     def load_data(self, data: Dict[str, Graph]) -> None:
         """
@@ -143,16 +140,30 @@ class HostGraphPanel(wx.Panel):
 
         :param data: The host graphs to load
         """
-        i = 0
-        for name, graph in data.items():
-            index = self.list.InsertItem(i, name)
-            self.host_graphs[index] = (name, graph)
-            i += 1
+        self.list.load_data(data)
 
-    def on_select(self, event) -> None:
-        item_index = event.GetIndex()
-        graph = self.host_graphs[item_index][1]
-        self.graph_panel.load_graph(graph)
+
+class ProductionPanel(wx.Panel):
+    """
+        Container used to display and edit productions.
+        """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.production_panel = ProductionGraphsPanel(self)
+        self.list = ProductionList(self, production_panel=self.production_panel)
+        hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
+        hbox.Add(self.production_panel, proportion=1, flag=wx.EXPAND)
+        self.SetSizer(hbox)
+
+    def load_data(self, data: Dict[str, Production]) -> None:
+        """
+        Load new productions into the list to display.
+
+        :param data: The productions to load.
+        """
+        self.list.load_data(data)
 
 
 class ResultGraphPanel(wx.Panel):
@@ -163,32 +174,145 @@ class ResultGraphPanel(wx.Panel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        self.list = wx.ListCtrl(self, style=wx.LC_REPORT)
-        self.list.InsertColumn(0, 'name', width=150)
-        self.list.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
         self.graph_panel = GraphPanel(self)
+        self.list = GraphList(self, graph_panel=self.graph_panel)
         hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.graph_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
 
-        self.result_graphs: Dict[int, Tuple[str, Graph]] = {}
+    def load_data(self, data: Dict[str, Graph]) -> None:
+        """
+        Load new data into the result graph displays.
+
+        :param data: The result graphs to load
+        """
+        self.list.load_data(data)
+
+
+class GraphList(wx.ListCtrl):
+    """
+    A container for displaying a list of graphs.
+    """
+
+    def __init__(self, *args, graph_panel, style=wx.LC_REPORT, **kwargs):
+        super().__init__(*args, style=style, **kwargs)
+        self.graph_panel = graph_panel
+        self.InsertColumn(0, 'name', width=150)
+        self.graphs: Dict[int, Tuple[str, Graph]] = {}
+        self.selected = None
+
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
 
     def load_data(self, data: Dict[str, Graph]) -> None:
         """
-        Load new data into the host graph displays.
+        Load new data into the graph list.
 
-        :param data: The host graphs to load
+        :param data: The graphs to load as dict with names matched to graphs.
         """
+        self.DeleteAllItems()
+        self.graphs.clear()
         i = 0
-        for name, graph in data.items():
-            index = self.list.InsertItem(i, name)
-            self.result_graphs[index] = (name, graph)
+        for name, graph_data in data.items():
+            index = self.InsertItem(i, name)
+            self.graphs[index] = (name, graph_data)
             i += 1
 
+    def delete_selection(self) -> None:
+        """
+        Delete the currently selected graph from the list.
+        """
+        if self.selected is None:
+            return
+        self.DeleteItem(self.selected)
+        self.graphs.pop(self.selected)
+        self.graph_panel.load_graph(Graph())
+
     def on_select(self, event) -> None:
+        """
+        Display the selected graph in the connected graph panel.
+        """
         item_index = event.GetIndex()
-        graph = self.result_graphs[item_index][1]
+        self.selected = item_index
+        graph = self.graphs[item_index][1]
         self.graph_panel.load_graph(graph)
+
+
+class ProductionList(wx.ListCtrl):
+    """
+    A container for displaying a list of productions.
+    """
+
+    def __init__(self, *args, production_panel, style=wx.LC_REPORT, **kwargs):
+        super().__init__(*args, style=style, **kwargs)
+        self.production_panel = production_panel
+        self.InsertColumn(0, 'name', width=150)
+        self.InsertColumn(1, 'daughters', width=150)
+        self.productions: Dict[int, Tuple[str, Production], int] = {}
+        self.graphs: Dict[int, Tuple[Graph, Mapping, Graph]] = {}
+        self.selected = None
+
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
+
+    def load_data(self, data: Dict[str, Production]) -> None:
+        """
+        Load new data into the graph list.
+
+        :param data: The graphs to load as dict with names matched to graphs.
+        """
+        self.DeleteAllItems()
+        self.productions.clear()
+        for index, (name, production) in enumerate(data.items()):
+            mother_graph = production.mother_graph
+            for sub_index, daughter_mapping in enumerate(production.mappings):
+                mapping = daughter_mapping.mapping
+                daughter_graph = daughter_mapping.daughter_graph
+                self.InsertItem(index, name)
+                self.SetItem(index, 1, f'Daughter {sub_index}')
+                self.productions[index] = (name, production, sub_index)
+                self.graphs[index] = (mother_graph, mapping, daughter_graph)
+
+    def delete_selection(self) -> None:
+        """
+        Delete the currently selected graph from the list.
+        """
+        if self.selected is None:
+            return
+        self.DeleteItem(self.selected)
+        self.productions.pop(self.selected)
+        self.graphs.pop(self.selected)
+        self.production_panel.load_graph(Graph(), Mapping(), Graph())
+
+    def on_select(self, event) -> None:
+        """
+        Display the selected graph in the connected graph panel.
+        """
+        item_index = event.GetIndex()
+        self.selected = item_index
+        graphs = self.graphs[item_index]
+        self.production_panel.load_graph(graphs)
+
+
+class ProductionGraphsPanel(wx.Panel):
+    """
+    A container for the plots of two graphs.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.graph1 = GraphPanel(self)
+        self.graph2 = GraphPanel(self)
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(self.graph1, proportion=1, flag=wx.EXPAND)
+        sizer.Add(self.graph2, proportion=1, flag=wx.EXPAND)
+        self.SetSizer(sizer)
+
+    def load_graph(self, graph_data: Tuple[Graph, Mapping, Graph]) -> None:
+        """
+        Load graphs into the two graph displays.
+
+        :param graph_data: The graphs to load
+        """
+        self.graph1.load_graph(graph_data[0])
+        self.graph2.load_graph(graph_data[2])
 
 
 class GraphPanel(wx.Panel):
@@ -215,10 +339,10 @@ class GraphPanel(wx.Panel):
         self.setup_mpl_visuals()
         self.canvas.Show()
 
-        on_press_cid = self.canvas.mpl_connect('button_press_event', self.on_press)
-        on_release_cid = self.canvas.mpl_connect('button_release_event', self.on_release)
-        on_pick_cid = self.canvas.mpl_connect('pick_event', self.on_pick)
-        on_hover_cid = self.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self.canvas.mpl_connect('button_press_event', self.on_press)
+        self.canvas.mpl_connect('button_release_event', self.on_release)
+        self.canvas.mpl_connect('pick_event', self.on_pick)
+        self.canvas.mpl_connect('motion_notify_event', self.on_move)
 
         self.points = [(0, 0), (1, 1), (3, 1), (-2, -2)]
         self.circles = Bidict()
@@ -248,7 +372,8 @@ class GraphPanel(wx.Panel):
         self.canvas.draw()
         self.Refresh()
 
-    def _is_update(f: T) -> T:
+    # noinspection PyMethodParameters
+    def _is_update(f: Callable[..., T]) -> Callable[..., T]:
         """
         A decorator to wrap a function performing visual updates with all necessary
         housekeeping functions.
@@ -267,6 +392,7 @@ class GraphPanel(wx.Panel):
 
         return wrap
 
+    # noinspection PyArgumentList
     @_is_update
     def draw_line(self) -> None:
         """
@@ -274,23 +400,26 @@ class GraphPanel(wx.Panel):
         """
         self.subplot.plot([x for x, _ in self.points], [y for _, y in self.points], picker=100)
 
+    # noinspection PyArgumentList
     @_is_update
     def draw_points(self) -> None:
         """
         Draw all points in self.points as individual circles.
         """
         for point in self.points:
-            self.circles.append(DraggableCircle(point, 0.5, update_func=self.redraw, color='w', ec='k'))
-        for circle in self.circles:
+            self.circles[point] = DraggableCircle(point, 0.5, update_func=self.redraw, color='w', ec='k')
+        for point, circle in self.circles:
             self.subplot.add_artist(circle)
             circle.register_events()
 
+    # noinspection PyArgumentList
     @_is_update
     def draw_graph(self) -> None:
         """
         Draw the graph as a set of circles and connecting edges.
         """
 
+        # noinspection PyShadowingNames
         def add_new_free_spaces(pos: Tuple[int, int], free_spaces: MutableSequence[Tuple[int, int]]) -> None:
             """
             Add newly available free spaces adjacent to pos to the list if they are not already present.
@@ -379,20 +508,21 @@ class GraphPanel(wx.Panel):
         return text[:-1]
 
     def on_press(self, event):
-        print(f'button={event.button}, x={event.x}, y={event.y}, xdata={event.xdata}, ydata={event.ydata}')
+        # print(f'button={event.button}, x={event.x}, y={event.y}, xdata={event.xdata}, ydata={event.ydata}')
         pass
 
     def on_release(self, event):
         pass
 
     def on_pick(self, event):
-        print(f'Pick event.')
+        pass
 
     def on_move(self, event):
         pass
 
 
 class DraggableCircle(plt.Circle):
+
     def __init__(self, *args, update_func, label_func, **kwargs):
         super().__init__(*args, **kwargs)
         self.update_func = update_func
@@ -405,6 +535,9 @@ class DraggableCircle(plt.Circle):
         self.on_press_cid = None
         self.on_release_cid = None
         self.on_hover_cid = None
+
+    def remove(self):
+        super().remove()
 
     def register_events(self):
         self.on_press_cid = self.figure.canvas.mpl_connect('button_press_event', self.on_press)
@@ -419,7 +552,7 @@ class DraggableCircle(plt.Circle):
             self.set_facecolor('red')
             self.update_func()
 
-    def on_release(self, event):
+    def on_release(self, _):
         if self.pressed:
             self.pressed = False
             self.start_circ_pos = None
@@ -471,6 +604,9 @@ class EdgeLine(plt.Line2D):
         self.hovered = False
         self.annotation = None
 
+    def remove(self):
+        super().remove()
+
     def register_events(self):
         self.on_hover_cid = self.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
@@ -504,8 +640,8 @@ class EdgeLine(plt.Line2D):
 
 
 app = wx.App()
-main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(600, 400))
-#main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
+main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(1000, 500))
+# main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
 # plot = GraphPanel(main_frame)
 # plot.load_data(data)
 # main_frame.Show()
