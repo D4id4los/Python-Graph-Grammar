@@ -99,8 +99,8 @@ class DaughterMapping():
         if data['id'] in mapping:
             return mapping[data['id']]
         mother_graph = mapping[data['mother_graph']]
-        mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
         daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping)
+        mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
         weight = data['weight']
         result = DaughterMapping(mother_graph, mother_to_daughter_map, daughter_graph, weight)
         mapping[data['id']] = result
