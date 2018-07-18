@@ -1,8 +1,9 @@
 import random
 import copy
 from graph import *
-from utils import Bidict
+from utils import Bidict, get_logger
 
+log = get_logger('model_gen.' + __name__)
 
 class Mapping(Bidict):
     """
@@ -134,12 +135,14 @@ class Production:
         :param host_graph: The host graph against which the production is matched.
         :return: All possible matching subgraphs of the target graph.
         """
+        log.debug(f'Matching {self} against {host_graph}.')
         matches = []
         mother_elements = self.mother_graph.element_list()
         start_element = mother_elements[0]
         for host_element in host_graph:
             if host_element.matches(start_element):
                 matches.extend(host_graph.match_at(host_element, mother_elements))
+        log.debug(f'Found {len(matches)} matches: {matches}.')
         return matches
 
     def apply(self, host_graph: Graph, map_mother_to_host: Dict[GraphElement, GraphElement]):
@@ -166,7 +169,7 @@ class Production:
                 except KeyError:
                     return None
             return map_daughtercopy_to_host
-
+        log.debug(f'Applying {self} to {host_graph} according to {map_mother_to_host}.')
         map_hostID_to_result = {}
         result_graph = copy.deepcopy(host_graph, map_hostID_to_result)
         daughter_mapping = self._select_mapping()
@@ -191,6 +194,7 @@ class Production:
             new_element = map_daughterID_to_copy[id(element)]
             new_element.replace_connection(daughtercopy_to_result)
             result_graph.add(new_element)
+        log.debug(f'Applied {self} with result {result_graph}.')
         return result_graph
 
     def _select_mapping(self) -> DaughterMapping:

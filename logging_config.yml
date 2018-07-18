@@ -1,0 +1,22 @@
+version: 1
+formatters:
+  standard:
+    format: '%(asctime)s — %(name)s — %(levelname)s — %(funcName)s:%(lineno)d — %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: standard
+    level: DEBUG
+    stream: ext://sys.stderr
+  file:
+    class: logging.handlers.RotatingFileHandler
+    formatter: standard
+    filename: graph_gen.log
+    maxBytes: 10240
+    backupCount: 3
+loggers:
+  model_gen:
+    handlers: [console]
+    level: DEBUG
+root:
+  level: DEBUG

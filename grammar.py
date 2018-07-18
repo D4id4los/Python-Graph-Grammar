@@ -1,6 +1,8 @@
 from productions import *
 from utils import *
 
+log = get_logger('model_gen.' + __name__)
+
 
 class Grammar:
     """
@@ -20,6 +22,7 @@ class Grammar:
         :return: The sequence of graphs that results from applying the grammar to the target
         graph.
         """
+        log.debug(f'Applying the grammar {self} to the target {target_graph} for max {max_steps} steps.')
         step_count = 0
         result_graphs = []
         new_host_graph = target_graph

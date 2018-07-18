@@ -12,11 +12,12 @@ from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
 from graph import Graph
 from productions import Production, Mapping
 from grammar import Grammar
-from utils import Bidict
+from utils import Bidict, get_logger
 
 T = TypeVar('T')
 
 RunGrammarEvent, EVT_RUN_GRAMMAR_EVENT = wx.lib.newevent.NewCommandEvent()
+log = get_logger('model_gen')
 
 
 class GraphUI(wx.Frame):
@@ -59,6 +60,7 @@ class GraphUI(wx.Frame):
 
     def load_graphs(self, host_graphs: Dict[str, Graph], productions: Dict[str, Production],
                     result_graphs: Dict[str, Graph]) -> None:
+        log.info('Loading new graphs and productions.')
         self.host_graphs = host_graphs
         self.productions = productions
         self.result_graphs = result_graphs
@@ -70,11 +72,14 @@ class GraphUI(wx.Frame):
         """
         Export all currently loaded graphs as a yaml file.
         """
+        log.debug('Opening export dialog.')
         with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
                            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
+            log.info('Exporting all graphs and productions.')
             path = file_dialog.GetPath()
+            log.debug(f'Exporting to file »{path}«.')
             data = {
                 'host_graphs': {k: v.to_yaml() for k, v in self.host_graphs.items()},
                 'productions': {k: v.to_yaml() for k, v in self.productions.items()},
@@ -82,28 +87,33 @@ class GraphUI(wx.Frame):
             }
             try:
                 with open(path, 'w') as stream:
-                    yaml.dump(data, stream)
+                    yaml.safe_dump(data, stream)
             except IOError:
+                log.error(f'Could not open/write-to file {path}.')
                 wx.LogError(f'Cannot save export to file {path}.')
 
     def import_graphs(self, _) -> None:
         """
         Import graphs for display from a yaml file.
         """
+        log.debug('Opening import dialog.')
         with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
+            log.info('Importing graphs and productions.')
             path = file_dialog.GetPath()
+            log.debug(f'Importing from file »{path}«.')
             try:
                 with open(path, 'r') as stream:
-                    data = yaml.load(stream)
+                    data = yaml.safe_load(stream)
                     mapping = {}
                     host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['host_graphs'].items()}
                     productions = {k: Production.from_yaml(v, mapping) for k, v in data['productions'].items()}
                     result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['result_graphs'].items()}
                     self.load_graphs(host_graphs, productions, result_graphs)
             except IOError:
+                log.error(f'Cannon open/read from file »{path}«.')
                 wx.LogError(f'Cannot open file {path}.')
 
     def run_grammar(self, _) -> None:
@@ -111,18 +121,22 @@ class GraphUI(wx.Frame):
         Run the grammar defined by the productions on the active hostgraph and add
         the result to result graphs.
         """
+        log.info('Running grammar.')
         grammar = Grammar(self.productions.values())
         host_graph = self.notebook.host_graph_panel.get_active()
         if host_graph is None:
+            log.error(f'Can not run grammar because no host graphs are loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
-        results = grammar.apply(host_graph, 3)
+        results = grammar.apply(host_graph, 10)
+        log.debug(f'There where {len(results)} derivations calculated: {results}.')
         offset = len(self.result_graphs) - 1
         for i, result in enumerate(results):
             self.result_graphs[f'Result {i + offset}'] = result
             self.notebook.result_panel.load_data(self.result_graphs)
 
     def on_quit(self, _) -> None:
+        log.info('Closing Model Gen.')
         self.Close()
 
 
@@ -699,10 +713,12 @@ class EdgeLine(plt.Line2D):
                     self.update_func()
 
 
-app = wx.App()
-main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(1000, 500))
-# main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
-# plot = GraphPanel(main_frame)
-# plot.load_data(data)
-# main_frame.Show()
-app.MainLoop()
+if __name__ == '__main__':
+    log.info('Starting up Model Gen.')
+    app = wx.App()
+    main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(1000, 500))
+    # main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
+    # plot = GraphPanel(main_frame)
+    # plot.load_data(data)
+    # main_frame.Show()
+    app.MainLoop()

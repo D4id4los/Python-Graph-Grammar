@@ -1,6 +1,11 @@
 import random
+import logging
+import logging.config
+import yaml
 from typing import Iterable, Sized
 
+
+logging_configured = False
 
 class Bidict(dict):
     """
@@ -31,3 +36,20 @@ def randomly(objects: Sized and Iterable):
     shuffled = list(objects)
     random.shuffle(shuffled)
     return shuffled
+
+
+def config_logging():
+    with open('logging_config.yml', 'r') as file:
+        log_conf_dict = yaml.safe_load(file)
+    logging.config.dictConfig(log_conf_dict)
+
+
+def get_logger(name, handler=None):
+    if not logging_configured:
+        config_logging()
+    logger = logging.getLogger(name)
+    if handler is None:
+        logger.addHandler(logging.NullHandler())
+    else:
+        logger.addHandler(handler)
+    return logger
