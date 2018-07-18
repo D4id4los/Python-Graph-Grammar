@@ -425,7 +425,7 @@ class Graph(MutableSet):
                 solutions.append((subgraph, matching))
                 break
             candidates = subgraph.neighbours()
-            target = target_elements[index + 1]
+            target = target_elements[index]
             for candidate in candidates:
                 if candidate.matches(target):
                     new_subgraph = Graph(subgraph)

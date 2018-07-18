@@ -35,7 +35,7 @@ class Grammar:
             new_host_graph = production.apply(new_host_graph, matching_mapping)
             result_graphs.append(new_host_graph)
             step_count += 1
-            if 0 < max_steps < step_count:
+            if max_steps <= step_count:
                 break
         return result_graphs
 
