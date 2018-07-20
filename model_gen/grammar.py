@@ -1,5 +1,6 @@
-from productions import *
-from utils import *
+from model_gen.utils import *
+
+from model_gen.productions import *
 
 log = get_logger('model_gen.' + __name__)
 

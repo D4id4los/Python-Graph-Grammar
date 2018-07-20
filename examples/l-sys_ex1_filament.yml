@@ -1,0 +1,175 @@
+host_graphs:
+  Host 1:
+    id: 001
+    vertices:
+    - id: 120
+      attr: {}
+    - id: 101
+      attr: {label: a_r}
+    - id: 121
+      attr: {}
+    edges:
+    - id: 211
+      attr: {}
+      vertex1: 120
+      vertex2: 101
+    - id: 212
+      attr: {}
+      vertex1: 101
+      vertex2: 121
+productions:
+  Prod 1:
+    id: 301
+    mother_graph:
+      id: 002
+      vertices:
+      - id: 112
+        attr: {}
+      - id: 102
+        attr: {label: a_r}
+      - id: 113
+        attr: {}
+      edges:
+      - id: 203
+        attr: {}
+        vertex1: 112
+        vertex2: 102
+      - id: 204
+        attr: {}
+        vertex1: 102
+        vertex2: 113
+    mappings:
+    - id: 401
+      weight: 1
+      mother_graph: 002
+      daughter_graph:
+        id: 003
+        vertices:
+        - id: 114
+          attr: {}
+        - id: 103
+          attr: {label: a_l}
+        - id: 104
+          attr: {label: b_r}
+        - id: 115
+          attr: {}
+        edges:
+        - id: 205
+          attr: {}
+          vertex1: 114
+          vertex2: 103
+        - id: 201
+          attr: {}
+          vertex1: 103
+          vertex2: 104
+        - id: 206
+          attr: {}
+          vertex1: 104
+          vertex2: 115
+      mapping:
+        id: 501
+        dict:
+          112: 114
+          203: 205
+          #102: 103
+          204: 206
+          113: 115
+  Prod 2:
+    id: 302
+    mother_graph:
+      id: 004
+      vertices:
+      - id: 116
+        attr: {}
+      - id: 105
+        attr: {label: a_l}
+      - id: 117
+        attr: {}
+      edges:
+      - id: 207
+        attr: {}
+        vertex1: 116
+        vertex2: 105
+      - id: 208
+        attr: {}
+        vertex1: 105
+        vertex2: 117
+    mappings:
+    - id: 402
+      weight: 1
+      mother_graph: 004
+      daughter_graph:
+        id: 005
+        vertices:
+        - id: 118
+          attr: {}
+        - id: 106
+          attr: {label: b_l}
+        - id: 107
+          attr: {label: a_r}
+        - id: 119
+          attr: {}
+        edges:
+        - id: 209
+          attr: {}
+          vertex1: 118
+          vertex2: 106
+        - id: 202
+          attr: {}
+          vertex1: 106
+          vertex2: 107
+        - id: 210
+          attr: {}
+          vertex1: 107
+          vertex2: 119
+      mapping:
+        id: 502
+        dict:
+          116: 118
+          207: 209
+          #105: 106
+          208: 210
+          117: 119
+  Prod 3:
+    id: 303
+    mother_graph:
+      id: 006
+      vertices:
+      - id: 108
+        attr: {label: b_r}
+      edges: []
+    mappings:
+    - id: 403
+      weight: 1
+      mother_graph: 006
+      daughter_graph:
+        id: 007
+        vertices:
+        - id: 109
+          attr: {label: a_r}
+        edges: []
+      mapping:
+        id: 503
+        dict: {108: 109}
+  Prod 4:
+    id: 304
+    mother_graph:
+      id: 008
+      vertices:
+      - id: 110
+        attr: {label: b_l}
+      edges: []
+    mappings:
+    - id: 404
+      weight: 1
+      mother_graph: 008
+      daughter_graph:
+        id: 009
+        vertices:
+        - id: 111
+          attr: {label: a_l}
+        edges: []
+      mapping:
+        id: 504
+        dict: {110: 111}
+result_graphs: {}

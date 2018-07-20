@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from functools import wraps
+from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
+
+import matplotlib.pyplot as plt
 import wx
 import wx.lib.newevent
 import yaml
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
-from functools import wraps
-from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
-from graph import Graph
-from productions import Production, Mapping
-from grammar import Grammar
-from utils import Bidict, get_logger
+from matplotlib.figure import Figure
+from model_gen.grammar import Grammar
+from model_gen.productions import Production, Mapping
+from model_gen.utils import Bidict, get_logger
+from model_gen.graph import Graph
 
 T = TypeVar('T')
 
@@ -128,7 +129,7 @@ class GraphUI(wx.Frame):
             log.error(f'Can not run grammar because no host graphs are loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
-        results = grammar.apply(host_graph, 10)
+        results = grammar.apply(host_graph, 1)
         log.debug(f'There where {len(results)} derivations calculated: {results}.')
         offset = len(self.result_graphs) - 1
         for i, result in enumerate(results):

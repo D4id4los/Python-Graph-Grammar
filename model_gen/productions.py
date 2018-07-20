@@ -1,9 +1,11 @@
 import random
-import copy
-from graph import *
-from utils import Bidict, get_logger
+from typing import Iterable, Sized, Tuple, Dict
+
+from model_gen.utils import Bidict, get_logger
+from model_gen.graph import Graph, GraphElement
 
 log = get_logger('model_gen.' + __name__)
+
 
 class Mapping(Bidict):
     """
@@ -141,6 +143,7 @@ class Production:
         start_element = mother_elements[0]
         for host_element in host_graph:
             if host_element.matches(start_element):
+                log.debug('Found a matching start element for %r with %r', start_element, host_element)
                 matches.extend(host_graph.match_at(host_element, mother_elements))
         log.debug(f'Found {len(matches)} matches: {matches}.')
         return matches
@@ -158,7 +161,7 @@ class Production:
         """
 
         def get_daughtercopy_to_result(map_host_to_result, mother_to_host, mother_to_daughter, copy_to_daughterID, daughter_graph):
-            def map_daughtercopy_to_host(x):
+            def map_daughtercopy_to_result(x):
                 try:
                     daughter_id = copy_to_daughterID[x]
                     daughter_element = daughter_graph.get_by_id(daughter_id)
@@ -168,10 +171,26 @@ class Production:
                     return result_element
                 except KeyError:
                     return None
-            return map_daughtercopy_to_host
+            return map_daughtercopy_to_result
+
+        def get_result_to_daughtercopy(result_to_hostID, host_to_mother, mother_to_daughter, daughterID_to_copy, host_graph):
+            def map_result_to_daughtercopy(x):
+                try:
+                    host_element_id = result_to_hostID[x]
+                    host_element = host_graph.get_by_id(host_element_id)
+                    mother_element = host_to_mother[host_element]
+                    daughter_element = mother_to_daughter[mother_element]
+                    daughtercopy_element = daughterID_to_copy[id(daughter_element)]
+                    return daughtercopy_element
+                except KeyError:
+                    return None
+            return map_result_to_daughtercopy
+
         log.debug(f'Applying {self} to {host_graph} according to {map_mother_to_host}.')
         map_hostID_to_result = {}
         result_graph = copy.deepcopy(host_graph, map_hostID_to_result)
+        map_result_to_hostID = {value: key for key, value in map_hostID_to_result.items() if
+                                  isinstance(value, GraphElement)}
         daughter_mapping = self._select_mapping()
         daughter_graph = daughter_mapping.daughter_graph
         map_mother_to_daughter = daughter_mapping.mapping
@@ -179,17 +198,25 @@ class Production:
         daughter_copy = copy.deepcopy(daughter_graph, map_daughterID_to_copy)
         map_copy_to_daughterID = {value: key for key, value in map_daughterID_to_copy.items() if
                                   isinstance(value, GraphElement)}
+        map_host_to_mother = {value: key for key, value in map_mother_to_host.items()}
         daughtercopy_to_result = get_daughtercopy_to_result(map_hostID_to_result,
                                                         map_mother_to_host,
                                                         map_mother_to_daughter,
                                                         map_copy_to_daughterID,
                                                         daughter_graph)
+        result_to_daughtercopy = get_result_to_daughtercopy(map_result_to_hostID,
+                                                            map_host_to_mother,
+                                                            map_mother_to_daughter,
+                                                            map_daughterID_to_copy,
+                                                            host_graph)
         for element in daughter_mapping.to_remove:
             result_graph.remove(map_hostID_to_result[id(map_mother_to_host[element])])
         for element in daughter_mapping.to_change:
             orig_element = map_hostID_to_result[id(map_mother_to_host[element])]
             for name, value in map_mother_to_daughter[element].attr.items():
                 orig_element.attr[name] = value
+            # THis is incorrect, it needs to replace connections to only those elements which where newly added.
+            orig_element.replace_connection(result_to_daughtercopy)
         for element in daughter_mapping.to_add:
             new_element = map_daughterID_to_copy[id(element)]
             new_element.replace_connection(daughtercopy_to_result)

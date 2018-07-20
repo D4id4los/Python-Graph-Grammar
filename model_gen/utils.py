@@ -2,10 +2,11 @@ import random
 import logging
 import logging.config
 import yaml
+import os
 from typing import Iterable, Sized
 
-
 logging_configured = False
+
 
 class Bidict(dict):
     """
@@ -39,7 +40,8 @@ def randomly(objects: Sized and Iterable):
 
 
 def config_logging():
-    with open('logging_config.yml', 'r') as file:
+    this_dir = os.path.dirname(__file__)
+    with open(os.path.join(this_dir, 'logging_config.yml'), 'r') as file:
         log_conf_dict = yaml.safe_load(file)
     logging.config.dictConfig(log_conf_dict)
 
