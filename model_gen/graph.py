@@ -103,7 +103,7 @@ class Vertex(GraphElement):
         super().__init__()
         self.edges: MutableSet['Edge'] = set()
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict={}, mapping=None):
         """
         Return a deep copy of the Vertex where connecting edges are only present
         if they have a corresponding deepcopy in memodict.
@@ -111,6 +111,8 @@ class Vertex(GraphElement):
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
+        if mapping is not None:
+            mapping[self] = result
         for key, value in self.__dict__.items():
             setattr(result, key, copy.deepcopy(value, memodict))
         result.edges = set()
@@ -166,7 +168,7 @@ class Edge(GraphElement):
         self.vertex1 = vertex1
         self.vertex2 = vertex2
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict={}, mapping=None):
         """
         Return a deepcopy of the edge where the vertices are only present if
         they have a corresponding deepcopy in memodict.
@@ -174,6 +176,8 @@ class Edge(GraphElement):
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
+        if mapping is not None:
+            mapping[self] = result
         for key, value in self.__dict__.items():
             setattr(result, key, copy.deepcopy(value, memodict))
         result.vertex1 = memodict[id(self.vertex1)] if id(self.vertex1) in memodict else None
@@ -316,13 +320,15 @@ class Graph(MutableSet):
     def __len__(self):
         return len(self.vertices) + len(self.edges) + len(self.faces)
 
-    def __deepcopy__(self, memodict={}):
+    def __deepcopy__(self, memodict={}, mapping=None):
         """
         Return a deep copy of the graph with all connections still remaining.
         """
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
+        if mapping is not None:
+            mapping[self] = result
         for key, value in self.__dict__.items():
             setattr(result, key, copy.deepcopy(value, memodict))
         result.vertices = copy.deepcopy(self.vertices, memodict)
