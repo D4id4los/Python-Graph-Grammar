@@ -327,17 +327,11 @@ class Graph(MutableSet):
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
-        if mapping is not None:
-            mapping[self] = result
         for key, value in self.__dict__.items():
             setattr(result, key, copy.deepcopy(value, memodict))
-        result.vertices = copy.deepcopy(self.vertices, memodict)
-        result.edges = []
-        result.faces = []
-        for edge in self.edges:
-            result.add(copy.deepcopy(edge, memodict))
-        for face in self.faces:
-            result.add(copy.deepcopy(face, memodict))
+        result.vertices = [x.__deepcopy__(memodict, mapping) for x in self.vertices]
+        result.edges = [x.__deepcopy__(memodict, mapping) for x in self.edges]
+        result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
         return result
 
     def add(self, element: GraphElement):

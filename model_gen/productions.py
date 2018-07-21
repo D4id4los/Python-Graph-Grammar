@@ -1,4 +1,6 @@
 import random
+import copy
+from functools import partial
 from typing import Iterable, Sized, Tuple, Dict
 
 from model_gen.utils import Bidict, get_logger
@@ -32,7 +34,7 @@ class Mapping(Bidict):
         return fields
 
     @staticmethod
-    def from_yaml(data, mapping = {}) -> 'Mapping':
+    def from_yaml(data, mapping={}) -> 'Mapping':
         """
         Deserialize a Mapping from a list or dict which was saved in a yaml file.
 
@@ -51,13 +53,14 @@ class Mapping(Bidict):
         return result
 
 
-class DaughterMapping():
+class ProductionOption():
     """
     Saves a daughter graph and all information about the mapping from the mother
     graph to the daughter graph.
     """
 
-    def __init__(self, mother_graph: Graph, mapping: Mapping, daughter_graph: Graph, weight: int = 1):
+    def __init__(self, mother_graph: Graph, mapping: Mapping,
+                 daughter_graph: Graph, weight: int = 1):
         self.mapping = mapping
         self.daughter_graph = daughter_graph
         self.mother_graph = mother_graph
@@ -69,10 +72,22 @@ class DaughterMapping():
         self.to_change = []
         for element in mother_elements:
             if element in mapping:
-                self.to_change.append(element)
+                neighbour_mapping = {}
+                unmapped_neighbours_in_m = [x for x in element.neighbours() if
+                                            x not in mapping]
+                unmapped_neighbours_in_d = [x for x in
+                                            mapping[element].neighbours() if
+                                            x not in mapping.values()]
+                if len(unmapped_neighbours_in_m) == 1 and \
+                        len(unmapped_neighbours_in_d) == 1:
+                    neighbour_mapping = {
+                        unmapped_neighbours_in_m[0]:
+                            unmapped_neighbours_in_d[0]}
+                self.to_change.append((element, neighbour_mapping))
             else:
                 self.to_remove.append(element)
-        self.to_add = [element for element in daughter_elements if element not in mapping.inverse]
+        self.to_add = [element for element in daughter_elements if
+                       element not in mapping.inverse]
 
     def to_yaml(self) -> Iterable:
         """
@@ -89,7 +104,7 @@ class DaughterMapping():
         return fields
 
     @staticmethod
-    def from_yaml(data, mapping = {}) -> 'DaughterMapping':
+    def from_yaml(data, mapping={}) -> 'ProductionOption':
         """
         Deserialize a DaughterMapping from a list or dict which was saved in a yaml file.
 
@@ -105,7 +120,8 @@ class DaughterMapping():
         daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping)
         mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
         weight = data['weight']
-        result = DaughterMapping(mother_graph, mother_to_daughter_map, daughter_graph, weight)
+        result = ProductionOption(mother_graph, mother_to_daughter_map,
+                                  daughter_graph, weight)
         mapping[data['id']] = result
         return result
 
@@ -123,14 +139,16 @@ class Production:
     source graph according to the matching defined in the production.
     """
 
-    def __init__(self, mother_graph: Graph, mappings: Sized and Iterable[DaughterMapping]):
+    def __init__(self, mother_graph: Graph,
+                 mappings: Sized and Iterable[ProductionOption]):
         self.mother_graph: Graph = mother_graph
-        self.mappings: Sized and Iterable[DaughterMapping] = mappings
+        self.mappings: Sized and Iterable[ProductionOption] = mappings
         self.total_weight = 0
         for mapping in self.mappings:
             self.total_weight += mapping.weight
 
-    def match(self, host_graph: Graph) -> Iterable[Tuple[Graph, Dict[GraphElement, GraphElement]]]:
+    def match(self, host_graph: Graph) -> Iterable[
+        Tuple[Graph, Dict[GraphElement, GraphElement]]]:
         """
         Tries to match the production against a target Graph.
 
@@ -143,98 +161,98 @@ class Production:
         start_element = mother_elements[0]
         for host_element in host_graph:
             if host_element.matches(start_element):
-                log.debug('Found a matching start element for %r with %r', start_element, host_element)
-                matches.extend(host_graph.match_at(host_element, mother_elements))
+                log.debug('Found a matching start element for %r with %r',
+                          start_element, host_element)
+                matches.extend(
+                    host_graph.match_at(host_element, mother_elements))
         log.debug(f'Found {len(matches)} matches: {matches}.')
         return matches
 
-    def apply(self, host_graph: Graph, map_mother_to_host: Dict[GraphElement, GraphElement]):
+    def apply(self, host_graph: Graph,
+              map_mother_to_host: Dict[GraphElement, GraphElement]) -> Graph:
         """
         Applies a production to a specific subgraph of the host graph and
         returns the result graph.
+
+        The relationship between the different graphs is as follows:
+        `Result - Host - Mother - Daughter - Daughter Copy`
+        Abbreviated as:
+        `R - H - M - D - C`
 
         :param host_graph: The graph to which the production is applied.
         :param map_mother_to_host: The specific subgraph of the host graph
         to which the production will be applied.
         :return: The graph resulting from applying the production.
-        :rtype: Graph
         """
 
-        def get_daughtercopy_to_result(map_host_to_result, mother_to_host, mother_to_daughter, copy_to_daughterID, daughter_graph):
-            def map_daughtercopy_to_result(x):
+        def get_M_to_R(map_M_to_H, map_H_to_R):
+            def M_to_R(x):
+                return map_H_to_R[map_M_to_H[x]]
+
+            return M_to_R
+
+        def get_C_to_R(map_M_to_H, map_H_to_R, map_M_to_D, map_D_to_C):
+            def C_to_R(x):
                 try:
-                    daughter_id = copy_to_daughterID[x]
-                    daughter_element = daughter_graph.get_by_id(daughter_id)
-                    mother_element = mother_to_daughter.inverse[daughter_element][0]
-                    host_element = mother_to_host[mother_element]
-                    result_element = map_host_to_result[id(host_element)]
-                    return result_element
+                    return map_H_to_R[
+                        map_M_to_H[map_M_to_D.inverse[map_D_to_C.inverse[x][0]][0]]]
                 except KeyError:
                     return None
-            return map_daughtercopy_to_result
 
-        def get_result_to_daughtercopy(result_to_hostID, host_to_mother, mother_to_daughter, daughterID_to_copy, host_graph):
-            def map_result_to_daughtercopy(x):
-                try:
-                    host_element_id = result_to_hostID[x]
-                    host_element = host_graph.get_by_id(host_element_id)
-                    mother_element = host_to_mother[host_element]
-                    daughter_element = mother_to_daughter[mother_element]
-                    daughtercopy_element = daughterID_to_copy[id(daughter_element)]
-                    return daughtercopy_element
-                except KeyError:
+            return C_to_R
+
+        def get_R_to_C(M_to_R, map_D_to_C):
+            def R_to_C(x_neighbour_map, x):
+                map = {M_to_R(m): map_D_to_C[d] for m, d in
+                       x_neighbour_map.items()}
+                if x in map:
+                    return map[x]
+                else:
                     return None
-            return map_result_to_daughtercopy
 
-        log.debug(f'Applying {self} to {host_graph} according to {map_mother_to_host}.')
-        map_hostID_to_result = {}
-        result_graph = copy.deepcopy(host_graph, map_hostID_to_result)
-        map_result_to_hostID = {value: key for key, value in map_hostID_to_result.items() if
-                                  isinstance(value, GraphElement)}
-        daughter_mapping = self._select_mapping()
-        daughter_graph = daughter_mapping.daughter_graph
-        map_mother_to_daughter = daughter_mapping.mapping
-        map_daughterID_to_copy = {}
-        daughter_copy = copy.deepcopy(daughter_graph, map_daughterID_to_copy)
-        map_copy_to_daughterID = {value: key for key, value in map_daughterID_to_copy.items() if
-                                  isinstance(value, GraphElement)}
-        map_host_to_mother = {value: key for key, value in map_mother_to_host.items()}
-        daughtercopy_to_result = get_daughtercopy_to_result(map_hostID_to_result,
-                                                        map_mother_to_host,
-                                                        map_mother_to_daughter,
-                                                        map_copy_to_daughterID,
-                                                        daughter_graph)
-        result_to_daughtercopy = get_result_to_daughtercopy(map_result_to_hostID,
-                                                            map_host_to_mother,
-                                                            map_mother_to_daughter,
-                                                            map_daughterID_to_copy,
-                                                            host_graph)
-        for element in daughter_mapping.to_remove:
-            result_graph.remove(map_hostID_to_result[id(map_mother_to_host[element])])
-        for element in daughter_mapping.to_change:
-            orig_element = map_hostID_to_result[id(map_mother_to_host[element])]
-            for name, value in map_mother_to_daughter[element].attr.items():
-                orig_element.attr[name] = value
-            # THis is incorrect, it needs to replace connections to only those elements which where newly added.
-            orig_element.replace_connection(result_to_daughtercopy)
-        for element in daughter_mapping.to_add:
-            new_element = map_daughterID_to_copy[id(element)]
-            new_element.replace_connection(daughtercopy_to_result)
+            return R_to_C
+
+        log.debug(f'Applying {self} to {host_graph} according to '
+                  f'{map_mother_to_host}.')
+        map_M_to_H = map_mother_to_host
+        map_H_to_R = Mapping()
+        result_graph = host_graph.__deepcopy__(mapping=map_H_to_R)
+        option = self._select_option()
+        daughter_graph = option.daughter_graph
+        map_M_to_D = option.mapping
+        map_D_to_C = Mapping()
+        daughter_copy = daughter_graph.__deepcopy__(mapping=map_D_to_C)
+        M_to_R = get_M_to_R(map_M_to_H, map_H_to_R)
+        C_to_R = get_C_to_R(map_M_to_H, map_H_to_R, map_M_to_D, map_D_to_C)
+        R_to_C = get_R_to_C(M_to_R, map_D_to_C)
+        for m_element in option.to_remove:
+            result_graph.remove(M_to_R(m_element))
+        for m_element, neighbour_mapping in option.to_change:
+            r_element = M_to_R(m_element)
+            for name, value in map_M_to_D[m_element].attr.items():
+                r_element.attr[name] = value
+            r_element.replace_connection(partial(R_to_C, neighbour_mapping))
+        for d_element in option.to_add:
+            new_element = map_D_to_C[d_element]
+            new_element.replace_connection(C_to_R)
             result_graph.add(new_element)
         log.debug(f'Applied {self} with result {result_graph}.')
         return result_graph
 
-    def _select_mapping(self) -> DaughterMapping:
+    def _select_option(self) -> ProductionOption:
         """
-        Randomly select a mapping and daughter graph from the list of possible mappings.
+        Randomly select a mapping and daughter graph from the list of possible
+        mappings.
 
-        :return: A tuple containing the mapping between mother and daughter graphs and the corresponding daughter graph.
+        :return: A tuple containing the mapping between mother and daughter
+                 graphs and the corresponding daughter graph.
         """
         rand_num = random.randint(0, len(self.mappings) - 1)
         index = 0
         lower_bound = 0
         while True:
-            if lower_bound <= rand_num < lower_bound + self.mappings[index].weight:
+            if lower_bound <= rand_num < lower_bound + self.mappings[
+                index].weight:
                 return self.mappings[index]
             else:
                 lower_bound += self.mappings[index].weight
@@ -266,7 +284,8 @@ class Production:
         if data['id'] in mapping:
             return mapping[data['id']]
         mother_graph = Graph.from_yaml(data['mother_graph'], mapping)
-        mappings = [DaughterMapping.from_yaml(x, mapping) for x in data['mappings']]
+        mappings = [ProductionOption.from_yaml(x, mapping) for x in
+                    data['mappings']]
         result = Production(mother_graph, mappings)
         mapping[data['id']] = result
         return result

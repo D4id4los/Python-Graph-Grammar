@@ -33,7 +33,7 @@ if __name__ == '__main__':
     host_graphs['Daughter copy'] = copy.deepcopy(d1)
     e1 = Mapping()
     e1[mv1_1] = dv1_1
-    dm1 = DaughterMapping(m1, e1, d1)
+    dm1 = ProductionOption(m1, e1, d1)
     p1 = Production(m1, [dm1])
     productions['Production 1'] = p1
     g1 = Grammar([p1])
