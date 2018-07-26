@@ -14,7 +14,6 @@ class GraphElement(abc.ABC):
     list of attributes.
     """
 
-
     def __init__(self):
         self.attr: Dict[AnyStr, Any] = {}
 
@@ -70,35 +69,43 @@ class GraphElement(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']) -> None:
+    def replace_connection(self, get_replacement:
+                           Callable[['GraphElement'], 'GraphElement']) -> None:
         """
-        Replace all connected elements with results returned by replacement function.
+        Replace all connected elements with results returned by replacement
+        function.
 
         If the function returns None, no replacement is performed.
 
-        :param get_replacement: The function deciding if and by what a GraphElement is to be replaced.
+        :param get_replacement: The function deciding if and by what a
+        GraphElement is to be replaced.
         """
         raise NotImplementedError()
 
     def to_yaml(self) -> Dict:
         """
-        Serialize the GraphElement into a list or dict which can be used to create a yaml export.
+        Serialize the GraphElement into a list or dict which can be used to
+        create a yaml export.
 
         :return: A list or dict representing the GraphElement.
         """
-        fields = {}
-        fields['attr'] = self.attr
-        fields['id'] = id(self)
+        fields = {
+            'attr': self.attr,
+            'id': id(self)
+        }
         return fields
 
+    # noinspection PyDefaultArgument
     @staticmethod
-    def from_yaml(data, mapping = {}):
+    def from_yaml(data, mapping={}):
         """
-        Create a GraphElement for the serialized list or dict from a yaml import.
+        Create a GraphElement for the serialized list or dict from a yaml
+        import.
 
         :return: A GraphElement corresponding to the list or dict.
         """
         raise NotImplementedError
+
 
 class Vertex(GraphElement):
     """
