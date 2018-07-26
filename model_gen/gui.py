@@ -50,12 +50,14 @@ class GraphUI(wx.Frame):
         file_quit = file_menu.Append(wx.ID_EXIT, item='Quit', helpString='Quit Model Gen')
         file_export = file_menu.Append(wx.ID_ANY, item='Export\tCtrl+e', helpString='Export all Graphs to YAML file')
         file_import = file_menu.Append(wx.ID_ANY, item='Import\tCtrl+i', helpString='Import Graphs from YAML file')
+        file_run = file_menu.Append(wx.ID_ANY, item='Run Grammar\tCtrl+r', helpString='Run the defined Grammar')
         menubar.Append(file_menu, title='&File')
         self.SetMenuBar(menubar)
 
         self.Bind(wx.EVT_MENU, self.on_quit, file_quit)
         self.Bind(wx.EVT_MENU, self.export_graphs, file_export)
         self.Bind(wx.EVT_MENU, self.import_graphs, file_import)
+        self.Bind(wx.EVT_MENU, self.run_grammar, file_run)
 
         self.Bind(EVT_RUN_GRAMMAR_EVENT, self.run_grammar)
 

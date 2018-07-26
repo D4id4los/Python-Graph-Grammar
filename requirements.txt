@@ -1,3 +1,6 @@
 wxPython >= 4.0.3
 matplotlib >= 2.2.2
 PyYAML
+pytest
+mock
+pytest-mock

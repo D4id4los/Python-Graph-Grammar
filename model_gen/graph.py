@@ -1,7 +1,9 @@
 import abc
 import itertools
 import copy
-from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, MutableSequence, Sized, Tuple, Callable
+from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable
+from typing import MutableSequence, Tuple, Callable
+from model_gen.exceptions import ModelGenArgumentError
 
 
 class GraphElement(abc.ABC):
@@ -12,6 +14,7 @@ class GraphElement(abc.ABC):
     list of attributes.
     """
 
+
     def __init__(self):
         self.attr: Dict[AnyStr, Any] = {}
 
@@ -20,14 +23,17 @@ class GraphElement(abc.ABC):
         """
         Test if the two graph elements match based on their attributes.
 
-        In this test the graph_element is considered to be the mother graph, or left-hand-side, of a production. This
-        means that all attributes of the graph_element must also be present and matching in this element for the
+        In this test the graph_element is considered to be the mother graph, or
+        left-hand-side, of a production. This means that all attributes of the
+        graph_element must also be present and matching in this element for the
         function to return true.
 
         :param graph_element: The graph element to test for matching
         attributes.
         :return: True if the attributes of the two elements are matching.
         """
+        if not isinstance(graph_element, GraphElement):
+            raise ModelGenArgumentError()
         try:
             for attr_key in graph_element.attr.keys():
                 if self.attr[attr_key] != graph_element.attr[attr_key]:
@@ -74,7 +80,7 @@ class GraphElement(abc.ABC):
         """
         raise NotImplementedError()
 
-    def to_yaml(self) -> Iterable:
+    def to_yaml(self) -> Dict:
         """
         Serialize the GraphElement into a list or dict which can be used to create a yaml export.
 
