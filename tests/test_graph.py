@@ -1,7 +1,6 @@
 import pytest
 from model_gen import graph
 from model_gen.exceptions import ModelGenArgumentError
-from pytest_mock import mocker
 
 
 class TestGraphElement:
@@ -57,6 +56,146 @@ class TestGraphElement:
         mocker.patch.object(graph.GraphElement, '__abstractmethods__', set())
         e = graph.GraphElement()
         e.attr = attrs
-        dict = e.to_yaml()
-        assert dict['attr'] == attrs
-        assert dict['id'] == id(e)
+        result = e.to_yaml()
+        assert result['attr'] == attrs
+        assert result['id'] == id(e)
+
+
+class TestVertex:
+
+    def test_deepcopy_no_edges(self):
+        """
+        A deepcopy of a Vertex should make a copy of the vertex and save the
+        old id to new object mapping into the memodict and if the mapping
+        argument is supplied also save a mapping from old object to new object
+        in the provided dictionary.
+
+
+        """
+        memodict = {}
+        mapping = {}
+        v = graph.Vertex()
+        copy = v.__deepcopy__(memodict, mapping)
+        assert id(v) != id(copy)
+        assert memodict[id(v)] == copy
+        assert mapping[v] == copy
+
+    def test_deepcopy_with_edges(self):
+        """
+        For the list of connected edges, an edge (or rather its pendant) is
+        only copied over if it is already contained the memodict. If there are
+        no such edges the list set remains empty.
+        """
+        v = graph.Vertex()
+        v2 = graph.Vertex()
+        e = graph.Edge(v, v2)
+        e2 = graph.Edge(v, v2)
+        v.edges.add(e)
+        memodict = {id(e): e2}
+        mapping = {}
+        assert e in v.edges
+        assert e2 not in v.edges
+        copy = v.__deepcopy__(memodict, mapping)
+        assert e not in copy.edges
+        assert e2 in copy.edges
+        memodict = {}
+        copy = v.__deepcopy__(memodict, mapping)
+        assert len(copy.edges) == 0
+
+    def test_matches_wrong_arg(self):
+        """
+        If called with a non GraphElement argument then an error is to be
+        thrown.
+        """
+        v = graph.Vertex()
+        with pytest.raises(ModelGenArgumentError):
+            v.matches('')
+
+    def test_matches_non_vertex(self):
+        v = graph.Vertex()
+        v2 = graph.Vertex()
+        e = graph.Edge(v, v2)
+        assert v.matches(e) is False
+
+    @pytest.mark.parametrize('attr1,attr2,result', [
+        ({}, {}, True),
+        ({'a': 1}, {}, True),
+        ({'a': 1, 'b': 2}, {'a': 1}, True),
+        ({}, {'a': 1}, False),
+        ({'a': 1}, {'a': 2}, False)
+    ])
+    def test_matches_vertex(self, attr1, attr2, result):
+        v = graph.Vertex()
+        v.attr = attr1
+        v2 = graph.Vertex()
+        v2.attr = attr2
+        assert v.matches(v2) is result
+
+    def test_replace_connection_valid_calls(self):
+        """
+        If the replacement function returns an element it is to be a
+        replacement for the connected element, if the function returns None
+        then no change is to be made.
+        """
+        v = graph.Vertex()
+        e1 = graph.Edge()
+        e2 = graph.Edge()
+        v.edges = {e1}
+
+        def func(x):
+            if x == e1:
+                return e2
+            else:
+                return None
+        v.replace_connection(func)
+        assert v.edges == {e2}
+        v.replace_connection(func)
+        assert v.edges == {e2}
+
+    def test_replace_connection_invalid_func(self):
+        """
+        If the replacement function does not return a object of a fitting
+        class, e.g. returning a Vertex instead of an edge, then an error
+        is to be thrown.
+        """
+        v = graph.Vertex()
+        e = graph.Edge()
+        v.edges = {e}
+
+        def func(_):
+            return ''
+        with pytest.raises(ValueError):
+            v.replace_connection(func)
+
+        def func2(_):
+            return graph.Vertex()
+        with pytest.raises(ValueError):
+            v.replace_connection(func2)
+
+    def test_from_yaml_not_created(self):
+        """
+        If the Vertex object has not yet been instantiated (identified by
+        the id field in the yaml data) then it should be created and
+        returned.
+        """
+        data = {'id': 1,
+                'attr': {'a': 1, 3: 'test'}}
+        mapping = {}
+        result = graph.Vertex.from_yaml(data, mapping)
+        assert result.attr == data['attr']
+        assert len(mapping) == 1
+        assert data['id'] in mapping
+
+    def test_from_yaml_already_created(self):
+        """
+        If the Vertex object has already been created (it being present
+        in mapping) then that existing object should be returned and no
+        new instance created.
+        """
+        vertex = graph.Vertex()
+        data = {'id': 1,
+                'attr': {'a': 1, 3: 'test'}}
+        mapping = {1: vertex}
+        result = graph.Vertex.from_yaml(data, mapping)
+        assert id(vertex) == id(result)
+        assert len(mapping) == 1

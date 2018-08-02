@@ -93,6 +93,7 @@ class GraphElement(abc.ABC):
             'attr': self.attr,
             'id': id(self)
         }
+
         return fields
 
     # noinspection PyDefaultArgument
@@ -127,6 +128,8 @@ class Vertex(GraphElement):
         if mapping is not None:
             mapping[self] = result
         for key, value in self.__dict__.items():
+            if key == 'edges':
+                continue  # Do not blindly copy Edges
             setattr(result, key, copy.deepcopy(value, memodict))
         result.edges = set()
         for old_edge in self.edges:
@@ -135,6 +138,8 @@ class Vertex(GraphElement):
         return result
 
     def matches(self, graph_element):
+        if not isinstance(graph_element, GraphElement):
+            raise ModelGenArgumentError()
         if not isinstance(graph_element, Vertex):
             return False
         return super().matches(graph_element)
@@ -153,6 +158,8 @@ class Vertex(GraphElement):
         to_remove = []
         for edge in self.edges:
             result = get_replacement(edge)
+            if result is not None and not isinstance(result, Edge):
+                raise ValueError()
             if result is not None:
                 to_add.append(result)
                 to_remove.append(edge)
@@ -176,7 +183,7 @@ class Edge(GraphElement):
     Represents an edge inside a graph.
     """
 
-    def __init__(self, vertex1: Vertex, vertex2: Vertex):
+    def __init__(self, vertex1: Vertex=None, vertex2: Vertex=None):
         super().__init__()
         self.vertex1 = vertex1
         self.vertex2 = vertex2
