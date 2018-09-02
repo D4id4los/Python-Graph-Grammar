@@ -199,12 +199,16 @@ class Edge(GraphElement):
         if mapping is not None:
             mapping[self] = result
         for key, value in self.__dict__.items():
+            if key == 'vertex1' or key == 'vertex2':
+                continue # Do not create copies of connected vertices
             setattr(result, key, copy.deepcopy(value, memodict))
         result.vertex1 = memodict[id(self.vertex1)] if id(self.vertex1) in memodict else None
         result.vertex2 = memodict[id(self.vertex2)] if id(self.vertex2) in memodict else None
         return result
 
     def matches(self, graph_element):
+        if not isinstance(graph_element, GraphElement):
+            raise ModelGenArgumentError
         if not isinstance(graph_element, Edge):
             return False
         return super().matches(graph_element)
@@ -225,9 +229,13 @@ class Edge(GraphElement):
     def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']):
         result = get_replacement(self.vertex1)
         if result is not None:
+            if not isinstance(result, Vertex):
+                raise ValueError()
             self.vertex1 = result
         result = get_replacement(self.vertex2)
         if result is not None:
+            if not isinstance(result, Vertex):
+                raise ValueError()
             self.vertex2 = result
 
     def to_yaml(self):
