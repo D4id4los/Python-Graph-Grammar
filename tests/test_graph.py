@@ -102,6 +102,26 @@ class TestVertex:
         assert e in copy.edges
         assert len(copy.edges) == 1
 
+    def test_recursive_copy(self):
+        """
+        Recursive copy should make a copy of all referenced elements
+        and reference those in the copy of the original vertex.
+
+        A mapping between the original referenced element and its copy
+        shall be saved in a dict if it is provided as an argument.
+        """
+        mapping = {}
+        vertex = graph.Vertex()
+        edge = graph.Edge(vertex, None)
+        vertex.edges.add(edge)
+        copy = vertex.recursive_copy(mapping)
+        copy_edge = copy.edges.pop()
+        assert id(copy) != id(vertex)
+        assert id(copy_edge) != id(edge)
+        assert mapping[vertex] == copy
+        assert mapping[edge] == copy_edge
+        assert len(mapping) == 2
+
     def test_matches_wrong_arg(self):
         """
         If called with a non GraphElement argument then an error is to be
@@ -213,6 +233,10 @@ class TestEdge:
         assert mapping[edge] == copy
 
     def test_deepcopy_with_connections(self):
+        """
+        Connections to other graph elements should be left untouched by
+        the deepcopy.
+        """
         mapping = {}
         vertex1 = graph.Vertex()
         vertex2 = graph.Vertex()
@@ -226,6 +250,27 @@ class TestEdge:
         assert memodict[id(edge)] == copy
         assert len(mapping) == 1
         assert mapping[edge] == copy
+
+    def test_recursive_copy(self):
+        """
+        References to other graph elements should lead to copies of
+        these elements being made and then referenced in the new object.
+
+        A link betwenn the old and new references should be saved in the
+        mapping dict, if such is provided.
+        """
+        mapping = {}
+        vertex1 = graph.Vertex()
+        vertex2 = graph.Vertex()
+        edge = graph.Edge(vertex1, vertex2)
+        copy = edge.recursive_copy(mapping)
+        assert id(copy) != id(edge)
+        assert id(copy.vertex1) != id(edge.vertex1)
+        assert id(copy.vertex2) != id(edge.vertex2)
+        assert mapping[edge] == copy
+        assert mapping[vertex1] == copy.vertex1
+        assert mapping[vertex2] == copy.vertex2
+        assert len(mapping) == 3
 
     def test_matches_wrong_arg(self):
         edge = graph.Edge()

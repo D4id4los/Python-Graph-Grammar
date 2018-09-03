@@ -158,7 +158,10 @@ class Vertex(GraphElement):
         mapping[self] = result
         for key, value in self.__dict__.items():
             if key == 'edges':
-                setattr(result, key, value.recursive_copy(mapping))
+                new_edges = set()
+                for old_edge in value:
+                    new_edges.add(old_edge.recursive_copy(mapping))
+                setattr(result, key, new_edges)
             else:
                 setattr(result, key, copy.deepcopy(value))
         return result
@@ -240,7 +243,7 @@ class Edge(GraphElement):
     # noinspection PyDefaultArgument
     def recursive_copy(self,
                        mapping: Dict['GraphElement', 'GraphElement'] = {}
-                       ) -> 'GraphElement':
+                       ) -> 'Edge':
         """
         Like deepcopy, but will also create copies for connected graph
         elements.
@@ -255,7 +258,7 @@ class Edge(GraphElement):
         result = cls.__new__(cls)
         mapping[self] = result
         for key, value in self.__dict__.items():
-            if key == 'vertex1' or key == 'vertex2':
+            if key == 'vertex1' or key == 'vertex2' and value is not None:
                 setattr(result, key, value.recursive_copy(mapping))
             else:
                 setattr(result, key, copy.deepcopy(value))
