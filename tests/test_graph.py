@@ -82,9 +82,8 @@ class TestVertex:
 
     def test_deepcopy_with_edges(self):
         """
-        For the list of connected edges, an edge (or rather its pendant) is
-        only copied over if it is already contained the memodict. If there are
-        no such edges the list set remains empty.
+        Makes a copy of the Vertex where connections remain unchanged,
+        i.e. uncopied, even if it exists in the memodict.
         """
         v = graph.Vertex()
         v2 = graph.Vertex()
@@ -96,11 +95,12 @@ class TestVertex:
         assert e in v.edges
         assert e2 not in v.edges
         copy = v.__deepcopy__(memodict, mapping)
-        assert e not in copy.edges
-        assert e2 in copy.edges
+        assert e in copy.edges
+        assert len(copy.edges) == 1
         memodict = {}
         copy = v.__deepcopy__(memodict, mapping)
-        assert len(copy.edges) == 0
+        assert e in copy.edges
+        assert len(copy.edges) == 1
 
     def test_matches_wrong_arg(self):
         """
@@ -221,8 +221,8 @@ class TestEdge:
         edge = graph.Edge(vertex1, vertex2)
         copy = edge.__deepcopy__(memodict, mapping)
         assert id(copy) != id(edge)
-        assert id(copy.vertex1) != id(edge.vertex1)
-        assert copy.vertex2 is None
+        assert id(copy.vertex1) == id(edge.vertex1)
+        assert id(copy.vertex2) == id(copy.vertex2)
         assert memodict[id(edge)] == copy
         assert len(mapping) == 1
         assert mapping[edge] == copy

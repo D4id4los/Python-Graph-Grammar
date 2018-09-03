@@ -2,7 +2,7 @@ import abc
 import itertools
 import copy
 from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable
-from typing import MutableSequence, Tuple, Callable
+from typing import MutableSequence, Tuple, Callable, Sized
 from model_gen.exceptions import ModelGenArgumentError
 
 
@@ -69,7 +69,8 @@ class GraphElement(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def replace_connection(self, get_replacement:
+    def replace_connection(self,
+                           get_replacement:
                            Callable[['GraphElement'], 'GraphElement']) -> None:
         """
         Replace all connected elements with results returned by replacement
@@ -117,10 +118,11 @@ class Vertex(GraphElement):
         super().__init__()
         self.edges: MutableSet['Edge'] = set()
 
+    # noinspection PyDefaultArgument
     def __deepcopy__(self, memodict={}, mapping=None):
         """
-        Return a deep copy of the Vertex where connecting edges are only present
-        if they have a corresponding deepcopy in memodict.
+        Return a deep copy of the Vertex where connecting edges are only
+        present if they have a corresponding deepcopy in memodict.
         """
         cls = self.__class__
         result = cls.__new__(cls)
@@ -129,12 +131,36 @@ class Vertex(GraphElement):
             mapping[self] = result
         for key, value in self.__dict__.items():
             if key == 'edges':
-                continue  # Do not blindly copy Edges
-            setattr(result, key, copy.deepcopy(value, memodict))
-        result.edges = set()
-        for old_edge in self.edges:
-            if id(old_edge) in memodict:
-                result.edges.add(memodict[id(old_edge)])
+                # Do not copy connected edges
+                setattr(result, key, value)
+            else:
+                # noinspection PyArgumentList
+                setattr(result, key, copy.deepcopy(value, memodict))
+        return result
+
+    # noinspection PyDefaultArgument
+    def recursive_copy(self,
+                       mapping: Dict['GraphElement', 'GraphElement'] = {}
+                       ) -> 'Vertex':
+        """
+        Like deepcopy, but will also create copies for connected graph
+        elements.
+
+        :arg mapping: A dict mapping original elements to already
+                      created copies of them.
+        :return: A copy of this graph element
+        """
+        if self in mapping:
+            # noinspection PyTypeChecker
+            return mapping[self]
+        cls = self.__class__
+        result = cls.__new__(cls)
+        mapping[self] = result
+        for key, value in self.__dict__.items():
+            if key == 'edges':
+                setattr(result, key, value.recursive_copy(mapping))
+            else:
+                setattr(result, key, copy.deepcopy(value))
         return result
 
     def matches(self, graph_element):
@@ -153,7 +179,9 @@ class Vertex(GraphElement):
     def neighbours(self):
         return self.edges
 
-    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']):
+    def replace_connection(self,
+                           get_replacement:
+                           Callable[['GraphElement'], 'GraphElement']):
         to_add = []
         to_remove = []
         for edge in self.edges:
@@ -168,8 +196,9 @@ class Vertex(GraphElement):
         for edge in to_add:
             self.edges.add(edge)
 
+    # noinspection PyDefaultArgument
     @staticmethod
-    def from_yaml(data, mapping = {}):
+    def from_yaml(data, mapping={}):
         if data['id'] in mapping:
             return mapping[data['id']]
         result = Vertex()
@@ -183,11 +212,12 @@ class Edge(GraphElement):
     Represents an edge inside a graph.
     """
 
-    def __init__(self, vertex1: Vertex=None, vertex2: Vertex=None):
+    def __init__(self, vertex1: Vertex = None, vertex2: Vertex = None):
         super().__init__()
         self.vertex1 = vertex1
         self.vertex2 = vertex2
 
+    # noinspection PyDefaultArgument
     def __deepcopy__(self, memodict={}, mapping=None):
         """
         Return a deepcopy of the edge where the vertices are only present if
@@ -200,10 +230,35 @@ class Edge(GraphElement):
             mapping[self] = result
         for key, value in self.__dict__.items():
             if key == 'vertex1' or key == 'vertex2':
-                continue # Do not create copies of connected vertices
-            setattr(result, key, copy.deepcopy(value, memodict))
-        result.vertex1 = memodict[id(self.vertex1)] if id(self.vertex1) in memodict else None
-        result.vertex2 = memodict[id(self.vertex2)] if id(self.vertex2) in memodict else None
+                # Do not create copies of connected vertices
+                setattr(result, key, value)
+            else:
+                # noinspection PyArgumentList
+                setattr(result, key, copy.deepcopy(value, memodict))
+        return result
+
+    # noinspection PyDefaultArgument
+    def recursive_copy(self,
+                       mapping: Dict['GraphElement', 'GraphElement'] = {}
+                       ) -> 'GraphElement':
+        """
+        Like deepcopy, but will also create copies for connected graph
+        elements.
+
+        :arg mapping: A dict mapping original elements to already created
+                      copies of them.
+        :return: A copy of this graph element
+        """
+        if self in mapping:
+            return mapping[self]
+        cls = self.__class__
+        result = cls.__new__(cls)
+        mapping[self] = result
+        for key, value in self.__dict__.items():
+            if key == 'vertex1' or key == 'vertex2':
+                setattr(result, key, value.recursive_copy(mapping))
+            else:
+                setattr(result, key, copy.deepcopy(value))
         return result
 
     def matches(self, graph_element):
@@ -226,7 +281,9 @@ class Edge(GraphElement):
     def neighbours(self):
         return [self.vertex1, self.vertex2]
 
-    def replace_connection(self, get_replacement: Callable[['GraphElement'], 'GraphElement']):
+    def replace_connection(self,
+                           get_replacement:
+                           Callable[['GraphElement'], 'GraphElement']):
         result = get_replacement(self.vertex1)
         if result is not None:
             if not isinstance(result, Vertex):
@@ -244,8 +301,9 @@ class Edge(GraphElement):
         fields['vertex2'] = id(self.vertex2)
         return fields
 
+    # noinspection PyDefaultArgument
     @staticmethod
-    def from_yaml(data, mapping = {}):
+    def from_yaml(data, mapping={}):
         if data['id'] in mapping:
             return mapping[data['id']]
         vertex1 = mapping[data['vertex1']]
@@ -257,7 +315,8 @@ class Edge(GraphElement):
 
     def get_other_vertex(self, vertex: Vertex) -> Vertex:
         """
-        Given one of the two vertices the edge connects to, return the second one.
+        Given one of the two vertices the edge connects to, return the
+        second one.
 
         :param vertex: One of the two vertices the edge connects to.
         :return: The second vertex this edge connects to.
@@ -302,11 +361,15 @@ class Graph(MutableSet):
     Saves lists of all elements contained inside the graph.
     """
 
-    def __init__(self, graph: 'Graph' = None, vertices: Iterable[Vertex] = None, edges: Iterable[Edge] = None,
-                 faces: Iterable[Face] = None, elements: Iterable[GraphElement] = None):
+    def __init__(self, graph: 'Graph' = None,
+                 vertices: Iterable[Vertex] = None,
+                 edges: Iterable[Edge] = None,
+                 faces: Iterable[Face] = None,
+                 elements: Iterable[GraphElement] = None):
         """
-        Initialises the graph, can take no arguments, a graph, all three of vertices, edges and faces or a list of
-        elements. No other combination is allowed.
+        Initialises the graph, can take no arguments, a graph, all three
+        of vertices, edges and faces or a list of elements. No other
+        combination is allowed.
 
         :param graph:
         :param vertices:
@@ -343,23 +406,28 @@ class Graph(MutableSet):
         return self.AllElemIter(self)
 
     def __contains__(self, item: GraphElement):
-        return self.vertices.__contains__(item) or self.edges.__contains__(item) or self.faces.__contains__(item)
+        return self.vertices.__contains__(item) or self.edges.__contains__(
+            item) or self.faces.__contains__(item)
 
     def __len__(self):
         return len(self.vertices) + len(self.edges) + len(self.faces)
 
+    # noinspection PyDefaultArgument
     def __deepcopy__(self, memodict={}, mapping=None):
         """
-        Return a deep copy of the graph with all connections still remaining.
+        Return a deep copy of the graph with all connections still
+        remaining.
         """
         cls = self.__class__
         result = cls.__new__(cls)
         memodict[id(self)] = result
         for key, value in self.__dict__.items():
-            setattr(result, key, copy.deepcopy(value, memodict))
-        result.vertices = [x.__deepcopy__(memodict, mapping) for x in self.vertices]
-        result.edges = [x.__deepcopy__(memodict, mapping) for x in self.edges]
-        result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
+            if key not in ('vertices', 'edges', 'faces'):
+                # noinspection PyArgumentList
+                setattr(result, key, copy.deepcopy(value, memodict))
+        result.vertices = [x.recursive_copy(mapping) for x in self.vertices]
+        result.edges = [x.recursive_copy(mapping) for x in self.edges]
+        # result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
         return result
 
     def add(self, element: GraphElement):
@@ -377,17 +445,22 @@ class Graph(MutableSet):
         for element in elements:
             self.add(element)
 
-    def element_list(self, order: str='connected') -> Sequence[GraphElement]:
+    def element_list(self, order: str = 'connected') -> Sequence[GraphElement]:
         """
-        A list of the elements of the graph in order of the all element iterator.
+        A list of the elements of the graph in order of the all element
+        iterator.
 
         Possible values for `order` are:
 
-        * `'connected'`: The order is such that first all vertices and edges are returned in a manner that always
-                         leads to a single connected graph. Afterwards the faces, if any, are returned.
-        * `'vef'`: First return all vertices, then all edges, then all faces
+        * `'connected'`: The order is such that first all vertices and
+                         edges are returned in a manner that always
+                         leads to a single connected graph. Afterwards
+                         the faces, if any, are returned.
+        * `'vef'`: First return all vertices, then all edges, then all
+                   faces.
 
-        :param order: A string specifying the order of element. Possible are: connected, vef
+        :param order: A string specifying the order of element.
+                      Possible are: connected, vef
         """
         if order == 'connected':
             element_list = []
@@ -403,10 +476,12 @@ class Graph(MutableSet):
         """
         Return the GraphElement whose object ID is passed as argument.
 
-        If no corresponding GraphElement can be found a KeyError is raised.
+        If no corresponding GraphElement can be found a KeyError is
+        raised.
 
-        :param object_id: The id of the GraphElement object you want to retrieve.
-        :return: The requestend GraphElement
+        :param object_id: The id of the GraphElement object you want to
+                          retrieve.
+        :return: The requested GraphElement
         """
         for vertex in self.vertices:
             if object_id == id(vertex):
@@ -420,12 +495,16 @@ class Graph(MutableSet):
 
     def neighbours(self) -> Iterable[GraphElement]:
         """
-        Return a list of elements connected to this graph, but not part of this graph.
+        Return a list of elements connected to this graph, but not part
+        of this graph.
 
-        This function only makes sens on subgraphs, where it will return all elements of the host graph which are
-        connected to but not part of the subgraph. For a completed graph it will return an empty list.
+        This function only makes sens on subgraphs, where it will return
+        all elements of the host graph which are connected to but not
+        part of the subgraph. For a completed graph it will return an
+        empty list.
 
-        :return: A list of elements connected to this graph, but not part of it.
+        :return: A list of elements connected to this graph, but not
+                 part of it.
         """
         neighbours = set()
         for element in itertools.chain(self.vertices, self.edges, self.faces):
@@ -435,16 +514,21 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
-    def match_at(self, start: GraphElement, target_elements: Sequence) -> Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+    def match_at(self, start: GraphElement, target_elements: Sequence) -> \
+            Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
         """
-        Try to find a match for the graph defined by the list of target elements at the specific starting element of
-        this graph.
+        Try to find a match for the graph defined by the list of target
+        elements at the specific starting element of this graph.
 
         :param start: The starting element of this graph.
-        :param target_elements: The elements of the graph that is to be matched in such an order that it always builds into a connected graph.
-        :return: The matching subgraphs if any exist, an empty list otherwise.
+        :param target_elements: The elements of the graph that is to be
+                                matched in such an order that it always
+                                builds into a connected graph.
+        :return: The matching subgraphs if any exist, an empty list
+                 otherwise.
         """
-        problems: Iterable[Tuple[Graph, int, Dict[GraphElement, GraphElement]]] = \
+        problems: Sized and Iterable[
+            Tuple[Graph, int, Dict[GraphElement, GraphElement]]] = \
             [(Graph(elements=[start]), 1, {target_elements[0]: start})]
         solutions = []
         while len(problems) > 0:
@@ -466,28 +550,34 @@ class Graph(MutableSet):
 
     def to_yaml(self):
         """
-        Serialize the graph into a list or dict which can be exported into a yaml string.
+        Serialize the graph into a list or dict which can be exported
+        into a yaml string.
 
-        :return: A list or dict representing the graph fit for yaml export.
+        :return: A list or dict representing the graph fit for yaml
+                 export.
         """
         vertices = [x.to_yaml() for x in self.vertices]
         edges = [x.to_yaml() for x in self.edges]
-        fields = {}
-        fields['vertices'] = vertices
-        fields['edges'] = edges
-        fields['id'] = id(self)
+        fields = {
+            'vertices': vertices,
+            'edges': edges,
+            'id': id(self),
+        }
         return fields
 
+    # noinspection PyDefaultArgument
     @staticmethod
-    def from_yaml(data, mapping = {}) -> 'Graph':
+    def from_yaml(data, mapping={}) -> 'Graph':
         """
-        Deserialize a graph from a list or dict which was saved in a yaml file.
+        Deserialize a graph from a list or dict which was saved in a
+        yaml file.
 
-        The mapping argument does not need to be specified, it will be filled automatically unless
-        you have a specific requirement.
+        The mapping argument does not need to be specified, it will be
+        filled automatically unless you have a specific requirement.
 
         :param data: The list or dict containing the graph data.
-        :param mapping: A dictionary which will be used to recreate references between objects.
+        :param mapping: A dictionary which will be used to recreate
+                        references between objects.
         """
         if data['id'] in mapping:
             return mapping[data['id']]
@@ -501,9 +591,9 @@ class Graph(MutableSet):
 
     class AllElemIter:
         """
-        Iterates over all elements of a graph in a order such that except for
-        the first element all other elements are connected to at least one
-        element that came before them.
+        Iterates over all elements of a graph in a order such that
+        except for the first element all other elements are connected to
+        at least one element that came before them.
         """
 
         def __init__(self, graph: 'Graph'):
@@ -517,7 +607,6 @@ class Graph(MutableSet):
             return self
 
         def __next__(self):
-            element = None
             if len(self._marked) == 0:
                 element = self._get_first_element()
             else:
@@ -559,22 +648,24 @@ class Graph(MutableSet):
             element.
             :rtype: GraphElement
             """
-            connecting_element = None
+            # connecting_element = None
             if len(self._unchecked_vertices) + len(self._unchecked_edges) == 0:
-                connecting_element = self._unchecked_faces.pop()
+                # connecting_element = self._unchecked_faces.pop()
+                pass
             else:
                 last_element = self._marked[-1]
                 # TODO: Find a nicer pattern to solve this problem.
                 if isinstance(last_element, Edge):
-                    if not last_element.vertex1 in self._marked:
+                    if last_element.vertex1 not in self._marked:
                         self._unchecked_vertices.remove(last_element.vertex1)
                         return last_element.vertex1
-                    elif not last_element.vertex2 in self._marked:
+                    elif last_element.vertex2 not in self._marked:
                         self._unchecked_vertices.remove(last_element.vertex2)
                         return last_element.vertex2
                 else:
                     for edge in self._unchecked_edges:
-                        if edge.vertex1 in self._marked or edge.vertex2 in self._marked:
+                        if edge.vertex1 in self._marked \
+                                or edge.vertex2 in self._marked:
                             self._unchecked_edges.remove(edge)
                             return edge
                     raise StopIteration
