@@ -1,0 +1,144 @@
+host_graphs:
+  Host 1:
+    edges:
+    - attr: &id005 {label: _1}
+      id: 139837365641344
+      vertex1: 139837365415272
+      vertex2: 139837365415384
+    id: 139837365415216
+    vertices:
+    - attr: &id006 {label: a}
+      id: 139837365415272
+    - attr: &id007 {}
+      id: 139837365415384
+  Daughter 1:
+    edges:
+    - attr: &id001 {label: _2}
+      id: 139837365642016
+      vertex1: 139837365641904
+      vertex2: 139837365641960
+    id: 139837365641848
+    vertices:
+    - attr: &id002 {}
+      id: 139837365641904
+    - attr: &id003 {label: a}
+      id: 139837365641960
+  Daughter copy:
+    edges:
+    - attr: {label: _2}
+      id: 139837365642352
+      vertex1: 139837365642184
+      vertex2: 139837365642408
+    id: 139837365642072
+    vertices:
+    - attr: {}
+      id: 139837365642184
+    - attr: {label: a}
+      id: 139837365642408
+  Mother 1:
+    edges: []
+    id: 139837365641400
+    vertices:
+    - attr: &id004 {label: a}
+      id: 139837365641792
+productions:
+  Production 1:
+    id: 139837365642296
+    mappings:
+    - daughter_graph:
+        edges:
+        - attr: *id001
+          id: 139837365642016
+          vertex1: 139837365641904
+          vertex2: 139837365641960
+        id: 139837365641848
+        vertices:
+        - attr: *id002
+          id: 139837365641904
+        - attr: *id003
+          id: 139837365641960
+      id: 139837365642128
+      mapping:
+        dict: {139837365641792: 139837365641904}
+        id: 139837365617680
+      mother_graph: 139837365641400
+      weight: 1
+    mother_graph:
+      edges: []
+      id: 139837365641400
+      vertices:
+      - attr: *id004
+        id: 139837365641792
+result_graphs:
+  Derivation 0:
+    edges:
+    - attr: *id005
+      id: 139837365641344
+      vertex1: 139837365415272
+      vertex2: 139837365415384
+    - attr: &id008 {label: _2}
+      id: 139837365642968
+      vertex1: 139837365415272
+      vertex2: 139837365643024
+    id: 139837365642576
+    vertices:
+    - attr: *id006
+      id: 139837365415272
+    - attr: *id007
+      id: 139837365415384
+    - attr: &id009 {label: a}
+      id: 139837365643024
+  Derivation 1:
+    edges:
+    - attr: *id005
+      id: 139837365641344
+      vertex1: 139837365415272
+      vertex2: 139837365415384
+    - attr: *id008
+      id: 139837365642968
+      vertex1: 139837365415272
+      vertex2: 139837365643024
+    - attr: &id010 {label: _2}
+      id: 139837365643304
+      vertex1: 139837365643024
+      vertex2: 139837365643360
+    id: 139837365642688
+    vertices:
+    - attr: *id006
+      id: 139837365415272
+    - attr: *id007
+      id: 139837365415384
+    - attr: *id009
+      id: 139837365643024
+    - attr: &id011 {label: a}
+      id: 139837365643360
+  Derivation 2:
+    edges:
+    - attr: *id005
+      id: 139837365641344
+      vertex1: 139837365415272
+      vertex2: 139837365415384
+    - attr: *id008
+      id: 139837365642968
+      vertex1: 139837365415272
+      vertex2: 139837365643024
+    - attr: *id010
+      id: 139837365643304
+      vertex1: 139837365643024
+      vertex2: 139837365643360
+    - attr: {label: _2}
+      id: 139837365643696
+      vertex1: 139837365415272
+      vertex2: 139837365643752
+    id: 139837365642912
+    vertices:
+    - attr: *id006
+      id: 139837365415272
+    - attr: *id007
+      id: 139837365415384
+    - attr: *id009
+      id: 139837365643024
+    - attr: *id011
+      id: 139837365643360
+    - attr: {label: a}
+      id: 139837365643752
