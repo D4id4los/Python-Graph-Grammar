@@ -430,7 +430,7 @@ class Graph(MutableSet):
                 setattr(result, key, copy.deepcopy(value, memodict))
         result.vertices = [x.recursive_copy(mapping) for x in self.vertices]
         result.edges = [x.recursive_copy(mapping) for x in self.edges]
-        # result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
+        result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
         return result
 
     def add(self, element: GraphElement):
