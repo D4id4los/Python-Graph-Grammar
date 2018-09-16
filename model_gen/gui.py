@@ -100,7 +100,7 @@ class GraphUI(wx.Frame):
         Import graphs for display from a yaml file.
         """
         log.debug('Opening import dialog.')
-        with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
+        with wx.FileDialog(self, 'Import Graphs', wildcard='YAML files (*.yml)|*.yml',
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
@@ -131,9 +131,9 @@ class GraphUI(wx.Frame):
             log.error(f'Can not run grammar because no host graphs are loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
-        results = grammar.apply(host_graph, 1)
+        results = grammar.apply(host_graph, 2)
         log.debug(f'There where {len(results)} derivations calculated: {results}.')
-        offset = len(self.result_graphs) - 1
+        offset = len(self.result_graphs)
         for i, result in enumerate(results):
             self.result_graphs[f'Result {i + offset}'] = result
             self.notebook.result_panel.load_data(self.result_graphs)
