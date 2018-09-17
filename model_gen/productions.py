@@ -148,25 +148,14 @@ class Production:
             self.total_weight += mapping.weight
 
     def match(self, host_graph: Graph) -> Iterable[
-        Tuple[Graph, Dict[GraphElement, GraphElement]]]:
+           Tuple[Graph, Dict[GraphElement, GraphElement]]]:
         """
         Tries to match the production against a target Graph.
 
         :param host_graph: The host graph against which the production is matched.
         :return: All possible matching subgraphs of the target graph.
         """
-        log.debug(f'Matching {self} against {host_graph}.')
-        matches = []
-        mother_elements = self.mother_graph.element_list()
-        start_element = mother_elements[0]
-        for host_element in host_graph:
-            if host_element.matches(start_element):
-                log.debug('Found a matching start element for %r with %r',
-                          start_element, host_element)
-                matches.extend(
-                    host_graph.match_at(host_element, mother_elements))
-        log.debug(f'Found {len(matches)} matches: {matches}.')
-        return matches
+        return host_graph.match(self.mother_graph)
 
     def apply(self, host_graph: Graph,
               map_mother_to_host: Dict[GraphElement, GraphElement]) -> Graph:

@@ -4,6 +4,9 @@ import copy
 from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable
 from typing import MutableSequence, Tuple, Callable, Sized
 from model_gen.exceptions import ModelGenArgumentError
+from model_gen.utils import get_logger
+
+log = get_logger('model_gen.' + __name__)
 
 
 class GraphElement(abc.ABC):
@@ -517,6 +520,31 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
+    def match(self, other_graph: 'Graph') -> \
+            Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+        """
+        Find all possible matches of the other graph in this graph.
+
+        These matches are partial isomorphism from the other graph to
+        this graph from a graph theoretical point of view.
+
+        :param other_graph: The graph to match against this graph.
+        :return: A list of all possible matches, empty of there are
+                 none.
+        """
+        log.debug(f'Matching {self} against {other_graph}.')
+        matches = []
+        other_elements = other_graph.element_list()
+        start_element = other_elements[0]
+        for own_element in self:
+            if own_element.matches(start_element):
+                log.debug('Found a matching start element for %r with %r',
+                          start_element, own_element)
+                matches.extend(
+                    self.match_at(own_element, other_elements))
+        log.debug(f'Found {len(matches)} matches: {matches}.')
+        return matches
+
     def match_at(self, start: GraphElement, target_elements: Sequence) -> \
             Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
         """
@@ -545,7 +573,6 @@ class Graph(MutableSet):
                 if candidate.matches(target):
                     new_subgraph = Graph(subgraph)
                     new_subgraph.add(candidate)
-                    # TODO: Currently Graph.add() will only work for edges if the graph already contains both vertices. Fix this.
                     new_matching = matching.copy()
                     new_matching[target] = candidate
                     problems.append((new_subgraph, index + 1, new_matching))
