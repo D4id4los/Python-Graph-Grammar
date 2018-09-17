@@ -181,6 +181,11 @@ class Vertex(GraphElement):
 
     def delete_from(self, graph: 'Graph'):
         graph.vertices.remove(self)
+        for edge in self.edges:
+            if edge.vertex1 == self:
+                edge.vertex1 = None
+            if edge.vertex2 == self:
+                edge.vertex2 = None
 
     def neighbours(self):
         return self.edges
@@ -261,7 +266,7 @@ class Edge(GraphElement):
         result = cls.__new__(cls)
         mapping[self] = result
         for key, value in self.__dict__.items():
-            if key == 'vertex1' or key == 'vertex2' and value is not None:
+            if (key == 'vertex1' or key == 'vertex2') and value is not None:
                 setattr(result, key, value.recursive_copy(mapping))
             else:
                 setattr(result, key, copy.deepcopy(value))
@@ -283,7 +288,7 @@ class Edge(GraphElement):
     def delete_from(self, graph: 'Graph'):
         graph.edges.remove(self)
         for vertex in (self.vertex1, self.vertex2):
-            if vertex is not None:
+            if vertex is not None and self in vertex.edges:
                 vertex.edges.remove(self)
 
     def neighbours(self):

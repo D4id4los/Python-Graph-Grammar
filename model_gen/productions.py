@@ -214,17 +214,22 @@ class Production:
         M_to_R = get_M_to_R(map_M_to_H, map_H_to_R)
         C_to_R = get_C_to_R(map_M_to_H, map_H_to_R, map_M_to_D, map_D_to_C)
         R_to_C = get_R_to_C(M_to_R, map_D_to_C)
-        for m_element in option.to_remove:
-            result_graph.remove(M_to_R(m_element))
+        # First add all new elements, so latter operations act entirely within
+        # the graph, never referencing outside elements
+        for d_element in option.to_add:
+            new_element = map_D_to_C[d_element]
+            new_element.replace_connection(C_to_R)
+            result_graph.add(new_element)
+        # Then change continuing elements as is necessary, while the
+        # connections to old elements still exist for use in computations
         for m_element, neighbour_mapping in option.to_change:
             r_element = M_to_R(m_element)
             for name, value in map_M_to_D[m_element].attr.items():
                 r_element.attr[name] = value
             r_element.replace_connection(partial(R_to_C, neighbour_mapping))
-        for d_element in option.to_add:
-            new_element = map_D_to_C[d_element]
-            new_element.replace_connection(C_to_R)
-            result_graph.add(new_element)
+        # As a last operation remove the elements to be deleted
+        for m_element in option.to_remove:
+            result_graph.remove(M_to_R(m_element))
         log.debug(f'Applied {self} with result {result_graph}.')
         return result_graph
 
