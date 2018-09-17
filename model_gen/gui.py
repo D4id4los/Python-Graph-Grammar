@@ -6,6 +6,7 @@ from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
 import matplotlib.pyplot as plt
 import wx
 import wx.lib.newevent
+import wx.lib.agw.aui as aui
 import yaml
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
@@ -143,13 +144,18 @@ class GraphUI(wx.Frame):
         self.Close()
 
 
-class MainNotebook(wx.Notebook):
+class MainNotebook(aui.AuiNotebook):
     """
     The notebook containing the three main tabs of the UI.
+
+    I am using AuiNotebook instead of wx.Notebook because the
+    Navigation Toolbar from matplotlib throws negative content height
+    warnings if it is placed somewhere inside a wx.Notebook, but not
+    if it is placed inside a aui.AuiNotebook.
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, agwStyle=aui.AUI_NB_TOP, **kwargs)
         self.host_graph_panel = HostGraphPanel(self)
         self.production_panel = ProductionPanel(self)
         self.result_panel = ResultGraphPanel(self)
