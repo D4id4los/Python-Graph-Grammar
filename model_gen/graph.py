@@ -277,15 +277,22 @@ class Edge(GraphElement):
     def add_to(self, graph: 'Graph'):
         graph.edges.append(self)
         for vertex in (self.vertex1, self.vertex2):
-            vertex.edges.add(self)
+            if vertex is not None:
+                vertex.edges.add(self)
 
     def delete_from(self, graph: 'Graph'):
         graph.edges.remove(self)
         for vertex in (self.vertex1, self.vertex2):
-            vertex.edges.remove(self)
+            if vertex is not None:
+                vertex.edges.remove(self)
 
     def neighbours(self):
-        return [self.vertex1, self.vertex2]
+        result = []
+        if self.vertex1 is not None:
+            result.append(self.vertex1)
+        if self.vertex2 is not None:
+            result.append(self.vertex2)
+        return result
 
     def replace_connection(self,
                            get_replacement:
@@ -521,7 +528,7 @@ class Graph(MutableSet):
         return neighbours
 
     def match(self, other_graph: 'Graph') -> \
-            Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+            Sized and Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
         """
         Find all possible matches of the other graph in this graph.
 
@@ -546,7 +553,7 @@ class Graph(MutableSet):
         return matches
 
     def match_at(self, start: GraphElement, target_elements: Sequence) -> \
-            Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+            Sized and Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
         """
         Try to find a match for the graph defined by the list of target
         elements at the specific starting element of this graph.
@@ -577,6 +584,19 @@ class Graph(MutableSet):
                     new_matching[target] = candidate
                     problems.append((new_subgraph, index + 1, new_matching))
         return solutions
+
+    def is_isomorph(self, other_graph: 'Graph') -> bool:
+        """
+        Test if the other graph is isomorph in relation to this graph.
+
+        :param other_graph: The graph to test against.
+        :return: True if the two graphs are isomorph, False otherwise.
+        """
+        if len(self.vertices) != len(other_graph.vertices) \
+                or len(self.edges) != len(other_graph.edges) \
+                or len(self.faces) != len(other_graph.faces):
+            return False
+        return len(self.match(other_graph)) > 0
 
     def to_yaml(self):
         """
@@ -679,23 +699,22 @@ class Graph(MutableSet):
             :rtype: GraphElement
             """
             # connecting_element = None
-            if len(self._unchecked_vertices) + len(self._unchecked_edges) == 0:
-                # connecting_element = self._unchecked_faces.pop()
-                pass
-            else:
-                last_element = self._marked[-1]
-                # TODO: Find a nicer pattern to solve this problem.
-                if isinstance(last_element, Edge):
-                    if last_element.vertex1 not in self._marked:
-                        self._unchecked_vertices.remove(last_element.vertex1)
-                        return last_element.vertex1
-                    elif last_element.vertex2 not in self._marked:
-                        self._unchecked_vertices.remove(last_element.vertex2)
-                        return last_element.vertex2
-                else:
-                    for edge in self._unchecked_edges:
-                        if edge.vertex1 in self._marked \
-                                or edge.vertex2 in self._marked:
+            for element in reversed(self._marked):
+                if isinstance(element, Edge):
+                    if element.vertex1 not in self._marked \
+                            and element.vertex1 is not None:
+                        self._unchecked_vertices.remove(element.vertex1)
+                        return element.vertex1
+                    elif element.vertex2 not in self._marked \
+                            and element.vertex2 is not None:
+                        self._unchecked_vertices.remove(element.vertex2)
+                        return element.vertex2
+                    else:
+                        continue
+                elif isinstance(element, Vertex):
+                    for edge in element.edges:
+                        if edge not in self._marked:
                             self._unchecked_edges.remove(edge)
                             return edge
-                    raise StopIteration
+                    continue
+            raise StopIteration
