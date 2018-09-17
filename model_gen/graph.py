@@ -431,7 +431,7 @@ class Graph(MutableSet):
         return len(self.vertices) + len(self.edges) + len(self.faces)
 
     # noinspection PyDefaultArgument
-    def __deepcopy__(self, memodict={}, mapping=None):
+    def __deepcopy__(self, memodict={}, mapping={}):
         """
         Return a deep copy of the graph with all connections still
         remaining.
