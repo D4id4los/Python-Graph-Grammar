@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from functools import wraps
-from typing import TypeVar, Dict, Tuple, MutableSequence, Callable
+from typing import TypeVar, Dict, Tuple, MutableSequence, Callable, Set
 
 import matplotlib.pyplot as plt
 import wx
 import wx.lib.newevent
 import wx.lib.agw.aui as aui
 import yaml
+import abc
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
 from model_gen.grammar import Grammar
 from model_gen.productions import Production, Mapping
 from model_gen.utils import Bidict, get_logger
-from model_gen.graph import Graph
+from model_gen.graph import Graph, GraphElement, Vertex, Edge
+from model_gen.exceptions import ModelGenArgumentError
 
 T = TypeVar('T')
 
@@ -398,6 +400,26 @@ class ProductionGraphsPanel(wx.Panel):
         self.graph2.load_graph(graph_data[2])
 
 
+def _is_update(f: Callable[..., T]) -> Callable[..., T]:
+    """
+    A decorator to wrap a function performing visual updates in a
+    matplotlib figure with all necessary housekeeping functions to
+    have the changes render as expected.
+    """
+
+    @wraps(f)
+    def wrap(self, *args, **kwargs) -> T:
+        # Before update operations
+        self.subplot.clear()
+        # Update Function
+        result = f(self, *args, **kwargs)
+        # After update operations
+        self.setup_mpl_visuals()
+        self.redraw()
+        return result
+
+    return wrap
+
 class GraphPanel(wx.Panel):
     """
     A container for the plots of a graph.
@@ -427,10 +449,17 @@ class GraphPanel(wx.Panel):
         self.canvas.mpl_connect('pick_event', self.on_pick)
         self.canvas.mpl_connect('motion_notify_event', self.on_move)
 
-        self.points = [(0, 0), (1, 1), (3, 1), (-2, -2)]
         self.circles = Bidict()
         self.lines = Bidict()
+
         self.graph = None
+        self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
+        self.vertices: Set[FigureVertex] = set()
+        self.edges: Set[FigureEdge] = set()
+
+    @property
+    def elements(self) -> Set['FigureElement']:
+        return self.vertices | self.edges
 
     def setup_mpl_visuals(self) -> None:
         """
@@ -455,47 +484,6 @@ class GraphPanel(wx.Panel):
         self.canvas.draw()
         self.Refresh()
 
-    # noinspection PyMethodParameters
-    def _is_update(f: Callable[..., T]) -> Callable[..., T]:
-        """
-        A decorator to wrap a function performing visual updates with all necessary
-        housekeeping functions.
-        """
-
-        @wraps(f)
-        def wrap(self, *args, **kwargs) -> T:
-            # Before update operations
-            self.subplot.clear()
-            # Update Function
-            result = f(self, *args, **kwargs)
-            # After update operations
-            self.setup_mpl_visuals()
-            self.redraw()
-            return result
-
-        return wrap
-
-    # noinspection PyArgumentList
-    @_is_update
-    def draw_line(self) -> None:
-        """
-        Draw a line connecting all points in self.points.
-        """
-        self.subplot.plot([x for x, _ in self.points], [y for _, y in self.points], picker=100)
-
-    # noinspection PyArgumentList
-    @_is_update
-    def draw_points(self) -> None:
-        """
-        Draw all points in self.points as individual circles.
-        """
-        for point in self.points:
-            self.circles[point] = DraggableCircle(point, 0.5, update_func=self.redraw, color='w', ec='k')
-        for point, circle in self.circles:
-            self.subplot.add_artist(circle)
-            circle.register_events()
-
-    # noinspection PyArgumentList
     @_is_update
     def draw_graph(self) -> None:
         """
@@ -527,31 +515,23 @@ class GraphPanel(wx.Panel):
 
         i = 0
         free_spaces = [(0, 0)]
-        for vertex in self.graph.vertices:
+        for graph_vertex in self.graph.vertices:
             position = free_spaces[i]
             add_new_free_spaces(position, free_spaces)
-            circle = DraggableCircle(position, 0.5, update_func=self.redraw, label_func=self.get_vertex_desc, color='w',
-                                     ec='k', zorder=10)
-            self.circles[vertex] = circle
-            self.subplot.add_artist(circle)
-            circle.register_events()
+            figure_vertex = FigureVertex(graph_vertex, position, 0.5,
+                                         color='w', ec='k', zorder=10)
+            self.vertices.add(figure_vertex)
+            self.graph_to_figure[graph_vertex] = figure_vertex
+            self.subplot.add_artist(figure_vertex)
             i += 1
-        for edge in self.graph.edges:
-            try:
-                pos1 = self.circles[edge.vertex1].center
-            except KeyError:
-                print(f'ERROR: Edge {edge} has incorrect vertex1: {edge.vertex1}')
-                pos1 = (0, 0)
-            try:
-                pos2 = self.circles[edge.vertex2].center
-            except KeyError:
-                print(f'ERROR: Edge {edge} has incorrect vertex2: {edge.vertex2}')
-                pos2 = (0, 0)
-            line = EdgeLine((pos1[0], pos2[0]), (pos1[1], pos2[1]), update_func=self.redraw,
-                            label_func=self.get_edge_desc, c='k')
-            self.lines[edge] = line
-            self.subplot.add_artist(line)
-            line.register_events()
+        for graph_edge in self.graph.edges:
+            figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
+            figure_vertex2 = self.graph_to_figure[graph_edge.vertex2]
+            figure_edge = FigureEdge(graph_edge, vertex1=figure_vertex1,
+                                     vertex2=figure_vertex2, c='k')
+            self.edges.add(figure_edge)
+            self.graph_to_figure[graph_edge] = figure_edge
+            self.subplot.add_artist(figure_edge)
 
     def load_graph(self, graph: Graph) -> None:
         """
@@ -560,35 +540,9 @@ class GraphPanel(wx.Panel):
         :param graph: The graph to be displayed
         """
         self.graph = graph
-        self.circles = Bidict()
+        self.vertices.clear()
+        self.edges.clear()
         self.draw_graph()
-
-    def get_vertex_desc(self, circle: plt.Circle) -> str:
-        """
-        Get a textual description of the attributes of the vertex corresponding to the circle passed as argument.
-
-        :param circle: The circle to which the corresponding description is requested.
-        :return: The description of the corresponding vertex
-        """
-        vertex = self.circles.inverse[circle][0]
-        # TODO: Create a attr_desc function in GraphElement
-        text = ''
-        for name, value in vertex.attr.items():
-            text += f'{name}: {value}\n'
-        return text[:-1]
-
-    def get_edge_desc(self, line: plt.Line2D) -> str:
-        """
-        Get a textual description of the attributes of the edge represented by line given as argument.
-
-        :param line: The line to which the corresponding attributes are required.
-        :return: A string containing a description of all attributes of the corresponding edge.
-        """
-        edge = self.lines.inverse[line][0]
-        text = ''
-        for name, value in edge.attr.items():
-            text += f'{name}: {value}\n'
-        return text[:-1]
 
     def on_press(self, event):
         # print(f'button={event.button}, x={event.x}, y={event.y}, xdata={event.xdata}, ydata={event.ydata}')
@@ -606,7 +560,7 @@ class GraphPanel(wx.Panel):
 
 class DraggableCircle(plt.Circle):
 
-    def __init__(self, *args, update_func, label_func, **kwargs):
+    def __init__(self, *args, update_func=None, label_func=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.update_func = update_func
         self.label_func = label_func
@@ -618,9 +572,6 @@ class DraggableCircle(plt.Circle):
         self.on_press_cid = None
         self.on_release_cid = None
         self.on_hover_cid = None
-
-    def remove(self):
-        super().remove()
 
     def register_events(self):
         self.on_press_cid = self.figure.canvas.mpl_connect('button_press_event', self.on_press)
@@ -687,9 +638,6 @@ class EdgeLine(plt.Line2D):
         self.hovered = False
         self.annotation = None
 
-    def remove(self):
-        super().remove()
-
     def register_events(self):
         self.on_hover_cid = self.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
@@ -720,6 +668,88 @@ class EdgeLine(plt.Line2D):
                 if self.annotation is not None:
                     self.annotation.set_visible(False)
                     self.update_func()
+
+
+class FigureElement(abc.ABC):
+    """
+    Visual representation of a GraphElement inside a matplotlib figure.
+
+    This is a base class for all other FigureElements to derive from.
+    """
+    def __init__(self, graph_element: GraphElement):
+        self.graph_element = graph_element
+        """The GraphElement that is represented by this FigureElement."""
+        self.hovered: bool = False
+        """Whether or not this element is currently being hovered over."""
+        self.annotation: plt.Annotation = None
+        """Saves any matplotlib annotation associated with this Element."""
+
+    def get_hover_text(self) -> str:
+        """
+        Get and return the on-hover text of the element.
+
+        :return: A string containing the hover text of the element.
+        """
+        text = ''
+        for name, value in self.graph_element.attr.items():
+            text += f'{name}: {value}\n'
+        return text[:-1]
+
+
+class FigureVertex(FigureElement, DraggableCircle):
+    """
+    The visual representation of a Vertex.
+    """
+    def __init__(self, graph_element: GraphElement, *args, edges=None,
+                 **kwargs):
+        FigureElement.__init__(self, graph_element)
+        DraggableCircle.__init__(self, *args, **kwargs)
+        self.edges: Set[FigureEdge] = set() if edges is None else edges
+        """A set containing all Edges connected to this Vertex."""
+        for edge in self.edges:
+            if self not in {edge.vertex1, edge.vertex2}:
+                if edge.vertex1 is None:
+                    edge.vertex1 = self
+                elif edge.vertex2 is None:
+                    edge.vertex2 = self
+                else:
+                    log.error(f'The FigureVertex was passed Edge {edge} as '
+                              f'Argument but the Edge is already connected to '
+                              f'two other Vertices.')
+                    raise ModelGenArgumentError('Edge is already connected to '
+                                                'two other Vertices.')
+
+
+class FigureEdge(FigureElement, plt.Line2D):
+    """
+    The visual representation of an Edge.
+    """
+    def __init__(self, graph_element: GraphElement, *args,
+                 vertex1: FigureVertex=None,
+                 vertex2: FigureVertex=None, **kwargs):
+        FigureElement.__init__(self, graph_element)
+        if vertex1 is not None and vertex2 is not None:
+            center1 = vertex1.center
+            center2 = vertex2.center
+            plt.Line2D.__init__(self, (center1[0], center2[0]),
+                                (center1[1], center2[1]), *args, **kwargs)
+            vertex1.edges.add(self)
+            vertex2.edges.add(self)
+        else:
+            plt.Line2D.__init__(self, *args, **kwargs)
+        self.vertex1: FigureVertex = vertex1
+        """The first Vertex connected to this Edge."""
+        self.vertex2: FigureVertex = vertex2
+        """The second Vertex connected to this Edge."""
+
+    def update_position(self):
+        """
+        Update the position of the Edge based on the connected Edges.
+        """
+        center1 = self.vertex1.center
+        center2 = self.vertex2.center
+        self.set_xdata((center1[0], center2[0]))
+        self.set_ydata((center1[1], center2[1]))
 
 
 if __name__ == '__main__':
