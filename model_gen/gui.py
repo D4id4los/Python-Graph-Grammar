@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from functools import wraps
-from typing import TypeVar, Dict, Tuple, MutableSequence, Callable, Set
+from typing import TypeVar, Dict, Tuple, MutableSequence, Set
 
 import matplotlib.pyplot as plt
 import wx
@@ -10,12 +9,14 @@ import wx.lib.agw.aui as aui
 import yaml
 import abc
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
+from matplotlib.backends.backend_wxagg import \
+    NavigationToolbar2WxAgg as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.patches import ConnectionPatch
 from model_gen.grammar import Grammar
 from model_gen.productions import Production, Mapping
 from model_gen.utils import Bidict, get_logger
-from model_gen.graph import Graph, GraphElement, Vertex, Edge
+from model_gen.graph import Graph, GraphElement
 from model_gen.exceptions import ModelGenArgumentError
 
 T = TypeVar('T')
@@ -50,10 +51,23 @@ class GraphUI(wx.Frame):
         """
         menubar = wx.MenuBar()
         file_menu = wx.Menu()
-        file_quit = file_menu.Append(wx.ID_EXIT, item='Quit', helpString='Quit Model Gen')
-        file_export = file_menu.Append(wx.ID_ANY, item='Export\tCtrl+e', helpString='Export all Graphs to YAML file')
-        file_import = file_menu.Append(wx.ID_ANY, item='Import\tCtrl+i', helpString='Import Graphs from YAML file')
-        file_run = file_menu.Append(wx.ID_ANY, item='Run Grammar\tCtrl+r', helpString='Run the defined Grammar')
+        file_quit = file_menu.Append(wx.ID_EXIT, item='Quit',
+                                     helpString='Quit Model Gen')
+        file_export = file_menu.Append(
+            wx.ID_ANY,
+            item='Export\tCtrl+e',
+            helpString='Export all Graphs to YAML file'
+        )
+        file_import = file_menu.Append(
+            wx.ID_ANY,
+            item='Import\tCtrl+i',
+            helpString='Import Graphs from YAML file'
+        )
+        file_run = file_menu.Append(
+            wx.ID_ANY,
+            item='Run Grammar\tCtrl+r',
+            helpString='Run the defined Grammar'
+        )
         menubar.Append(file_menu, title='&File')
         self.SetMenuBar(menubar)
 
@@ -64,7 +78,8 @@ class GraphUI(wx.Frame):
 
         self.Bind(EVT_RUN_GRAMMAR_EVENT, self.run_grammar)
 
-    def load_graphs(self, host_graphs: Dict[str, Graph], productions: Dict[str, Production],
+    def load_graphs(self, host_graphs: Dict[str, Graph],
+                    productions: Dict[str, Production],
                     result_graphs: Dict[str, Graph]) -> None:
         log.info('Loading new graphs and productions.')
         self.host_graphs = host_graphs
@@ -79,17 +94,22 @@ class GraphUI(wx.Frame):
         Export all currently loaded graphs as a yaml file.
         """
         log.debug('Opening export dialog.')
-        with wx.FileDialog(self, 'Export Graphs', wildcard='YAML files (*.yml)|*.yml',
-                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as file_dialog:
+        with wx.FileDialog(self, 'Export Graphs',
+                           wildcard='YAML files (*.yml)|*.yml',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+                           ) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
             log.info('Exporting all graphs and productions.')
             path = file_dialog.GetPath()
             log.debug(f'Exporting to file »{path}«.')
             data = {
-                'host_graphs': {k: v.to_yaml() for k, v in self.host_graphs.items()},
-                'productions': {k: v.to_yaml() for k, v in self.productions.items()},
-                'result_graphs': {k: v.to_yaml() for k, v in self.result_graphs.items()}
+                'host_graphs': {k: v.to_yaml() for k, v in
+                                self.host_graphs.items()},
+                'productions': {k: v.to_yaml() for k, v in
+                                self.productions.items()},
+                'result_graphs': {k: v.to_yaml() for k, v in
+                                  self.result_graphs.items()}
             }
             try:
                 with open(path, 'w') as stream:
@@ -103,8 +123,10 @@ class GraphUI(wx.Frame):
         Import graphs for display from a yaml file.
         """
         log.debug('Opening import dialog.')
-        with wx.FileDialog(self, 'Import Graphs', wildcard='YAML files (*.yml)|*.yml',
-                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as file_dialog:
+        with wx.FileDialog(self, 'Import Graphs',
+                           wildcard='YAML files (*.yml)|*.yml',
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+                           ) as file_dialog:
             if file_dialog.ShowModal() == wx.ID_CANCEL:
                 return
             log.info('Importing graphs and productions.')
@@ -114,9 +136,12 @@ class GraphUI(wx.Frame):
                 with open(path, 'r') as stream:
                     data = yaml.safe_load(stream)
                     mapping = {}
-                    host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['host_graphs'].items()}
-                    productions = {k: Production.from_yaml(v, mapping) for k, v in data['productions'].items()}
-                    result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in data['result_graphs'].items()}
+                    host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
+                                   data['host_graphs'].items()}
+                    productions = {k: Production.from_yaml(v, mapping) for k, v
+                                   in data['productions'].items()}
+                    result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
+                                     data['result_graphs'].items()}
                     self.load_graphs(host_graphs, productions, result_graphs)
             except IOError:
                 log.error(f'Cannon open/read from file »{path}«.')
@@ -124,18 +149,21 @@ class GraphUI(wx.Frame):
 
     def run_grammar(self, _) -> None:
         """
-        Run the grammar defined by the productions on the active hostgraph and add
-        the result to result graphs.
+        Run the grammar defined by the productions on the active
+        hostgraph and add the result to result graphs.
         """
         log.info('Running grammar.')
         grammar = Grammar(self.productions.values())
         host_graph = self.notebook.host_graph_panel.get_active()
         if host_graph is None:
-            log.error(f'Can not run grammar because no host graphs are loaded/defined.')
+            log.error(
+                f'Can not run grammar because no host graphs are '
+                f'loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
         results = grammar.apply(host_graph, 2)
-        log.debug(f'There where {len(results)} derivations calculated: {results}.')
+        log.debug(
+            f'There where {len(results)} derivations calculated: {results}.')
         offset = len(self.result_graphs)
         for i, result in enumerate(results):
             self.result_graphs[f'Result {i + offset}'] = result
@@ -206,7 +234,8 @@ class ProductionPanel(wx.Panel):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.production_panel = ProductionGraphsPanel(self)
-        self.list = ProductionList(self, production_panel=self.production_panel)
+        self.list = ProductionList(self,
+                                   production_panel=self.production_panel)
         hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.production_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
@@ -332,7 +361,7 @@ class ProductionList(wx.ListCtrl):
         self.production_panel = production_panel
         self.InsertColumn(0, 'name', width=150)
         self.InsertColumn(1, 'daughters', width=150)
-        self.productions: Dict[int, Tuple[str, Production], int] = {}
+        self.productions: Dict[int, Tuple[str, Production, int]] = {}
         self.graphs: Dict[int, Tuple[Graph, Mapping, Graph]] = {}
         self.selected = None
 
@@ -377,48 +406,26 @@ class ProductionList(wx.ListCtrl):
         self.production_panel.load_graph(graphs)
 
 
-class ProductionGraphsPanel(wx.Panel):
-    """
-    A container for the plots of two graphs.
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.graph1 = GraphPanel(self)
-        self.graph2 = GraphPanel(self)
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        sizer.Add(self.graph1, proportion=1, flag=wx.EXPAND)
-        sizer.Add(self.graph2, proportion=1, flag=wx.EXPAND)
-        self.SetSizer(sizer)
+# def _is_update(f: Callable[..., T]) -> Callable[..., T]:
+#     """
+#     A decorator to wrap a function performing visual updates in a
+#     matplotlib figure with all necessary housekeeping functions to
+#     have the changes render as expected.
+#     """
+#
+#     @wraps(f)
+#     def wrap(self, *args, **kwargs) -> T:
+#         # Before update operations
+#         self.subplot.clear()
+#         # Update Function
+#         result = f(self, *args, **kwargs)
+#         # After update operations
+#         self.setup_mpl_visuals()
+#         self.redraw()
+#         return result
+#
+#     return wrap
 
-    def load_graph(self, graph_data: Tuple[Graph, Mapping, Graph]) -> None:
-        """
-        Load graphs into the two graph displays.
-
-        :param graph_data: The graphs to load
-        """
-        self.graph1.load_graph(graph_data[0])
-        self.graph2.load_graph(graph_data[2])
-
-
-def _is_update(f: Callable[..., T]) -> Callable[..., T]:
-    """
-    A decorator to wrap a function performing visual updates in a
-    matplotlib figure with all necessary housekeeping functions to
-    have the changes render as expected.
-    """
-
-    @wraps(f)
-    def wrap(self, *args, **kwargs) -> T:
-        # Before update operations
-        self.subplot.clear()
-        # Update Function
-        result = f(self, *args, **kwargs)
-        # After update operations
-        self.setup_mpl_visuals()
-        self.redraw()
-        return result
-
-    return wrap
 
 class GraphPanel(wx.Panel):
     """
@@ -430,7 +437,7 @@ class GraphPanel(wx.Panel):
         # matplotlib objects
         self.figure = Figure(figsize=(2, 2))
         self.figure.patch.set_facecolor('white')
-        self.subplot = self.figure.add_subplot(111)
+        self.subplot = self.figure.add_subplot(111)  # Is of type Axes
         self.canvas = FigureCanvas(self, id=wx.ID_ANY, figure=self.figure)
         self.toolbar = NavigationToolbar(canvas=self.canvas)
         self.toolbar.Realize()
@@ -447,7 +454,7 @@ class GraphPanel(wx.Panel):
         self.canvas.mpl_connect('button_press_event', self.on_press)
         self.canvas.mpl_connect('button_release_event', self.on_release)
         self.canvas.mpl_connect('pick_event', self.on_pick)
-        self.canvas.mpl_connect('motion_notify_event', self.on_move)
+        self.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
         self.circles = Bidict()
         self.lines = Bidict()
@@ -461,42 +468,52 @@ class GraphPanel(wx.Panel):
     def elements(self) -> Set['FigureElement']:
         return self.vertices | self.edges
 
-    def setup_mpl_visuals(self) -> None:
+    def setup_mpl_visuals(self, axes=None) -> None:
         """
-        Setup all the visual setting of the matplotlib canvas, figure and subplot.
+        Setup all the visual setting of the matplotlib canvas, figure
+        and subplot.
 
-        This function needs to be called every time the mpl figure is redrawn because
-        clearing the figure allso resets all these visual settings.
+        This function needs to be called every time the mpl figure is
+        redrawn because clearing the figure allso resets all these
+        visual settings.
+
+        :param axes: The axes for which the visuals shall be set.
         """
-        self.subplot.patch.set_facecolor('white')
-        self.subplot.set_xlim(-10, 10, auto=True)
-        self.subplot.set_ylim(-10, 10, auto=True)
+        if axes is None:
+            axes = self.subplot
+        axes.patch.set_facecolor('white')
+        axes.set_xlim(-10, 10, auto=True)
+        axes.set_ylim(-10, 10, auto=True)
         # TODO: Make XYLim confort to window size/dimensions
-        self.subplot.set_xticks([])
-        self.subplot.set_yticks([])
+        axes.set_xticks([])
+        axes.set_yticks([])
         self.figure.subplots_adjust(bottom=0, top=1, left=0, right=1)
-        self.subplot.axis('off')
+        axes.axis('off')
 
     def redraw(self) -> None:
         """
         Call all update function necessary to update the graph visualisation.
         """
-        self.canvas.draw()
+        self.canvas.draw_idle()
         self.Refresh()
 
-    @_is_update
-    def draw_graph(self) -> None:
+    def draw_graph(self, graph=None, axes=None) -> None:
         """
         Draw the graph as a set of circles and connecting edges.
         """
 
         # noinspection PyShadowingNames
-        def add_new_free_spaces(pos: Tuple[int, int], free_spaces: MutableSequence[Tuple[int, int]]) -> None:
+        def add_new_free_spaces(pos: Tuple[int, int],
+                                free_spaces: MutableSequence[
+                                    Tuple[int, int]]) -> None:
             """
-            Add newly available free spaces adjacent to pos to the list if they are not already present.
+            Add newly available free spaces adjacent to pos to the
+            list if they are not already present.
 
-            :param pos: The position adjacent to which new spaces will be searched.
-            :param free_spaces: The list to which new free spaces will be added
+            :param pos: The position adjacent to which new spaces
+                        will be searched.
+            :param free_spaces: The list to which new free spaces
+                                will be added
             """
             offset = 2
             possible_positions = [
@@ -513,25 +530,71 @@ class GraphPanel(wx.Panel):
                 if candidate not in free_spaces:
                     free_spaces.append(candidate)
 
+        if axes is None:
+            axes = self.subplot
+        if graph is None:
+            graph = self.graph
         i = 0
         free_spaces = [(0, 0)]
-        for graph_vertex in self.graph.vertices:
+        for graph_vertex in graph.vertices:
             position = free_spaces[i]
             add_new_free_spaces(position, free_spaces)
             figure_vertex = FigureVertex(graph_vertex, position, 0.5,
                                          color='w', ec='k', zorder=10)
             self.vertices.add(figure_vertex)
             self.graph_to_figure[graph_vertex] = figure_vertex
-            self.subplot.add_artist(figure_vertex)
+            axes.add_artist(figure_vertex)
             i += 1
-        for graph_edge in self.graph.edges:
+        for graph_edge in graph.edges:
             figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
             figure_vertex2 = self.graph_to_figure[graph_edge.vertex2]
             figure_edge = FigureEdge(graph_edge, vertex1=figure_vertex1,
                                      vertex2=figure_vertex2, c='k')
             self.edges.add(figure_edge)
             self.graph_to_figure[graph_edge] = figure_edge
-            self.subplot.add_artist(figure_edge)
+            axes.add_artist(figure_edge)
+        self.setup_mpl_visuals(axes)
+        self.redraw()
+
+    def annotate(self, text: str, position: Tuple[int, int],
+                 axes: plt.Axes = None) -> plt.Annotation:
+        """
+        Places an annotation on the subplot.
+        
+        :param text: The text to place.
+        :param position: The positon of the annotation.
+        :param axes: The axes to add the annotation to
+        :return: The Annotation object representing the annotation.
+        """
+        if axes is None:
+            axes = self.subplot
+        annotation = axes.annotate(text,
+                                   xy=position,
+                                   xytext=(10, 10),
+                                   textcoords='offset pixels',
+                                   arrowprops=dict(
+                                       arrowstyle='->'),
+                                   bbox=dict(
+                                       boxstyle='round',
+                                       fc='w'),
+                                   zorder=20)
+        annotation.set_visible(True)
+        return annotation
+
+    def annotate_element(self, element: 'FigureElement') -> plt.Annotation:
+        """
+        Annotate a FigureElement.
+
+        This is a convenience function so you don't need to pass all
+        three arguments separately, they are all taken from the
+        passed element.
+
+        :param element: The FigureElement to annotate
+        :return: The Annotation object representing the annotation.
+        """
+        return self.annotate(element.get_hover_text(),
+                             element.get_center(),
+                             element.axes)
 
     def load_graph(self, graph: Graph) -> None:
         """
@@ -542,41 +605,141 @@ class GraphPanel(wx.Panel):
         self.graph = graph
         self.vertices.clear()
         self.edges.clear()
+        self.subplot.clear()
         self.draw_graph()
 
+    def event_in_axes(self, event) -> bool:
+        """
+        Test if an event is inside the axes of this Panel.
+
+        :param event: The event to check.
+        :return: True if the event is inside the axes, False otherwise.x
+        """
+        return event.inaxes == self.subplot
+
     def on_press(self, event):
-        # print(f'button={event.button}, x={event.x}, y={event.y}, xdata={event.xdata}, ydata={event.ydata}')
-        pass
+        if not self.event_in_axes(event):
+            return
+        for element in self.elements:
+            if element.contains(event)[0]:
+                try:
+                    element.on_press(event)
+                    self.redraw()
+                except AttributeError:
+                    pass
 
     def on_release(self, event):
-        pass
+        if not self.event_in_axes(event):
+            return
+        for element in self.elements:
+            if element.contains(event)[0]:
+                try:
+                    element.on_release(event)
+                    self.redraw()
+                except AttributeError:
+                    pass
 
     def on_pick(self, event):
         pass
 
-    def on_move(self, event):
-        pass
+    def on_motion(self, event):
+        if not self.event_in_axes(event):
+            return
+        for element in self.elements:
+            if element.contains(event)[0]:
+                if not element.hovered:
+                    element.hovered = True
+                    if element.annotation is None \
+                            and element.get_hover_text() != '':
+                        element.annotation = self.annotate_element(element)
+                        self.redraw()
+                try:
+                    element.on_motion(event)
+                    self.redraw()
+                except AttributeError:
+                    pass
+            else:
+                if element.hovered:
+                    element.hovered = False
+                    if element.annotation is not None:
+                        element.annotation.set_visible(False)
+                        element.annotation.remove()
+                        element.annotation = None
+                        self.redraw()
+
+
+class ProductionGraphsPanel(GraphPanel):
+    """
+    A container for the plots of two graphs with arrows connecting
+    certain elements.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.subplot.remove()
+        del self.subplot
+        self.subplot = self.figure.add_subplot(121)
+        self.subplot2 = self.figure.add_subplot(122)
+        self.graph2 = None
+        self.setup_mpl_visuals(self.subplot)
+        self.setup_mpl_visuals(self.subplot2)
+        self.mappings: Set[ConnectionPatch] = set()
+
+    def load_graph(self, graph_data: Tuple[Graph, Mapping, Graph]) -> None:
+        """
+        Load graphs into the two graph displays.
+
+        :param graph_data: The graphs to load
+        """
+        self.graph = graph_data[0]
+        self.graph2 = graph_data[2]
+        self.vertices.clear()
+        self.edges.clear()
+        self.subplot.clear()
+        self.subplot2.clear()
+        self.draw_graph(graph=self.graph, axes=self.subplot)
+        self.draw_graph(graph=self.graph2, axes=self.subplot2)
+        self.draw_mappings(graph_data[1])
+
+    def draw_mappings(self, mapping: Mapping) -> None:
+        """
+        Draw arrows between the GraphElements that are mapped together.
+
+        :param mapping: A Mapping containing the information on what
+                        arrows to draw.
+        """
+        for graph_element1, graph_element2 in mapping.items():
+            figure_element1 = self.graph_to_figure[graph_element1]
+            figure_element2 = self.graph_to_figure[graph_element2]
+            patch = ConnectionPatch(
+                xyA=figure_element1.get_center(),
+                xyB=figure_element2.get_center(),
+                coordsA="data",
+                coordsB="data",
+                axesA=self.subplot,
+                axesB=self.subplot2,
+                arrowstyle="->",
+                clip_on=False,
+            )
+            self.mappings.add(patch)
+            self.subplot.add_artist(patch)
+        self.redraw()
+
+    def event_in_axes(self, event):
+        if event.inaxes == self.subplot.axes \
+                or event.inaxes == self.subplot2.axes:
+            return True
+        else:
+            return False
 
 
 class DraggableCircle(plt.Circle):
 
-    def __init__(self, *args, update_func=None, label_func=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.update_func = update_func
-        self.label_func = label_func
-        self.annotation = None
         self.pressed = False
-        self.hovered = False
         self.start_circ_pos = None
         self.start_mouse_pos = None
-        self.on_press_cid = None
-        self.on_release_cid = None
-        self.on_hover_cid = None
-
-    def register_events(self):
-        self.on_press_cid = self.figure.canvas.mpl_connect('button_press_event', self.on_press)
-        self.on_release_cid = self.figure.canvas.mpl_connect('button_release_event', self.on_release)
-        self.on_hover_cid = self.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
     def on_press(self, event):
         if self.contains(event)[0]:
@@ -584,7 +747,6 @@ class DraggableCircle(plt.Circle):
             self.start_circ_pos = self.center
             self.start_mouse_pos = (event.xdata, event.ydata)
             self.set_facecolor('red')
-            self.update_func()
 
     def on_release(self, _):
         if self.pressed:
@@ -592,7 +754,6 @@ class DraggableCircle(plt.Circle):
             self.start_circ_pos = None
             self.start_mouse_pos = None
             self.set_facecolor('white')
-            self.update_func()
 
     def on_motion(self, event):
         if event.inaxes != self.axes:
@@ -600,74 +761,8 @@ class DraggableCircle(plt.Circle):
         if self.pressed:
             dx = event.xdata - self.start_mouse_pos[0]
             dy = event.ydata - self.start_mouse_pos[1]
-            self.center = (self.start_circ_pos[0] + dx, self.start_circ_pos[1] + dy)
-            self.update_func()
-        if self.contains(event)[0]:
-            if not self.hovered:
-                self.hovered = True
-                if self.annotation is None:
-                    axis = self.figure.gca()
-                    text = self.label_func(self)
-                    self.annotation = axis.annotate(text,
-                                                    xy=self.center,
-                                                    xytext=(10, 10),
-                                                    textcoords='offset pixels',
-                                                    arrowprops=dict(arrowstyle='->'),
-                                                    bbox=dict(boxstyle='round', fc='w'),
-                                                    zorder=20)
-                self.annotation.set_visible(True)
-                self.update_func()
-        else:
-            if self.hovered:
-                self.hovered = False
-                if self.annotation is not None:
-                    self.annotation.set_visible(False)
-                    self.update_func()
-
-
-class EdgeLine(plt.Line2D):
-    """
-    This class is a specialization of a line that offers mouseover labels.
-    """
-
-    def __init__(self, *args, update_func, label_func, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.update_func = update_func
-        self.label_func = label_func
-        self.on_hover_cid = None
-        self.hovered = False
-        self.annotation = None
-
-    def register_events(self):
-        self.on_hover_cid = self.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
-
-    def on_motion(self, event):
-        if event.inaxes != self.axes:
-            return
-        if self.contains(event)[0]:
-            if not self.hovered:
-                self.hovered = True
-                if self.annotation is None:
-                    axis = self.figure.gca()
-                    text = self.label_func(self)
-                    x1, x2 = self.get_xdata()
-                    y1, y2 = self.get_ydata()
-                    center = (x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2)
-                    self.annotation = axis.annotate(text,
-                                                    xy=center,
-                                                    xytext=(10, 10),
-                                                    textcoords='offset pixels',
-                                                    arrowprops=dict(arrowstyle='->'),
-                                                    bbox=dict(boxstyle='round', fc='w'),
-                                                    zorder=20)
-                self.annotation.set_visible(True)
-                self.update_func()
-        else:
-            if self.hovered:
-                self.hovered = False
-                if self.annotation is not None:
-                    self.annotation.set_visible(False)
-                    self.update_func()
+            self.center = (
+                self.start_circ_pos[0] + dx, self.start_circ_pos[1] + dy)
 
 
 class FigureElement(abc.ABC):
@@ -676,6 +771,7 @@ class FigureElement(abc.ABC):
 
     This is a base class for all other FigureElements to derive from.
     """
+
     def __init__(self, graph_element: GraphElement):
         self.graph_element = graph_element
         """The GraphElement that is represented by this FigureElement."""
@@ -695,11 +791,21 @@ class FigureElement(abc.ABC):
             text += f'{name}: {value}\n'
         return text[:-1]
 
+    @abc.abstractmethod
+    def get_center(self) -> Tuple[int, int]:
+        """
+        Return the center position of this element.
+
+        :return: A tuple containing the centers x and y coordinate.
+        """
+        raise NotImplementedError()
+
 
 class FigureVertex(FigureElement, DraggableCircle):
     """
     The visual representation of a Vertex.
     """
+
     def __init__(self, graph_element: GraphElement, *args, edges=None,
                  **kwargs):
         FigureElement.__init__(self, graph_element)
@@ -719,14 +825,29 @@ class FigureVertex(FigureElement, DraggableCircle):
                     raise ModelGenArgumentError('Edge is already connected to '
                                                 'two other Vertices.')
 
+    def get_center(self) -> Tuple[int, int]:
+        return self.center
+
+    def on_motion(self, event):
+        DraggableCircle.on_motion(self, event)
+        for edge in self.edges:
+            edge.update_position()
+
+    def on_press(self, event):
+        DraggableCircle.on_press(self, event)
+
+    def on_release(self, event):
+        DraggableCircle.on_release(self, event)
+
 
 class FigureEdge(FigureElement, plt.Line2D):
     """
     The visual representation of an Edge.
     """
+
     def __init__(self, graph_element: GraphElement, *args,
-                 vertex1: FigureVertex=None,
-                 vertex2: FigureVertex=None, **kwargs):
+                 vertex1: FigureVertex = None,
+                 vertex2: FigureVertex = None, **kwargs):
         FigureElement.__init__(self, graph_element)
         if vertex1 is not None and vertex2 is not None:
             center1 = vertex1.center
@@ -751,13 +872,16 @@ class FigureEdge(FigureElement, plt.Line2D):
         self.set_xdata((center1[0], center2[0]))
         self.set_ydata((center1[1], center2[1]))
 
+    def get_center(self) -> Tuple[int, int]:
+        x1, x2 = self.get_xdata()
+        y1, y2 = self.get_ydata()
+        center = (x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2)
+        return center
+
 
 if __name__ == '__main__':
     log.info('Starting up Model Gen.')
     app = wx.App()
-    main_frame = GraphUI(None, title="Model Gen Graph Grammar", size=(1000, 500))
-    # main_frame.load_graphs(test1.host_graphs, test1.productions, test1.result_graphs)
-    # plot = GraphPanel(main_frame)
-    # plot.load_data(data)
-    # main_frame.Show()
+    main_frame = GraphUI(None, title="Model Gen Graph Grammar",
+                         size=(1000, 500))
     app.MainLoop()

@@ -12,7 +12,8 @@ class Grammar:
     def __init__(self, productions: Iterable[Production]):
         self.productions: Iterable[Production] = productions
 
-    def apply(self, target_graph: Graph, max_steps: int = 0) -> Iterable[Graph]:
+    def apply(self, target_graph: Graph, max_steps: int = 0) \
+            -> Sized and Iterable[Graph]:
         """
         Apply the productions of the grammar to a target graph and return a derivation
         sequence of the result graph.
