@@ -4,3 +4,4 @@ PyYAML
 pytest
 mock
 pytest-mock
+PyDispatcher

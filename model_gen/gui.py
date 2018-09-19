@@ -8,6 +8,7 @@ import wx.lib.newevent
 import wx.lib.agw.aui as aui
 import yaml
 import abc
+from pydispatch import dispatcher
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
@@ -22,7 +23,7 @@ from model_gen.opts import Opts
 
 T = TypeVar('T')
 
-RunGrammarEvent, EVT_RUN_GRAMMAR_EVENT = wx.lib.newevent.NewCommandEvent()
+RunGrammarEvent, EVT_RUN_GRAMMAR = wx.lib.newevent.NewCommandEvent()
 log = get_logger('model_gen')
 
 
@@ -89,7 +90,7 @@ class GraphUI(wx.Frame):
         self.Bind(wx.EVT_MENU, self.switch_label_display,
                   self.view_show_all_labels)
 
-        self.Bind(EVT_RUN_GRAMMAR_EVENT, self.run_grammar)
+        self.Bind(EVT_RUN_GRAMMAR, self.run_grammar)
 
     def load_graphs(self, host_graphs: Dict[str, Graph],
                     productions: Dict[str, Production],
@@ -482,8 +483,8 @@ class GraphPanel(wx.Panel):
         self.canvas.mpl_connect('pick_event', self.on_pick)
         self.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
-        self.circles = Bidict()
-        self.lines = Bidict()
+        self.pressed_elements: Dict[FigureElement, Tuple[float, float]] = {}
+        self.press_start_position: Tuple[float, float] = None
 
         self.graph = None
         self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
@@ -582,7 +583,7 @@ class GraphPanel(wx.Panel):
         if opts['show_all_labels']:
             for element in self.elements:
                 if element.get_hover_text() != '':
-                    self.annotate_element(element)
+                    element.annotation = self.annotate_element(element)
         self.setup_mpl_visuals(axes)
         self.redraw()
 
@@ -650,10 +651,14 @@ class GraphPanel(wx.Panel):
     def on_press(self, event):
         if not self.event_in_axes(event):
             return
+        self.press_start_position = (event.xdata, event.ydata)
         for element in self.elements:
             if element.contains(event)[0]:
+                self.pressed_elements[element] = element.get_center()
+                dispatcher.connect(receiver=element.on_position_change,
+                                   signal='element_position_changed')
                 try:
-                    element.on_press(event)
+                    # element.on_press(event)
                     self.redraw()
                 except AttributeError:
                     pass
@@ -661,10 +666,14 @@ class GraphPanel(wx.Panel):
     def on_release(self, event):
         if not self.event_in_axes(event):
             return
+        self.press_start_position = None
         for element in self.elements:
             if element.contains(event)[0]:
+                self.pressed_elements.pop(element)
+                dispatcher.disconnect(receiver=element.on_position_change,
+                                      signal='element_position_changed')
                 try:
-                    element.on_release(event)
+                    # element.on_release(event)
                     self.redraw()
                 except AttributeError:
                     pass
@@ -684,7 +693,7 @@ class GraphPanel(wx.Panel):
                         element.annotation = self.annotate_element(element)
                         self.redraw()
                 try:
-                    element.on_motion(event)
+                    # element.on_motion(event)
                     self.redraw()
                 except AttributeError:
                     pass
@@ -697,6 +706,18 @@ class GraphPanel(wx.Panel):
                         element.annotation.remove()
                         element.annotation = None
                         self.redraw()
+        # This is a sanity check. With gui interactions it could easily happen
+        # that a mouse release occurs is such a way that an inconsistency
+        # appears.
+        if len(self.pressed_elements) != 0 and self.press_start_position is None:
+            self.pressed_elements.clear()
+        elif len(self.pressed_elements) > 0:
+            dispatcher.send(signal='element_position_changed', sender=self)
+            for element, center in self.pressed_elements.items():
+                if isinstance(element, FigureVertex):
+                    dx = event.xdata - self.press_start_position[0]
+                    dy = event.ydata - self.press_start_position[1]
+                    element.center = (center[0] + dx, center[1] + dy)
 
 
 class ProductionGraphsPanel(GraphPanel):
@@ -789,11 +810,6 @@ class DraggableCircle(plt.Circle):
     def on_motion(self, event):
         if event.inaxes != self.axes:
             return
-        if self.pressed:
-            dx = event.xdata - self.start_mouse_pos[0]
-            dy = event.ydata - self.start_mouse_pos[1]
-            self.center = (
-                self.start_circ_pos[0] + dx, self.start_circ_pos[1] + dy)
 
 
 class FigureElement(abc.ABC):
@@ -831,6 +847,18 @@ class FigureElement(abc.ABC):
         """
         raise NotImplementedError()
 
+    def on_position_change(self) -> None:
+        """
+        Is called when the Position of an Element is changed.
+        """
+        pass
+
+    def on_press(self, e):
+        DraggableCircle.on_press(self, e)
+
+    def on_release(self, e):
+        DraggableCircle.on_release(self, e)
+
 
 class FigureVertex(FigureElement, DraggableCircle):
     """
@@ -859,16 +887,11 @@ class FigureVertex(FigureElement, DraggableCircle):
     def get_center(self) -> Tuple[int, int]:
         return self.center
 
-    def on_motion(self, event):
-        DraggableCircle.on_motion(self, event)
+    def on_position_change(self):
         for edge in self.edges:
             edge.update_position()
-
-    def on_press(self, event):
-        DraggableCircle.on_press(self, event)
-
-    def on_release(self, event):
-        DraggableCircle.on_release(self, event)
+        if self.annotation is not None:
+            self.annotation.xy = self.center
 
 
 class FigureEdge(FigureElement, plt.Line2D):
@@ -908,6 +931,11 @@ class FigureEdge(FigureElement, plt.Line2D):
         y1, y2 = self.get_ydata()
         center = (x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2)
         return center
+
+    def on_position_change(self):
+        self.update_position()
+        if self.annotation is not None:
+            self.annotation.xy = self.get_center()
 
 
 if __name__ == '__main__':
