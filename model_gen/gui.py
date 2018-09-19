@@ -47,6 +47,9 @@ class GraphUI(wx.Frame):
         self.productions: Dict[str, Production] = {}
         self.result_graphs: Dict[str, Graph] = {}
 
+        if 'last_grammar_file_path' in opts:
+            self.load_graph_from_file(opts['last_grammar_file_path'])
+
     # noinspection PyAttributeOutsideInit
     def _setup_menus(self) -> None:
         """
@@ -146,20 +149,29 @@ class GraphUI(wx.Frame):
             log.info('Importing graphs and productions.')
             path = file_dialog.GetPath()
             log.debug(f'Importing from file »{path}«.')
-            try:
-                with open(path, 'r') as stream:
-                    data = yaml.safe_load(stream)
-                    mapping = {}
-                    host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
-                                   data['host_graphs'].items()}
-                    productions = {k: Production.from_yaml(v, mapping) for k, v
-                                   in data['productions'].items()}
-                    result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
-                                     data['result_graphs'].items()}
-                    self.load_graphs(host_graphs, productions, result_graphs)
-            except IOError:
-                log.error(f'Cannon open/read from file »{path}«.')
-                wx.LogError(f'Cannot open file {path}.')
+            self.load_graph_from_file(path)
+            opts['last_grammar_file_path'] = path
+
+
+    def load_graph_from_file(self, file_path: str) -> None:
+        """
+        Loads a graph saved in a yaml file and displays it in the gui.
+        :param file_path: Path to the file.
+        """
+        try:
+            with open(file_path, 'r') as stream:
+                data = yaml.safe_load(stream)
+                mapping = {}
+                host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
+                               data['host_graphs'].items()}
+                productions = {k: Production.from_yaml(v, mapping) for k, v
+                               in data['productions'].items()}
+                result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
+                                 data['result_graphs'].items()}
+                self.load_graphs(host_graphs, productions, result_graphs)
+        except IOError:
+            log.error(f'Cannon open/read from file »{file_path}«.')
+            wx.LogError(f'Cannot open file {file_path}.')
 
     def run_grammar(self, _) -> None:
         """
