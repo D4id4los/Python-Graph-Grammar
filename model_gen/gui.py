@@ -18,6 +18,7 @@ from model_gen.productions import Production, Mapping
 from model_gen.utils import Bidict, get_logger
 from model_gen.graph import Graph, GraphElement
 from model_gen.exceptions import ModelGenArgumentError
+from model_gen.opts import Opts
 
 T = TypeVar('T')
 
@@ -32,7 +33,7 @@ class GraphUI(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setup_menus()
+        self._setup_menus()
         self.panel = wx.Panel(self)
         self.notebook = MainNotebook(self.panel)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -45,7 +46,8 @@ class GraphUI(wx.Frame):
         self.productions: Dict[str, Production] = {}
         self.result_graphs: Dict[str, Graph] = {}
 
-    def setup_menus(self) -> None:
+    # noinspection PyAttributeOutsideInit
+    def _setup_menus(self) -> None:
         """
         Add all menu items to the wx window.
         """
@@ -69,12 +71,23 @@ class GraphUI(wx.Frame):
             helpString='Run the defined Grammar'
         )
         menubar.Append(file_menu, title='&File')
+        view_menu = wx.Menu()
+        self.view_show_all_labels: wx.MenuItem = view_menu.Append(
+            wx.ID_ANY,
+            item='Show All Lables\tCtrl+l',
+            helpString='Show labels for all Elements of a Graph',
+            kind=wx.ITEM_CHECK
+        )
+        self.view_show_all_labels.Check(opts['show_all_labels'])
+        menubar.Append(view_menu, title='&View')
         self.SetMenuBar(menubar)
 
         self.Bind(wx.EVT_MENU, self.on_quit, file_quit)
         self.Bind(wx.EVT_MENU, self.export_graphs, file_export)
         self.Bind(wx.EVT_MENU, self.import_graphs, file_import)
         self.Bind(wx.EVT_MENU, self.run_grammar, file_run)
+        self.Bind(wx.EVT_MENU, self.switch_label_display,
+                  self.view_show_all_labels)
 
         self.Bind(EVT_RUN_GRAMMAR_EVENT, self.run_grammar)
 
@@ -168,6 +181,19 @@ class GraphUI(wx.Frame):
         for i, result in enumerate(results):
             self.result_graphs[f'Result {i + offset}'] = result
             self.notebook.result_panel.load_data(self.result_graphs)
+
+    def switch_label_display(self, _) -> None:
+        """
+        Switch the label display Mode between displaying Labels for
+        all GraphElements and only displaying them for hovered
+        GraphElements.
+
+        :param _: The event passed by wx
+        """
+        if self.view_show_all_labels.IsChecked():
+            opts['show_all_labels'] = True
+        else:
+            opts['show_all_labels'] = False
 
     def on_quit(self, _) -> None:
         log.info('Closing Model Gen.')
@@ -553,6 +579,10 @@ class GraphPanel(wx.Panel):
             self.edges.add(figure_edge)
             self.graph_to_figure[graph_edge] = figure_edge
             axes.add_artist(figure_edge)
+        if opts['show_all_labels']:
+            for element in self.elements:
+                if element.get_hover_text() != '':
+                    self.annotate_element(element)
         self.setup_mpl_visuals(axes)
         self.redraw()
 
@@ -661,7 +691,8 @@ class GraphPanel(wx.Panel):
             else:
                 if element.hovered:
                     element.hovered = False
-                    if element.annotation is not None:
+                    if element.annotation is not None \
+                            and not opts['show_all_labels']:
                         element.annotation.set_visible(False)
                         element.annotation.remove()
                         element.annotation = None
@@ -881,7 +912,11 @@ class FigureEdge(FigureElement, plt.Line2D):
 
 if __name__ == '__main__':
     log.info('Starting up Model Gen.')
+    log.info('Reading in Options.')
+    opts = Opts()
     app = wx.App()
     main_frame = GraphUI(None, title="Model Gen Graph Grammar",
                          size=(1000, 500))
     app.MainLoop()
+    log.info('Saving Options.')
+    opts.save()

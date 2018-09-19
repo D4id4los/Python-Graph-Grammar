@@ -33,6 +33,22 @@ class Bidict(dict):
         super(Bidict, self).__delitem__(key)
 
 
+class Singleton(type):
+    """
+    This class is a meta class used to make other classes singletons.
+
+    Usage:
+    > class MyClass(metaclass=Singleton):
+    >     pass
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
 def randomly(objects: Sized and Iterable):
     shuffled = list(objects)
     random.shuffle(shuffled)
