@@ -668,11 +668,6 @@ class GraphPanel(wx.Panel):
                 self.pressed_elements[element] = element.get_center()
                 dispatcher.connect(receiver=element.on_position_change,
                                    signal='element_position_changed')
-                try:
-                    # element.on_press(event)
-                    self.redraw()
-                except AttributeError:
-                    pass
 
     def on_release(self, event):
         if not self.event_in_axes(event):
@@ -680,14 +675,13 @@ class GraphPanel(wx.Panel):
         self.press_start_position = None
         for element in self.elements:
             if element.contains(event)[0]:
-                self.pressed_elements.pop(element)
-                dispatcher.disconnect(receiver=element.on_position_change,
-                                      signal='element_position_changed')
-                try:
-                    # element.on_release(event)
-                    self.redraw()
-                except AttributeError:
-                    pass
+                # The If clause should not be necessary, but with gui elements
+                # I have experienced that such rules are quite relative.
+                # This particular case threw KeyErrors
+                if element in self.pressed_elements:
+                    self.pressed_elements.pop(element)
+                    dispatcher.disconnect(receiver=element.on_position_change,
+                                          signal='element_position_changed')
 
     def on_pick(self, event):
         pass
@@ -703,11 +697,6 @@ class GraphPanel(wx.Panel):
                             and element.get_hover_text() != '':
                         element.annotation = self.annotate_element(element)
                         self.redraw()
-                try:
-                    # element.on_motion(event)
-                    self.redraw()
-                except AttributeError:
-                    pass
             else:
                 if element.hovered:
                     element.hovered = False
@@ -730,6 +719,7 @@ class GraphPanel(wx.Panel):
                     dx = event.xdata - self.press_start_position[0]
                     dy = event.ydata - self.press_start_position[1]
                     element.center = (center[0] + dx, center[1] + dy)
+            self.redraw()
 
 
 class ProductionGraphsPanel(GraphPanel):
