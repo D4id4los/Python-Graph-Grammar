@@ -1,62 +1,125 @@
 import random
-import copy
 from functools import partial
-from typing import Iterable, Sized, Tuple, Dict
+from typing import Iterable, Sized, Union
 
-from model_gen.utils import Bidict, get_logger
+from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement
+from model_gen.exceptions import ModelGenArgumentError
 
 log = get_logger('model_gen.' + __name__)
 
 
-class Mapping(Bidict):
+class ProductionApplicationHierarchy:
     """
-    Maps the elements of one graph to the elements of another graph.
+    This class serves as a tool to save the hierarchy of the five
+    different graphs involved in applying a production and the
+    mapping between them.
 
-    This mapping can be empty, if there is no correspondence of elements or
-    it can be a bijection.
+    The graphs necessary to apply a Production are:
+    - Result Graph (R) :: A copy of the Host Graph.
+    - Host Graph (H) :: The full graph a production is applied to.
+    - Mother Graph (M) :: The left-hand-side of the production.
+    - Daughter Graph (D) :: The right-hand-side of the production.
+    - Daughter Copy (C) :: A copy of the daughter graph.
+
+    They are connected as follows:
+    R <-> H <-> M <-> D <-> C
+
+    With the details on the relationships:
+    R <-1-to-1-copy-> H <-Partial-Isomorphism-> M <-Manual-Mapping---
+    ---> D <-1-to-1-copy-> C
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 host_graph: Graph,
+                 mother_to_host: Mapping,
+                 production_option: 'ProductionOption',
+                 ) -> None:
+        self.host_to_result = Mapping()
+        self.result_graph = host_graph.__deepcopy__(
+            mapping=self.host_to_result)
+        self.host_graph = host_graph
+        self.mother_to_host = mother_to_host
+        self.mother_graph = production_option.mother_graph
+        self.mother_to_daughter = production_option.mapping
+        self.daughter_graph = production_option.daughter_graph
+        self.daughter_to_copy = Mapping()
+        self.copy_graph = self.daughter_graph.__deepcopy__(
+            mapping=self.daughter_to_copy)
+        self.hierarchy_alias = {
+            'R': 0,
+            'H': 1,
+            'M': 2,
+            'D': 3,
+            'C': 4
+        }
+        self.movements = {
+            0: {
+                'up': self.host_to_result.inverse,
+                'down': None,
+            },
+            1: {
+                'up': self.mother_to_host.inverse,
+                'down': self.host_to_result
+            },
+            2: {
+                'up': self.mother_to_daughter,
+                'down': self.mother_to_host
+            },
+            3: {
+                'up': self.daughter_to_copy,
+                'down': self.mother_to_daughter.inverse
+            },
+            4: {
+                'up': None,
+                'down': self.daughter_to_copy.inverse
+            }
+        }
 
-    def to_yaml(self) -> Iterable:
+    def map(self, element: GraphElement, source_level: Union[int, str],
+            target_level: Union[int, str]) -> Union[GraphElement, None]:
         """
-        Return a dict or list giving a representation of the mapping fit for export with yaml.
+        Translates an element from one graph in the hierarchy to another.
 
-        In this case this means use object ids rather than objects themselves.
+        If no such mapping exists None is returned.
 
-        :return: A representation of a Match in list or dict.
+        :param element: The GraphElement to map to a different Graph.
+        :param source_level: The level from where the Element is from.
+        :param target_level: The level where the Element shall be mapped to.
+        :return: The corresponding GraphElement in the target Graph.
         """
-        fields = {}
-        fields['dict'] = {id(k): id(v) for k, v in self.items()}
-        fields['id'] = id(self)
-        return fields
+        if not isinstance(source_level, int):
+            source_level = self.hierarchy_alias[source_level]
+        if not isinstance(target_level, int):
+            target_level = self.hierarchy_alias[target_level]
+        if target_level < 0 or target_level > 4:
+            log.error(f'Error trying to map an Element to a nonexistent level'
+                      f' {target_level} in the hierarchy.')
+            raise ModelGenArgumentError
+        if source_level < 0 or source_level > 4:
+            log.error(f'Error: The source level is set to {source_level}, '
+                      f'outside the bound for the hierarchy. The function has '
+                      f'entered an incongruous state; Aborting.')
+            raise ModelGenArgumentError
+        if source_level == target_level:
+            return element
+        if source_level < target_level:
+            action = 'up'
+            new_source_level = source_level + 1
+        else:
+            action = 'down'
+            new_source_level = source_level - 1
+        try:
+            result = self.movements[source_level][action][element]
+        except KeyError:
+            return None
+        return self.map(result, new_source_level, target_level)
 
-    @staticmethod
-    def from_yaml(data, mapping={}) -> 'Mapping':
-        """
-        Deserialize a Mapping from a list or dict which was saved in a yaml file.
 
-        The mapping argument does not need to be specified, it will be filled automatically unless
-        you have a specific requirement.
-
-        :param data: The list or dict containing the Mapping data.
-        :param mapping: A dictionary which will be used to recreate references between objects.
-        """
-        if data['id'] in mapping:
-            return mapping[data['id']]
-        result = Mapping()
-        for key, value in data['dict'].items():
-            result[mapping[key]] = mapping[value]
-        mapping[data['id']] = result
-        return result
-
-
-class ProductionOption():
+class ProductionOption:
     """
-    Saves a daughter graph and all information about the mapping from the mother
-    graph to the daughter graph.
+    Saves a daughter graph and all information about the mapping
+    from the mother graph to the daughter graph.
     """
 
     def __init__(self, mother_graph: Graph, mapping: Mapping,
@@ -72,18 +135,7 @@ class ProductionOption():
         self.to_change = []
         for element in mother_elements:
             if element in mapping:
-                neighbour_mapping = {}
-                unmapped_neighbours_in_m = [x for x in element.neighbours() if
-                                            x not in mapping]
-                unmapped_neighbours_in_d = [x for x in
-                                            mapping[element].neighbours() if
-                                            x not in mapping.values()]
-                if len(unmapped_neighbours_in_m) == 1 and \
-                        len(unmapped_neighbours_in_d) == 1:
-                    neighbour_mapping = {
-                        unmapped_neighbours_in_m[0]:
-                            unmapped_neighbours_in_d[0]}
-                self.to_change.append((element, neighbour_mapping))
+                self.to_change.append(mapping[element])
             else:
                 self.to_remove.append(element)
         self.to_add = [element for element in daughter_elements if
@@ -91,28 +143,33 @@ class ProductionOption():
 
     def to_yaml(self) -> Iterable:
         """
-        Return a list or dict representing the DaughterMapping which can be exported to yaml.
+        Return a list or dict representing the DaughterMapping which
+        can be exported to yaml.
 
         :return: A list or dict representing the DaughterMapping.
         """
-        fields = {}
-        fields['mother_graph'] = id(self.mother_graph)
-        fields['mapping'] = self.mapping.to_yaml()
-        fields['daughter_graph'] = self.daughter_graph.to_yaml()
-        fields['weight'] = self.weight
-        fields['id'] = id(self)
+        fields = {
+            'mother_graph': id(self.mother_graph),
+            'mapping': self.mapping.to_yaml(),
+            'daughter_graph': self.daughter_graph.to_yaml(),
+            'weight': self.weight,
+            'id': id(self),
+        }
         return fields
 
+    # noinspection PyDefaultArgument
     @staticmethod
     def from_yaml(data, mapping={}) -> 'ProductionOption':
         """
-        Deserialize a DaughterMapping from a list or dict which was saved in a yaml file.
+        Deserialize a DaughterMapping from a list or dict which was
+        saved in a yaml file.
 
-        The mapping argument does not need to be specified, it will be filled automatically unless
-        you have a specific requirement.
+        The mapping argument does not need to be specified, it will
+        be filled automatically unless you have a specific requirement.
 
         :param data: The list or dict containing the DaughterMapping data.
-        :param mapping: A dictionary which will be used to recreate references between objects.
+        :param mapping: A dictionary which will be used to recreate
+            references between objects.
         """
         if data['id'] in mapping:
             return mapping[data['id']]
@@ -147,18 +204,19 @@ class Production:
         for mapping in self.mappings:
             self.total_weight += mapping.weight
 
-    def match(self, host_graph: Graph) -> Iterable[
-           Tuple[Graph, Dict[GraphElement, GraphElement]]]:
+    def match(self, host_graph: Graph) \
+            -> Iterable[Mapping]:
         """
         Tries to match the production against a target Graph.
 
-        :param host_graph: The host graph against which the production is matched.
+        :param host_graph: The host graph against which the
+                           production is matched.
         :return: All possible matching subgraphs of the target graph.
         """
         return host_graph.match(self.mother_graph)
 
     def apply(self, host_graph: Graph,
-              map_mother_to_host: Dict[GraphElement, GraphElement]) -> Graph:
+              map_mother_to_host: Mapping) -> Graph:
         """
         Applies a production to a specific subgraph of the host graph and
         returns the result graph.
@@ -174,62 +232,52 @@ class Production:
         :return: The graph resulting from applying the production.
         """
 
-        def get_M_to_R(map_M_to_H, map_H_to_R):
-            def M_to_R(x):
-                return map_H_to_R[map_M_to_H[x]]
-
-            return M_to_R
-
-        def get_C_to_R(map_M_to_H, map_H_to_R, map_M_to_D, map_D_to_C):
-            def C_to_R(x):
-                try:
-                    return map_H_to_R[
-                        map_M_to_H[map_M_to_D.inverse[map_D_to_C.inverse[x][0]][0]]]
-                except KeyError:
-                    return None
-
-            return C_to_R
-
-        def get_R_to_C(M_to_R, map_D_to_C):
-            def R_to_C(x_neighbour_map, x):
-                map = {M_to_R(m): map_D_to_C[d] for m, d in
-                       x_neighbour_map.items()}
-                if x in map:
-                    return map[x]
-                else:
-                    return None
-
-            return R_to_C
+        def map_elements_to_be_removed(element, source_level, target_level,
+                                       to_be_removed):
+            if element in to_be_removed:
+                return hierarchy.map(element, source_level, target_level)
+            else:
+                return None
 
         log.debug(f'Applying {self} to {host_graph} according to '
                   f'{map_mother_to_host}.')
-        map_M_to_H = map_mother_to_host
-        map_H_to_R = Mapping()
-        result_graph = host_graph.__deepcopy__(mapping=map_H_to_R)
         option = self._select_option()
-        daughter_graph = option.daughter_graph
-        map_M_to_D = option.mapping
-        map_D_to_C = Mapping()
-        daughter_copy = daughter_graph.__deepcopy__(mapping=map_D_to_C)
-        M_to_R = get_M_to_R(map_M_to_H, map_H_to_R)
-        C_to_R = get_C_to_R(map_M_to_H, map_H_to_R, map_M_to_D, map_D_to_C)
-        R_to_C = get_R_to_C(M_to_R, map_D_to_C)
-        # First add all new elements, so latter operations act entirely within
-        # the graph, never referencing outside elements
-        for d_element in option.to_add:
-            new_element = map_D_to_C[d_element]
-            new_element.replace_connection(C_to_R)
-            result_graph.add(new_element)
-        # Then change continuing elements as is necessary, while the
-        # connections to old elements still exist for use in computations
-        for m_element, neighbour_mapping in option.to_change:
-            r_element = M_to_R(m_element)
-            for name, value in map_M_to_D[m_element].attr.items():
-                r_element.attr[name] = value
-            r_element.replace_connection(partial(R_to_C, neighbour_mapping))
-        # As a last operation remove the elements to be deleted
-        for m_element in option.to_remove:
-            result_graph.remove(M_to_R(m_element))
+        hierarchy = ProductionApplicationHierarchy(
+            host_graph,
+            map_mother_to_host,
+            option
+        )
+        result_graph = hierarchy.result_graph
+        to_add = {hierarchy.map(x, 'D', 'C') for x in option.to_add}
+        to_change = {hierarchy.map(x, 'D', 'R') for x in option.to_change}
+        to_remove = {hierarchy.map(x, 'M', 'R') for x in option.to_remove}
+        # First remove the now unnecessary Elements, this will remove them
+        # from any neighbourhood lists.
+        for R_element in to_remove:
+            result_graph.discard(R_element)
+        # Second add the new elements, which can now have their references
+        # contained entirely within the Graph and also add themselves to
+        # any neighbourhood lists, if they border any pre-existing elements.
+        for C_element in to_add:
+            C_element.replace_connection(
+                partial(hierarchy.map, source_level='C', target_level='R')
+            )
+            valid_inconsistencies = {x for x in C_element.neighbours()
+                                     if x in to_add}
+            result_graph.add(C_element, ignore_errors=valid_inconsistencies)
+        # At last, change the properties and neighbourhood lists of any
+        # elements that remained un-deleted. It is especially important to
+        # make sure all elements are connected correctly
+        for R_element in to_change:
+            # noinspection PyPep8Naming
+            D_element = hierarchy.map(R_element, 'R', 'D')
+            for name, value in D_element.attr.items():
+                R_element.attr[name] = value
+            R_element.replace_connection(
+                partial(map_elements_to_be_removed, source_level='R',
+                        target_level='C', to_remove=to_remove)
+            )
+
         log.debug(f'Applied {self} with result {result_graph}.')
         return result_graph
 
@@ -245,8 +293,8 @@ class Production:
         index = 0
         lower_bound = 0
         while True:
-            if lower_bound <= rand_num < lower_bound + self.mappings[
-                index].weight:
+            if lower_bound <= rand_num \
+                    < lower_bound + self.mappings[index].weight:
                 return self.mappings[index]
             else:
                 lower_bound += self.mappings[index].weight
@@ -254,26 +302,31 @@ class Production:
 
     def to_yaml(self) -> Iterable:
         """
-        Serialize the Production into a list or dict which can be exported into yaml.
+        Serialize the Production into a list or dict which can be
+        exported into yaml.
 
         :return: A list or dict representing the Production.
         """
-        fields = {}
-        fields['mother_graph'] = self.mother_graph.to_yaml()
-        fields['mappings'] = [x.to_yaml() for x in self.mappings]
-        fields['id'] = id(self)
+        fields = {
+            'mother_graph': self.mother_graph.to_yaml(),
+            'mappings': [x.to_yaml() for x in self.mappings],
+            'id': id(self)
+        }
         return fields
 
+    # noinspection PyDefaultArgument
     @staticmethod
     def from_yaml(data, mapping={}) -> 'Production':
         """
-        Deserialize a Production from a list or dict which was saved in a yaml file.
+        Deserialize a Production from a list or dict which was saved
+        in a yaml file.
 
-        The mapping argument does not need to be specified, it will be filled automatically unless
-        you have a specific requirement.
+        The mapping argument does not need to be specified, it will
+        be filled automatically unless you have a specific requirement.
 
         :param data: The list or dict containing the Production data.
-        :param mapping: A dictionary which will be used to recreate references between objects.
+        :param mapping: A dictionary which will be used to recreate
+            references between objects.
         """
         if data['id'] in mapping:
             return mapping[data['id']]

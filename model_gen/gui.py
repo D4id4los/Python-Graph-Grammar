@@ -152,7 +152,6 @@ class GraphUI(wx.Frame):
             self.load_graph_from_file(path)
             opts['last_grammar_file_path'] = path
 
-
     def load_graph_from_file(self, file_path: str) -> None:
         """
         Loads a graph saved in a yaml file and displays it in the gui.
@@ -721,7 +720,8 @@ class GraphPanel(wx.Panel):
         # This is a sanity check. With gui interactions it could easily happen
         # that a mouse release occurs is such a way that an inconsistency
         # appears.
-        if len(self.pressed_elements) != 0 and self.press_start_position is None:
+        if len(self.pressed_elements) != 0 \
+                and self.press_start_position is None:
             self.pressed_elements.clear()
         elif len(self.pressed_elements) > 0:
             dispatcher.send(signal='element_position_changed', sender=self)

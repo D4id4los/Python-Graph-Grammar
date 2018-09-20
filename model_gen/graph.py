@@ -1,10 +1,11 @@
 import abc
 import itertools
 import copy
-from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable
-from typing import MutableSequence, Tuple, Callable, Sized
+from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List
+from typing import MutableSequence, Tuple, Callable, AbstractSet
 from model_gen.exceptions import ModelGenArgumentError
-from model_gen.utils import get_logger
+from model_gen.exceptions import ModelGenIncongruentGraphStateError
+from model_gen.utils import get_logger, Mapping
 
 log = get_logger('model_gen.' + __name__)
 
@@ -45,20 +46,25 @@ class GraphElement(abc.ABC):
         return True
 
     @abc.abstractmethod
-    def add_to(self, graph: 'Graph') -> None:
+    def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None) -> None:
         """
         Add this element to the graph passed as argument.
 
         :param graph: The graph to add this element to.
+        :param ignore_errors: An set of GraphElements who should be
+            ignored when checking for errors.
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def delete_from(self, graph: 'Graph') -> None:
+    def delete_from(self, graph: 'Graph', ignore_errors: AbstractSet=None) \
+            -> None:
         """
         Remove this element from the graph passed as argument.
 
-        :param graph: The graph to remove this elemnt from.
+        :param graph: The graph to remove this element from.
+        :param ignore_errors: An set of GraphElements who should be
+            ignored when checking for errors.
         """
         raise NotImplementedError()
 
@@ -176,16 +182,35 @@ class Vertex(GraphElement):
             return False
         return super().matches(graph_element)
 
-    def add_to(self, graph: 'Graph'):
+    def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.vertices.append(self)
+        for edge in self.edges:
+            if edge not in graph.edges and edge not in ignore_errors:
+                log.error('Error adding Vertex to Graph: Vertex references an'
+                          ' Edge which does not exist inside the Graph.')
+                raise ModelGenIncongruentGraphStateError
+            if self not in edge.neighbours():
+                if edge.vertex1 is None:
+                    edge.vertex1 = self
+                elif edge.vertex2 is None:
+                    edge.vertex2 = self
+                elif edge not in ignore_errors:
+                    log.error('Error adding Vertex to Graph: Vertex references'
+                              ' an Edge that does not reference the Vertex.')
+                    raise ModelGenIncongruentGraphStateError
 
-    def delete_from(self, graph: 'Graph'):
+    def delete_from(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.vertices.remove(self)
         for edge in self.edges:
-            if edge.vertex1 == self:
-                edge.vertex1 = None
-            if edge.vertex2 == self:
-                edge.vertex2 = None
+            if self in edge.neighbours():
+                if edge.vertex1 == self:
+                    edge.vertex1 = None
+                if edge.vertex2 == self:
+                    edge.vertex2 = None
+            elif edge not in ignore_errors:
+                log.error('Error deleting Vertex from Graph: Vertex referenced'
+                          'an Edge that did not reference the Vertex.')
+                raise ModelGenIncongruentGraphStateError
 
     def neighbours(self):
         return self.edges
@@ -261,6 +286,7 @@ class Edge(GraphElement):
         :return: A copy of this graph element
         """
         if self in mapping:
+            # noinspection PyTypeChecker
             return mapping[self]
         cls = self.__class__
         result = cls.__new__(cls)
@@ -279,17 +305,26 @@ class Edge(GraphElement):
             return False
         return super().matches(graph_element)
 
-    def add_to(self, graph: 'Graph'):
+    def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.edges.append(self)
         for vertex in (self.vertex1, self.vertex2):
+            if vertex not in graph.vertices and vertex not in ignore_errors:
+                log.error('Error adding Edge: The Edge references a Vertex '
+                          'which is not part of the Graph I am adding the Edge'
+                          'to.')
+                raise ModelGenIncongruentGraphStateError
             if vertex is not None:
                 vertex.edges.add(self)
 
-    def delete_from(self, graph: 'Graph'):
+    def delete_from(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.edges.remove(self)
         for vertex in (self.vertex1, self.vertex2):
             if vertex is not None and self in vertex.edges:
                 vertex.edges.remove(self)
+            elif vertex is not None and vertex not in ignore_errors:
+                log.error('Error deleting Edge: The Edge references a Vertex'
+                          ' which does not reference back to the Edge.')
+                raise ModelGenIncongruentGraphStateError
 
     def neighbours(self):
         result = []
@@ -352,6 +387,16 @@ class Face(GraphElement):
     Represents a face inside a graph.
     """
 
+    # noinspection PyDefaultArgument
+    @staticmethod
+    def from_yaml(data, mapping={}):
+        pass
+
+    def replace_connection(self,
+                           get_replacement:
+                           Callable[['GraphElement'], 'GraphElement']) -> None:
+        pass
+
     def __init__(self, vertices: MutableSet[Vertex], edges: MutableSet[Edge]):
         super().__init__()
         self._vertices: MutableSet[Vertex] = vertices
@@ -362,10 +407,10 @@ class Face(GraphElement):
             return False
         return super().matches(graph_element)
 
-    def add_to(self, graph: 'Graph'):
+    def add_to(self, graph: 'Graph', **kwargs):
         graph.faces.append(self)
 
-    def delete_from(self, graph: 'Graph'):
+    def delete_from(self, graph: 'Graph', **kwargs):
         graph.faces.remove(self)
 
     def neighbours(self):
@@ -396,7 +441,10 @@ class Graph(MutableSet):
         :param elements:
         """
         if graph is not None:
-            if vertices is not None or edges is not None or faces is not None or elements is not None:
+            if vertices is not None \
+                    or edges is not None \
+                    or faces is not None \
+                    or elements is not None:
                 raise TypeError()
             self.vertices = list(graph.vertices)
             self.edges = list(graph.edges)
@@ -445,14 +493,14 @@ class Graph(MutableSet):
                 setattr(result, key, copy.deepcopy(value, memodict))
         result.vertices = [x.recursive_copy(mapping) for x in self.vertices]
         result.edges = [x.recursive_copy(mapping) for x in self.edges]
-        result.faces = [copy.deepcopy(x, memodict) for x in self.faces]
+        result.faces = [copy.deepcopy(x) for x in self.faces]
         return result
 
-    def add(self, element: GraphElement):
-        element.add_to(self)
+    def add(self, element: GraphElement, ignore_errors: AbstractSet=None):
+        element.add_to(self, ignore_errors)
 
-    def discard(self, element: GraphElement):
-        element.delete_from(self)
+    def discard(self, element: GraphElement, ignore_errors: AbstractSet=None):
+        element.delete_from(self, ignore_errors)
 
     def add_elements(self, elements: Iterable[GraphElement]) -> None:
         """
@@ -533,7 +581,7 @@ class Graph(MutableSet):
         return neighbours
 
     def match(self, other_graph: 'Graph') -> \
-            Sized and Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+            List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
 
@@ -557,8 +605,9 @@ class Graph(MutableSet):
         log.debug(f'Found {len(matches)} matches: {matches}.')
         return matches
 
-    def match_at(self, start: GraphElement, target_elements: Sequence) -> \
-            Sized and Iterable[Tuple['Graph', Dict[GraphElement, GraphElement]]]:
+    @staticmethod
+    def match_at(start: GraphElement, target_elements: Sequence) -> \
+            List[Mapping]:
         """
         Try to find a match for the graph defined by the list of target
         elements at the specific starting element of this graph.
@@ -567,27 +616,36 @@ class Graph(MutableSet):
         :param target_elements: The elements of the graph that is to be
                                 matched in such an order that it always
                                 builds into a connected graph.
-        :return: The matching subgraphs if any exist, an empty list
-                 otherwise.
+        :return: A list of mappings between this graph and the other
+                 graph, if such a mapping exists.
         """
-        problems: Sized and Iterable[
-            Tuple[Graph, int, Dict[GraphElement, GraphElement]]] = \
-            [(Graph(elements=[start]), 1, {target_elements[0]: start})]
+        def get_candidates(matches: Iterable[GraphElement]) \
+                -> List[GraphElement]:
+            """
+            Return a list of all non-matched neighbours of matched elements.
+            """
+            result = []
+            for element in matches:
+                for neighbour in element.neighbours():
+                    if neighbour not in matches:
+                        result.append(neighbour)
+            return result
+
+        problems: List[Tuple[int, Mapping]] = \
+            [(1, Mapping({target_elements[0]: start}))]
         solutions = []
         while len(problems) > 0:
-            subgraph, index, matching = problems.pop()
+            index, matching = problems.pop()
             if index == len(target_elements):
-                solutions.append((subgraph, matching))
+                solutions.append(matching)
                 break
-            candidates = subgraph.neighbours()
+            candidates = get_candidates(matching.values())
             target = target_elements[index]
             for candidate in candidates:
                 if candidate.matches(target):
-                    new_subgraph = Graph(subgraph)
-                    new_subgraph.add(candidate)
-                    new_matching = matching.copy()
+                    new_matching = Mapping(matching)
                     new_matching[target] = candidate
-                    problems.append((new_subgraph, index + 1, new_matching))
+                    problems.append((index + 1, new_matching))
         return solutions
 
     def is_isomorph(self, other_graph: 'Graph') -> bool:
