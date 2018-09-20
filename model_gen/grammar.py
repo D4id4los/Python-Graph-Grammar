@@ -1,4 +1,5 @@
 from typing import List, TypeVar, Tuple
+from timeit import default_timer as timer
 from model_gen.utils import *
 from model_gen.productions import *
 
@@ -28,12 +29,14 @@ class Grammar:
         :return: The sequence of graphs that results from applying
                  the grammar to the target graph.
         """
-        log.debug(f'Applying the grammar {self} to the target '
-                  f'{target_graph} for max {max_steps} steps.')
+        start_time = timer()
+        log.info(f'Applying the grammar {self} to the target '
+                 f'{id(target_graph)} for max {max_steps} steps.')
         step_count = 0
         result_graphs = []
         new_host_graph = target_graph
         while True:
+            log.info(f'Runnig derivation {step_count}.')
             production, matches = self._find_matching_production(
                 new_host_graph
             )
@@ -42,9 +45,13 @@ class Grammar:
             matching_mapping = self._select_match(matches)
             new_host_graph = production.apply(new_host_graph, matching_mapping)
             result_graphs.append(new_host_graph)
+            log.info(f'Resulted in a graph with {len(new_host_graph)} elements.')
             step_count += 1
             if max_steps != 0 and max_steps <= step_count:
                 break
+        end_time = timer()
+        dt = end_time - start_time
+        log.info(f'Calculated {len(result_graphs)} derivations in {dt} seconds.')
         return result_graphs
 
     def _find_matching_production(self, target_graph: Graph) \

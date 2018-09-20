@@ -239,8 +239,7 @@ class Production:
             else:
                 return None
 
-        log.debug(f'Applying {self} to {host_graph} according to '
-                  f'{map_mother_to_host}.')
+        log.debug(f'Applying {self} to graph {id(host_graph)}.')
         option = self._select_option()
         hierarchy = ProductionApplicationHierarchy(
             host_graph,
@@ -278,7 +277,7 @@ class Production:
                         target_level='C', to_be_removed=to_remove)
             )
 
-        log.debug(f'Applied {self} with result {result_graph}.')
+        log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         return result_graph
 
     def _select_option(self) -> ProductionOption:

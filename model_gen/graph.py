@@ -592,17 +592,16 @@ class Graph(MutableSet):
         :return: A list of all possible matches, empty of there are
                  none.
         """
-        log.debug(f'Matching {self} against {other_graph}.')
+        log.debug(f'Matching graph {id(self)} against graph '
+                  f'{id(other_graph)}.')
         matches = []
         other_elements = other_graph.element_list()
         start_element = other_elements[0]
         for own_element in self:
             if own_element.matches(start_element):
-                log.debug('Found a matching start element for %r with %r',
-                          start_element, own_element)
                 matches.extend(
                     self.match_at(own_element, other_elements))
-        log.debug(f'Found {len(matches)} matches: {matches}.')
+        log.debug(f'Found {len(matches)} matches.')
         return matches
 
     @staticmethod
