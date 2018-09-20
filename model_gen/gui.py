@@ -186,7 +186,7 @@ class GraphUI(wx.Frame):
                 f'loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
-        results = grammar.apply(host_graph, 2)
+        results = grammar.apply(host_graph, opts['max_derivations'])
         log.debug(
             f'There where {len(results)} derivations calculated: {results}.')
         offset = len(self.result_graphs)

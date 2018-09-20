@@ -275,7 +275,7 @@ class Production:
                 R_element.attr[name] = value
             R_element.replace_connection(
                 partial(map_elements_to_be_removed, source_level='R',
-                        target_level='C', to_remove=to_remove)
+                        target_level='C', to_be_removed=to_remove)
             )
 
         log.debug(f'Applied {self} with result {result_graph}.')
