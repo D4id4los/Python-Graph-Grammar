@@ -12,8 +12,10 @@ class Grammar:
     """
     A grammar is a collection of productions that can be applied on a graph.
     """
-    def __init__(self, productions: Iterable[Production]):
+    def __init__(self, productions: Iterable[Production]=None,
+                 subgrammars: Iterable['Grammar']=None):
         self.productions: Iterable[Production] = productions
+        self.subgrammars: Iterable['Grammar'] = subgrammars
 
     def apply(self, target_graph: Graph, max_steps: int = 0) \
             -> List[Graph]:
@@ -97,5 +99,21 @@ class Grammar:
 
         :return: The grammar as a list or dict.
         """
-        data = {'productions': [x.to_yaml() for x in self.productions]}
+        data = {
+            'productions': [x.to_yaml() for x in self.productions],
+            'subgrammars': [x.to_yaml() for x in self.subgrammars],
+            'id': id(self)
+        }
         return data
+
+    @staticmethod
+    def from_yaml(data, mapping=None):
+        if mapping is None:
+            mapping = {}
+        if data['id'] in mapping:
+            return mapping[data['id']]
+        result = Grammar()
+        result.productions = Production.from_yaml(data, mapping)
+        result.subgrammars = Grammar.from_yaml(data, mapping)
+        mapping[data['id']] = result
+        return result
