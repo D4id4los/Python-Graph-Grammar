@@ -8,12 +8,16 @@ from matplotlib.backends.backend_wx import \
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import ConnectionPatch
+import matplotlib.backend_bases
 from pydispatch import dispatcher
 
 from exceptions import ModelGenArgumentError
-from graph import GraphElement, Graph
-from gui import opts, log
-from utils import Bidict, Mapping
+from graph import GraphElement, Graph, Vertex, Edge
+from utils import Bidict, Mapping, get_logger
+from model_gen.opts import Opts
+
+log = get_logger('model_gen.' + __name__)
+opts = Opts()
 
 
 class GraphPanel(wx.Panel):
@@ -42,13 +46,16 @@ class GraphPanel(wx.Panel):
 
         self.canvas.mpl_connect('button_press_event', self.on_press)
         self.canvas.mpl_connect('button_release_event', self.on_release)
+        self.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.canvas.mpl_connect('key_release_event', self.on_key_release)
         self.canvas.mpl_connect('pick_event', self.on_pick)
         self.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
         self.pressed_elements: Dict[FigureElement, Tuple[float, float]] = {}
         self.press_start_position: Tuple[float, float] = None
+        self.pressed_keys: Dict[str, bool] = {}
 
-        self.graph = None
+        self.graph: Graph = None
         self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
         self.vertices: Set[FigureVertex] = set()
         self.edges: Set[FigureEdge] = set()
@@ -189,6 +196,22 @@ class GraphPanel(wx.Panel):
                              element.get_center(),
                              element.axes)
 
+    def _clear_drawing(self) -> None:
+        """
+        Clears the current drawing and dicts/lists referencing the
+        drawn elements.
+        """
+        self.vertices.clear()
+        self.edges.clear()
+        self.subplot.clear()
+
+    def _redraw(self) -> None:
+        """
+        Redraw the currently loaded graph.
+        """
+        self._clear_drawing()
+        self.draw_graph()
+
     def load_graph(self, graph: Graph) -> None:
         """
         Load and display the passed graph.
@@ -196,12 +219,35 @@ class GraphPanel(wx.Panel):
         :param graph: The graph to be displayed
         """
         self.graph = graph
-        self.vertices.clear()
-        self.edges.clear()
-        self.subplot.clear()
-        self.draw_graph()
+        self._redraw()
 
-    def event_in_axes(self, event) -> bool:
+    def _get_connected_graph(self, axes: plt.Axes) -> Graph:
+        """
+        Return the graph that is represented by the specified axes.
+
+        :param axes: Axes to which the corresponding graph is to be
+            found.
+        :return: Graph represented by the Axes.
+        """
+        if axes == self.subplot:
+            return self.graph
+        else:
+            raise KeyError('Specified Axes could not be found.')
+
+    def add_vertex(self, event: matplotlib.backend_bases.LocationEvent) \
+            -> None:
+        """
+        Adds a vertex to the graph at the position defined by the mpl event.
+
+        :param event: The matplotlib event that initiated the adding.
+        """
+        log.info(f'Adding Vertex @ {event.x} - {event.y}')
+        graph = self._get_connected_graph(event.inaxes)
+        vertex = Vertex()
+        graph.add(vertex)
+        self._redraw()
+
+    def event_in_axes(self, event: matplotlib.backend_bases.Event) -> bool:
         """
         Test if an event is inside the axes of this Panel.
 
@@ -210,34 +256,45 @@ class GraphPanel(wx.Panel):
         """
         return event.inaxes == self.subplot
 
-    def on_press(self, event):
+    def on_press(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
-        self.press_start_position = (event.xdata, event.ydata)
-        for element in self.elements:
-            if element.contains(event)[0]:
-                self.pressed_elements[element] = element.get_center()
-                dispatcher.connect(receiver=element.on_position_change,
-                                   signal='element_position_changed')
+        if event.button == 1: # 1 = left click
+            self.press_start_position = (event.xdata, event.ydata)
+            for element in self.elements:
+                if element.contains(event)[0]:
+                    self.pressed_elements[element] = element.get_center()
+                    dispatcher.connect(receiver=element.on_position_change,
+                                       signal='element_position_changed')
 
-    def on_release(self, event):
+    def on_release(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
-        self.press_start_position = None
-        for element in self.elements:
-            if element.contains(event)[0]:
-                # The If clause should not be necessary, but with gui elements
-                # I have experienced that such rules are quite relative.
-                # This particular case threw KeyErrors
-                if element in self.pressed_elements:
+        if event.button == 1: # 1 = left click
+            if event.key == 'ctrl+control':
+                self.add_vertex(event)
+                return
+            self.press_start_position = None
+            for element in self.elements:
+                if element.contains(event)[0] \
+                        and element in self.pressed_elements:
                     self.pressed_elements.pop(element)
                     dispatcher.disconnect(receiver=element.on_position_change,
                                           signal='element_position_changed')
 
-    def on_pick(self, event):
+    def on_key_press(self, event: matplotlib.backend_bases.KeyEvent):
+        self.pressed_keys[event.key] = True
+
+    def on_key_release(self, event: matplotlib.backend_bases.KeyEvent):
+        if ( event.key == 'd' and self.pressed_keys['control'] )\
+                or event.key == 'delete':
+            self.remove_element(event)
+        self.pressed_keys[event.key] = False
+
+    def on_pick(self, event: matplotlib.backend_bases.PickEvent):
         pass
 
-    def on_motion(self, event):
+    def on_motion(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
         for element in self.elements:
@@ -285,10 +342,30 @@ class ProductionGraphsPanel(GraphPanel):
         del self.subplot
         self.subplot = self.figure.add_subplot(121)
         self.subplot2 = self.figure.add_subplot(122)
-        self.graph2 = None
+        self.graph2: Graph = None
+        self.mapping: Mapping = None
         self.setup_mpl_visuals(self.subplot)
         self.setup_mpl_visuals(self.subplot2)
         self.mappings: Set[ConnectionPatch] = set()
+
+    def _clear_drawing(self) -> None:
+        """
+        Clears the current drawing and dicts/lists referencing the
+        drawn elements.
+        """
+        self.vertices.clear()
+        self.edges.clear()
+        self.subplot.clear()
+        self.subplot2.clear()
+
+    def _redraw(self) -> None:
+        """
+        Redraw the currently loaded graphs.
+        """
+        self._clear_drawing()
+        self.draw_graph(graph=self.graph, axes=self.subplot)
+        self.draw_graph(graph=self.graph2, axes=self.subplot2)
+        self.draw_mappings(self.mapping)
 
     def load_graph(self, graph_data: Tuple[Graph, Mapping, Graph]) -> None:
         """
@@ -298,13 +375,9 @@ class ProductionGraphsPanel(GraphPanel):
         """
         self.graph = graph_data[0]
         self.graph2 = graph_data[2]
-        self.vertices.clear()
-        self.edges.clear()
-        self.subplot.clear()
-        self.subplot2.clear()
-        self.draw_graph(graph=self.graph, axes=self.subplot)
-        self.draw_graph(graph=self.graph2, axes=self.subplot2)
-        self.draw_mappings(graph_data[1])
+        self.mapping = graph_data[1]
+        self._clear_drawing()
+        self._redraw()
 
     def draw_mappings(self, mapping: Mapping) -> None:
         """
@@ -329,6 +402,21 @@ class ProductionGraphsPanel(GraphPanel):
             self.mappings.add(patch)
             self.subplot.add_artist(patch)
         self.redraw()
+
+    def _get_connected_graph(self, axes: plt.Axes) -> Graph:
+        """
+        Return the graph that is represented by the specified axes.
+
+        :param axes: Axes to which the corresponding graph is to be
+            found.
+        :return: Graph represented by the Axes.
+        """
+        if axes == self.subplot:
+            return self.graph
+        elif axes == self.subplot2:
+            return self.graph2
+        else:
+            raise KeyError('Specified Axes could not be found.')
 
     def event_in_axes(self, event):
         if event.inaxes == self.subplot.axes \

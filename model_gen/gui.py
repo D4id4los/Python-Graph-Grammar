@@ -6,7 +6,7 @@ import wx
 import wx.lib.newevent
 import yaml
 
-from gui_elements import MainNotebook
+from gui_elements import MainNotebook, EVT_RUN_GRAMMAR
 from model_gen.grammar import Grammar
 from model_gen.productions import Production
 from model_gen.utils import get_logger
@@ -15,7 +15,8 @@ from model_gen.opts import Opts
 
 T = TypeVar('T')
 
-RunGrammarEvent, EVT_RUN_GRAMMAR = wx.lib.newevent.NewCommandEvent()
+
+
 log = get_logger('model_gen')
 
 

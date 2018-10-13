@@ -1,14 +1,15 @@
 from typing import Dict, Tuple
 
 import wx
+import wx.lib.newevent
 from wx.lib.agw import aui as aui
 
 from graph import Graph
-from gui import RunGrammarEvent
 from gui_graphs import GraphPanel, ProductionGraphsPanel
 from productions import Production
 from utils import Mapping
 
+RunGrammarEvent, EVT_RUN_GRAMMAR = wx.lib.newevent.NewCommandEvent()
 
 class MainNotebook(aui.AuiNotebook):
     """
@@ -195,6 +196,7 @@ class GrammarTree(wx.TreeCtrl):
     """
     def __init__(self, *args, production_graph_panel, **kwargs):
         super().__init__(*args, **kwargs)
+        self.AddRoot('Grammar')
 
 
 class ProductionList(wx.ListCtrl):
