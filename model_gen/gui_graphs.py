@@ -8,6 +8,7 @@ from matplotlib.backends.backend_wx import \
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.patches import ConnectionPatch
+import matplotlib.patheffects as pe
 import matplotlib.backend_bases
 from pydispatch import dispatcher
 
@@ -205,7 +206,7 @@ class GraphPanel(wx.Panel):
         self.edges.clear()
         self.subplot.clear()
 
-    def _redraw(self) -> None:
+    def _redraw_graph(self) -> None:
         """
         Redraw the currently loaded graph.
         """
@@ -219,7 +220,7 @@ class GraphPanel(wx.Panel):
         :param graph: The graph to be displayed
         """
         self.graph = graph
-        self._redraw()
+        self._redraw_graph()
 
     def _get_connected_graph(self, axes: plt.Axes) -> Graph:
         """
@@ -245,7 +246,7 @@ class GraphPanel(wx.Panel):
         graph = self._get_connected_graph(event.inaxes)
         vertex = Vertex()
         graph.add(vertex)
-        self._redraw()
+        self._redraw_graph()
 
     def delete_element(self, event: matplotlib.backend_bases.LocationEvent) \
         -> None:
@@ -260,7 +261,7 @@ class GraphPanel(wx.Panel):
         log.info(f'Elements to remove are {to_remove}')
         for element in to_remove:
             graph.remove(self.graph_to_figure.inverse[element][0])
-        self._redraw()
+        self._redraw_graph()
 
     def event_in_axes(self, event: matplotlib.backend_bases.Event) -> bool:
         """
@@ -316,19 +317,19 @@ class GraphPanel(wx.Panel):
             if element.contains(event)[0]:
                 if not element.hovered:
                     element.hovered = True
+                    element.on_hover()
                     if element.annotation is None \
                             and element.get_hover_text() != '':
                         element.annotation = self.annotate_element(element)
-                        self.redraw()
             else:
                 if element.hovered:
                     element.hovered = False
+                    element.on_unhover()
                     if element.annotation is not None \
                             and not opts['show_all_labels']:
                         element.annotation.set_visible(False)
                         element.annotation.remove()
                         element.annotation = None
-                        self.redraw()
         # This is a sanity check. With gui interactions it could easily happen
         # that a mouse release occurs is such a way that an inconsistency
         # appears.
@@ -342,7 +343,7 @@ class GraphPanel(wx.Panel):
                     dx = event.xdata - self.press_start_position[0]
                     dy = event.ydata - self.press_start_position[1]
                     element.center = (center[0] + dx, center[1] + dy)
-            self.redraw()
+        self.redraw()
 
 
 class ProductionGraphsPanel(GraphPanel):
@@ -373,7 +374,7 @@ class ProductionGraphsPanel(GraphPanel):
         self.subplot.clear()
         self.subplot2.clear()
 
-    def _redraw(self) -> None:
+    def _redraw_graph(self) -> None:
         """
         Redraw the currently loaded graphs.
         """
@@ -392,7 +393,7 @@ class ProductionGraphsPanel(GraphPanel):
         self.graph2 = graph_data[2]
         self.mapping = graph_data[1]
         self._clear_drawing()
-        self._redraw()
+        self._redraw_graph()
 
     def draw_mappings(self, mapping: Mapping) -> None:
         """
@@ -467,6 +468,16 @@ class FigureElement(abc.ABC):
             text += f'{name}: {value}\n'
         return text[:-1]
 
+    def on_hover(self) -> None:
+        """
+        Called when the element is hovered.
+        """
+
+    def on_unhover(self) -> None:
+        """
+        Called when an element stops being hovered.
+        """
+
     @abc.abstractmethod
     def get_center(self) -> Tuple[int, int]:
         """
@@ -516,6 +527,15 @@ class FigureVertex(FigureElement, plt.Circle):
         if self.annotation is not None:
             self.annotation.xy = self.center
 
+    def on_hover(self):
+        log.debug(f'Setting path effect on {self}')
+        self.set_path_effects([pe.Stroke(linewidth=3, foreground='r'),
+                               pe.Normal()])
+
+    def on_unhover(self):
+        log.debug(f'Unsetting path effect on {self}')
+        self.set_path_effects([pe.Normal()])
+
 
 class FigureEdge(FigureElement, plt.Line2D):
     """
@@ -559,3 +579,12 @@ class FigureEdge(FigureElement, plt.Line2D):
         self.update_position()
         if self.annotation is not None:
             self.annotation.xy = self.get_center()
+
+    def on_hover(self):
+        log.debug(f'Setting path effect on {self}')
+        self.set_path_effects([pe.Stroke(linewidth=3, foreground='r'),
+                               pe.Normal()])
+
+    def on_unhover(self):
+        log.debug(f'Unsetting path effect on {self}')
+        self.set_path_effects([pe.Normal()])
