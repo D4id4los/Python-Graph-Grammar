@@ -247,6 +247,21 @@ class GraphPanel(wx.Panel):
         graph.add(vertex)
         self._redraw()
 
+    def delete_element(self, event: matplotlib.backend_bases.LocationEvent) \
+        -> None:
+        """
+        Removes the hovered Elements from the graph.
+
+        :param event: The matplotlib event that initiated the removal.
+        """
+        log.info(f'Removing Element(s) @ {event.x} - {event.y}')
+        graph = self._get_connected_graph(event.inaxes)
+        to_remove = {x for x in self.elements if x.contains(event)[0]}
+        log.info(f'Elements to remove are {to_remove}')
+        for element in to_remove:
+            graph.remove(self.graph_to_figure.inverse[element][0])
+        self._redraw()
+
     def event_in_axes(self, event: matplotlib.backend_bases.Event) -> bool:
         """
         Test if an event is inside the axes of this Panel.
@@ -288,7 +303,7 @@ class GraphPanel(wx.Panel):
     def on_key_release(self, event: matplotlib.backend_bases.KeyEvent):
         if ( event.key == 'd' and self.pressed_keys['control'] )\
                 or event.key == 'delete':
-            self.remove_element(event)
+            self.delete_element(event)
         self.pressed_keys[event.key] = False
 
     def on_pick(self, event: matplotlib.backend_bases.PickEvent):
