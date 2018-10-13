@@ -55,6 +55,7 @@ class GraphPanel(wx.Panel):
         self.pressed_elements: Dict[FigureElement, Tuple[float, float]] = {}
         self.press_start_position: Tuple[float, float] = None
         self.pressed_keys: Dict[str, bool] = {}
+        self.selected_element: FigureElement = None
 
         self.graph: Graph = None
         self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
@@ -248,8 +249,34 @@ class GraphPanel(wx.Panel):
         graph.add(vertex)
         self._redraw_graph()
 
+    def connect_vertices(self, event: matplotlib.backend_bases.LocationEvent,
+                         vertex: 'FigureVertex') -> None:
+        """
+        Adds a new Edge between two vertices, if self.selected_element
+        is not None. If it is None then it sets self.selected_element
+        to the vertex passed as argument.
+
+        :param event: The event that initiated this action.
+        :param vertex: Vertex to connect to another vertex.
+        """
+        log.debug('connecting Vertices')
+        if self.selected_element is None:
+            self.selected_element = vertex
+            vertex.add_extra_path_effect('selection',
+                                         pe.Stroke(linewidth=5,
+                                                   foreground='b'))
+            return
+        graph = self._get_connected_graph(event.inaxes)
+        vertex1 = self.graph_to_figure.inverse[self.selected_element][0]
+        vertex2 = self.graph_to_figure.inverse[vertex][0]
+        new_edge = Edge(vertex1, vertex2)
+        graph.add(new_edge)
+        self.selected_element.remove_extra_path_effect('selection')
+        self.selected_element = None
+        self._redraw_graph()
+
     def delete_element(self, event: matplotlib.backend_bases.LocationEvent) \
-        -> None:
+            -> None:
         """
         Removes the hovered Elements from the graph.
 
@@ -275,7 +302,7 @@ class GraphPanel(wx.Panel):
     def on_press(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
-        if event.button == 1: # 1 = left click
+        if event.button == 1:  # 1 = left click
             self.press_start_position = (event.xdata, event.ydata)
             for element in self.elements:
                 if element.contains(event)[0]:
@@ -286,7 +313,7 @@ class GraphPanel(wx.Panel):
     def on_release(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
-        if event.button == 1: # 1 = left click
+        if event.button == 1:  # 1 = left click
             if event.key == 'ctrl+control':
                 self.add_vertex(event)
                 return
@@ -297,12 +324,21 @@ class GraphPanel(wx.Panel):
                     self.pressed_elements.pop(element)
                     dispatcher.disconnect(receiver=element.on_position_change,
                                           signal='element_position_changed')
+        elif event.button == 3:  # 3 = right click
+            for vertex in self.vertices:
+                if vertex.contains(event)[0]:
+                    self.connect_vertices(event, vertex)
+                    return
+            if self.selected_element is not None:
+                self.selected_element.remove_extra_path_effect('selection')
+                self.selected_element = None
+            self.redraw()
 
     def on_key_press(self, event: matplotlib.backend_bases.KeyEvent):
         self.pressed_keys[event.key] = True
 
     def on_key_release(self, event: matplotlib.backend_bases.KeyEvent):
-        if ( event.key == 'd' and self.pressed_keys['control'] )\
+        if (event.key == 'd' and self.pressed_keys['control']) \
                 or event.key == 'delete':
             self.delete_element(event)
         self.pressed_keys[event.key] = False
@@ -456,6 +492,8 @@ class FigureElement(abc.ABC):
         """Whether or not this element is currently being hovered over."""
         self.annotation: plt.Annotation = None
         """Saves any matplotlib annotation associated with this Element."""
+        self.extra_path_effects: Dict[str, pe.AbstractPathEffect] = {}
+        """Saves a dict mapping text labels to applied path effects."""
 
     def get_hover_text(self) -> str:
         """
@@ -467,6 +505,25 @@ class FigureElement(abc.ABC):
         for name, value in self.graph_element.attr.items():
             text += f'{name}: {value}\n'
         return text[:-1]
+
+    def add_extra_path_effect(self, name: str,
+                              effect: pe.AbstractPathEffect) -> None:
+        """
+        Add an extra path effect to the element.
+
+        :param name: Name of the effect.
+        :param effect: The effect to add.
+        """
+        self.extra_path_effects[name] = effect
+
+    def remove_extra_path_effect(self, name: str):
+        """
+        Removes the path effect with the specified name from the
+        element.
+
+        :param name: Name of the path effect to remove.
+        """
+        self.extra_path_effects.pop(name)
 
     def on_hover(self) -> None:
         """
@@ -521,6 +578,35 @@ class FigureVertex(FigureElement, plt.Circle):
     def get_center(self) -> Tuple[int, int]:
         return self.center
 
+    def update_path_effects(self) -> None:
+        """
+        Updates the applied path effects.
+        """
+        effects = list(self.extra_path_effects.values())
+        effects.append(pe.Normal())
+        self.set_path_effects(effects)
+
+    def add_extra_path_effect(self, name: str,
+                              effect: pe.AbstractPathEffect) -> None:
+        """
+        Add an extra path effect to the element.
+
+        :param name: Name of the effect.
+        :param effect: The effect to add.
+        """
+        super().add_extra_path_effect(name, effect)
+        self.update_path_effects()
+
+    def remove_extra_path_effect(self, name: str):
+        """
+        Removes the path effect with the specified name from the
+        element.
+
+        :param name: Name of the path effect to remove.
+        """
+        super().remove_extra_path_effect(name)
+        self.update_path_effects()
+
     def on_position_change(self):
         for edge in self.edges:
             edge.update_position()
@@ -529,12 +615,12 @@ class FigureVertex(FigureElement, plt.Circle):
 
     def on_hover(self):
         log.debug(f'Setting path effect on {self}')
-        self.set_path_effects([pe.Stroke(linewidth=3, foreground='r'),
-                               pe.Normal()])
+        self.add_extra_path_effect('hover',
+                                   pe.Stroke(linewidth=3, foreground='r'))
 
     def on_unhover(self):
         log.debug(f'Unsetting path effect on {self}')
-        self.set_path_effects([pe.Normal()])
+        self.remove_extra_path_effect('hover')
 
 
 class FigureEdge(FigureElement, plt.Line2D):
@@ -575,6 +661,35 @@ class FigureEdge(FigureElement, plt.Line2D):
         center = (x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2)
         return center
 
+    def update_path_effects(self) -> None:
+        """
+        Updates the applied path effects.
+        """
+        effects = list(self.extra_path_effects.values())
+        effects.append(pe.Normal())
+        self.set_path_effects(effects)
+
+    def add_extra_path_effect(self, name: str,
+                              effect: pe.AbstractPathEffect) -> None:
+        """
+        Add an extra path effect to the element.
+
+        :param name: Name of the effect.
+        :param effect: The effect to add.
+        """
+        super().add_extra_path_effect(name, effect)
+        self.update_path_effects()
+
+    def remove_extra_path_effect(self, name: str):
+        """
+        Removes the path effect with the specified name from the
+        element.
+
+        :param name: Name of the path effect to remove.
+        """
+        super().remove_extra_path_effect(name)
+        self.update_path_effects()
+
     def on_position_change(self):
         self.update_position()
         if self.annotation is not None:
@@ -582,9 +697,9 @@ class FigureEdge(FigureElement, plt.Line2D):
 
     def on_hover(self):
         log.debug(f'Setting path effect on {self}')
-        self.set_path_effects([pe.Stroke(linewidth=3, foreground='r'),
-                               pe.Normal()])
+        self.add_extra_path_effect('hover',
+                                   pe.Stroke(linewidth=3, foreground='r'))
 
     def on_unhover(self):
         log.debug(f'Unsetting path effect on {self}')
-        self.set_path_effects([pe.Normal()])
+        self.remove_extra_path_effect('hover')
