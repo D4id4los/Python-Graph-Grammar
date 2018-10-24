@@ -21,6 +21,97 @@ log = get_logger('model_gen.' + __name__)
 opts = Opts()
 
 
+def _get_round_edges_bitmap(width: int, height: int, radius: int):
+    """
+    Calculate a bitmap for use as a wx frame background with rounded
+    corners.
+
+    :param width: Width of the frame.
+    :param height: Height of the frame.
+    :param radius: Radius of the corner.
+    :return: A bitmap for use as a wx frame background.
+    """
+    mask_color = opts['gui']['attrs']['mask_color']
+    background_color = opts['gui']['attrs']['background_color']
+    bitmap = wx.Bitmap(width, height)
+    dc = wx.MemoryDC(bitmap)
+    dc.SetBrush(wx.Brush(mask_color))
+    dc.DrawRectangle(0,0,width,height)
+    dc.SetBrush(wx.Brush(background_color))
+    dc.SetPen(wx.Pen(background_color))
+    dc.DrawRoundedRectangle(0,0,width,height,radius)
+    bitmap.SetMaskColour(mask_color)
+    return bitmap
+
+
+class AttributeEditingFrame(wx.Frame):
+    """
+    This frame is used to open a small window near a graph element
+    to allow editing of the elements attribute.
+    """
+    def __init__(self, *args, position=(0, 0), element=None, **kwargs):
+        style = wx.CLIP_CHILDREN | wx.NO_BORDER \
+                          | wx.FRAME_SHAPED | wx.FRAME_NO_TASKBAR \
+                          | wx.FRAME_NO_WINDOW_MENU
+        super().__init__(*args, **kwargs, style=style)
+        self.SetTransparent(240)
+        self.SetPosition(position)
+        self._set_frame_shape()
+        self.attr_labels = {}
+        self.attr_inputs = {}
+        self.element = element
+        self._load_attrs()
+        self.Bind(wx.EVT_MOTION, self.on_mouse_movement)
+        self.Layout()
+        self.Show(True)
+        self._drag_start_pos = None
+
+    def _set_frame_shape(self) -> None:
+        """
+        Sets this frames shape to a rounded rectangle.
+        """
+        width, height = self.GetSize()
+        self.SetShape(wx.Region(_get_round_edges_bitmap(width, height, 10)))
+
+    def _load_attrs(self) -> None:
+        """
+        Load the attributes from the connected element.
+        """
+        rows = len(self.element.attr)
+        if rows == 0:
+            return
+        flex_sizer = wx.FlexGridSizer(rows, 2, vgap=5, hgap=10)
+        wx_elements = []
+        for label, value in self.element.attr.items():
+            text_label = wx.StaticText(self, label=label)
+            text_input = wx.TextCtrl(self, value=value)
+            self.attr_labels[label] = text_label
+            self.attr_inputs[label] = text_input
+            wx_elements.extend([
+                (text_label, 0, wx.ALIGN_CENTER_VERTICAL),
+                (text_input, 1, wx.EXPAND)
+            ])
+        flex_sizer.AddMany(wx_elements)
+        self.SetSizer(flex_sizer)
+
+    def on_mouse_movement(self, event: wx.MouseEvent) -> None:
+        """
+        This handles the dragging of the window.
+
+        :param event: The wx event object.
+        """
+        if not event.Dragging():
+            self._drag_start_pos = None
+            return
+        # self.CaptureMouse()
+        if self._drag_start_pos is None:
+            self._drag_start_pos = event.GetPosition()
+        else:
+            current_pos = event.GetPosition()
+            change = self._drag_start_pos - current_pos
+            self.SetPosition(self.GetPosition() - change)
+
+
 class GraphPanel(wx.Panel):
     """
     A container for the plots of a graph.
@@ -56,6 +147,7 @@ class GraphPanel(wx.Panel):
         self.press_start_position: Tuple[float, float] = None
         self.pressed_keys: Dict[str, bool] = {}
         self.selected_element: FigureElement = None
+        self.attr_editing_window = None
 
         self.graph: Graph = None
         self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
@@ -206,6 +298,8 @@ class GraphPanel(wx.Panel):
         self.vertices.clear()
         self.edges.clear()
         self.subplot.clear()
+        self.selected_element = None
+        self.pressed_elements.clear()
 
     def _redraw_graph(self) -> None:
         """
@@ -290,6 +384,26 @@ class GraphPanel(wx.Panel):
             graph.remove(self.graph_to_figure.inverse[element][0])
         self._redraw_graph()
 
+    def open_attr_editing(self, element) -> None:
+        """
+        Display a window that allows for editing of an elements
+        attributes.
+        """
+        if self.attr_editing_window is not None:
+            self.close_attr_editing()
+        else:
+            position = wx.GetMousePosition()
+            self.attr_editing_window = AttributeEditingFrame(self, wx.ID_ANY,
+                                                             position=position,
+                                                             element=element)
+
+    def close_attr_editing(self) -> None:
+        """
+        Closes an opened element attribute editing window.
+        """
+        self.attr_editing_window.Close()
+        self.attr_editing_window = None
+
     def event_in_axes(self, event: matplotlib.backend_bases.Event) -> bool:
         """
         Test if an event is inside the axes of this Panel.
@@ -302,10 +416,16 @@ class GraphPanel(wx.Panel):
     def on_press(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
+        if self.attr_editing_window is not None:
+            self.close_attr_editing()
         if event.button == 1:  # 1 = left click
             self.press_start_position = (event.xdata, event.ydata)
             for element in self.elements:
                 if element.contains(event)[0]:
+                    if event.key == 'shift' \
+                            and self.attr_editing_window is None:
+                        self.open_attr_editing(
+                            self.graph_to_figure.inverse[element][0])
                     self.pressed_elements[element] = element.get_center()
                     dispatcher.connect(receiver=element.on_position_change,
                                        signal='element_position_changed')
