@@ -57,12 +57,21 @@ class AttributeEditingFrame(wx.Frame):
         self.SetTransparent(240)
         self.SetPosition(position)
         self._set_frame_shape()
-        self.attr_labels = {}
-        self.attr_inputs = {}
+        self.attr_labels: Dict[int, wx.TextCtrl] = {}
+        self.attr_values: Dict[int, wx.TextCtrl] = {}
+        self.attr_ids: Dict[int, str] = {}
         self.element = element
+        box = wx.BoxSizer(wx.VERTICAL)
+        self.flex_grid = None
         self._load_attrs()
+        self.add_attr_button = wx.Button(self, wx.ID_ANY, label='+')
+        box.AddMany([
+            (self.flex_grid, 0),
+            (self.add_attr_button, 0, wx.ALIGN_LEFT)
+        ])
+        self.SetSizer(box)
         self.Bind(wx.EVT_MOTION, self.on_mouse_movement)
-        self.Layout()
+        self.Bind(wx.EVT_BUTTON, self.add_attr)
         self.Show(True)
         self._drag_start_pos = None
 
@@ -73,26 +82,73 @@ class AttributeEditingFrame(wx.Frame):
         width, height = self.GetSize()
         self.SetShape(wx.Region(_get_round_edges_bitmap(width, height, 10)))
 
+    def _update_attr_list(self) -> None:
+        """
+        Updates the list of displayed attribute text inputs.
+        """
+        self.flex_grid = wx.FlexGridSizer(cols=2, vgap=5, hgap=10)
+        wx_elements=[]
+        for attr_id in self.attr_ids:
+            label_input = self.attr_labels[attr_id]
+            value_input = self.attr_values[attr_id]
+            wx_elements.extend([
+                (label_input, 0, wx.ALIGN_CENTER_VERTICAL),
+                (value_input, 1, wx.EXPAND)
+            ])
+        self.flex_grid.AddMany(wx_elements)
+        self.Layout()
+
     def _load_attrs(self) -> None:
         """
         Load the attributes from the connected element.
         """
-        rows = len(self.element.attr)
-        if rows == 0:
-            return
-        flex_sizer = wx.FlexGridSizer(rows, 2, vgap=5, hgap=10)
-        wx_elements = []
-        for label, value in self.element.attr.items():
-            text_label = wx.StaticText(self, label=label)
-            text_input = wx.TextCtrl(self, value=value)
-            self.attr_labels[label] = text_label
-            self.attr_inputs[label] = text_input
-            wx_elements.extend([
-                (text_label, 0, wx.ALIGN_CENTER_VERTICAL),
-                (text_input, 1, wx.EXPAND)
-            ])
-        flex_sizer.AddMany(wx_elements)
-        self.SetSizer(flex_sizer)
+        self.attr_ids.clear()
+        for i, attr_label in enumerate(self.element.attr):
+            self.attr_ids[i] = attr_label
+        for attr_id in self.attr_ids:
+            attr_label = self.attr_ids[attr_id]
+            attr_value = self.element.attr[attr_label]
+            text_label = wx.TextCtrl(self, value=attr_label)
+            text_value = wx.TextCtrl(self, value=attr_value)
+            self.attr_labels[attr_id] = text_label
+            self.attr_values[attr_id] = text_value
+        self._update_attr_list()
+
+    def _save_attrs(self) -> None:
+        """
+        Save the changes to the attributes to the connected element.
+        """
+        for attr_id in self.attr_ids:
+            orig_label = self.attr_ids[attr_id]
+            attr_label = self.attr_labels[attr_id].GetValue()
+            attr_value = self.attr_values[attr_id].GetValue()
+            if orig_label != attr_label:
+                self.element.attr.pop(orig_label)
+                self.attr_ids[attr_id] = attr_label
+            if self.element.attr[attr_label] != attr_value:
+                self.element.attr[attr_label] = attr_value
+
+    def add_attr(self, event: wx.CommandEvent) -> None:
+        """
+        Add an attribute to the element on the push of a button.
+
+        :param event: The wx event of pushing a button.
+        """
+        new_id = len(self.attr_ids)
+        self.attr_ids[new_id] = ''
+        text_label = wx.TextCtrl(self, value='')
+        text_value = wx.TextCtrl(self, value='')
+        self.attr_labels[new_id] = text_label
+        self.attr_values[new_id] = text_value
+        self._update_attr_list()
+
+    def Close(self, *args, **kwargs):
+        """
+        Override to save changes to arguments before closing the
+        frame.
+        """
+        self._save_attrs()
+        super().Close(*args, **kwargs)
 
     def on_mouse_movement(self, event: wx.MouseEvent) -> None:
         """
@@ -260,6 +316,8 @@ class GraphPanel(wx.Panel):
         :param axes: The axes to add the annotation to
         :return: The Annotation object representing the annotation.
         """
+        if text == '':
+            return
         if axes is None:
             axes = self.subplot
         annotation = axes.annotate(text,
@@ -286,9 +344,13 @@ class GraphPanel(wx.Panel):
         :param element: The FigureElement to annotate
         :return: The Annotation object representing the annotation.
         """
-        return self.annotate(element.get_hover_text(),
-                             element.get_center(),
-                             element.axes)
+        if element.annotation is not None:
+            element.annotation.set_text(element.get_hover_text())
+            return element.annotation
+        else:
+            return self.annotate(element.get_hover_text(),
+                                 element.get_center(),
+                                 element.axes)
 
     def _clear_drawing(self) -> None:
         """
@@ -396,6 +458,8 @@ class GraphPanel(wx.Panel):
             self.attr_editing_window = AttributeEditingFrame(self, wx.ID_ANY,
                                                              position=position,
                                                              element=element)
+            figure_element = self.graph_to_figure[element]
+            figure_element.annotation = self.annotate_element(figure_element)
 
     def close_attr_editing(self) -> None:
         """
@@ -413,16 +477,21 @@ class GraphPanel(wx.Panel):
         """
         return event.inaxes == self.subplot
 
+    # For Checking Keyboard presses during mouse-clicks using the mpl functions
+    # results in keys such as Alt getting "stuck", for reasons see:
+    # https://stackoverflow.com/a/36837686
+    # Therefore I need to use event.guiEvent.CmdDown() and the like.
     def on_press(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
             return
         if self.attr_editing_window is not None:
             self.close_attr_editing()
+            self.redraw()
         if event.button == 1:  # 1 = left click
             self.press_start_position = (event.xdata, event.ydata)
             for element in self.elements:
                 if element.contains(event)[0]:
-                    if event.key == 'shift' \
+                    if event.guiEvent.ShiftDown() \
                             and self.attr_editing_window is None:
                         self.open_attr_editing(
                             self.graph_to_figure.inverse[element][0])
@@ -434,7 +503,7 @@ class GraphPanel(wx.Panel):
         if not self.event_in_axes(event):
             return
         if event.button == 1:  # 1 = left click
-            if event.key == 'ctrl+control':
+            if event.guiEvent.CmdDown():
                 self.add_vertex(event)
                 return
             self.press_start_position = None
