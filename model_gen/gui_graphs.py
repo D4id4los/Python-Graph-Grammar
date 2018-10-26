@@ -640,6 +640,8 @@ class ProductionGraphsPanel(GraphPanel):
                 arrowstyle="->",
                 clip_on=False,
             )
+            figure_element1.mapping_left = patch
+            figure_element2.mapping_right = patch
             self.mappings.add(patch)
             self.subplot.add_artist(patch)
         self.redraw()
@@ -681,6 +683,12 @@ class FigureElement(abc.ABC):
         """Whether or not this element is currently being hovered over."""
         self.annotation: plt.Annotation = None
         """Saves any matplotlib annotation associated with this Element."""
+        self.mapping_left: ConnectionPatch = None
+        """Saves the ConnectionPatch if this element is on the left hand side
+        of the production."""
+        self.mapping_right: ConnectionPatch = None
+        """Saves the ConnectionPatch if this element is on the right hand side
+        of the production."""
         self.extra_path_effects: Dict[str, pe.AbstractPathEffect] = {}
         """Saves a dict mapping text labels to applied path effects."""
 
@@ -798,9 +806,13 @@ class FigureVertex(FigureElement, plt.Circle):
 
     def on_position_change(self):
         for edge in self.edges:
-            edge.update_position()
+            edge.on_position_change()
         if self.annotation is not None:
             self.annotation.xy = self.center
+        if self.mapping_left is not None:
+            self.mapping_left.xy1 = self.center
+        if self.mapping_right is not None:
+            self.mapping_right.xy2 = self.center
 
     def on_hover(self):
         log.debug(f'Setting path effect on {self}')
@@ -883,6 +895,10 @@ class FigureEdge(FigureElement, plt.Line2D):
         self.update_position()
         if self.annotation is not None:
             self.annotation.xy = self.get_center()
+        if self.mapping_left is not None:
+            self.mapping_left.xy1 = self.get_center()
+        if self.mapping_right is not None:
+            self.mapping_right.xy2 = self.get_center()
 
     def on_hover(self):
         log.debug(f'Setting path effect on {self}')
