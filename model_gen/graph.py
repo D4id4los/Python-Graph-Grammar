@@ -307,7 +307,7 @@ class Edge(GraphElement):
 
     def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.edges.append(self)
-        for vertex in (self.vertex1, self.vertex2):
+        for vertex in self.get_neighbour_vertices():
             if vertex not in graph.vertices and vertex not in ignore_errors:
                 log.error('Error adding Edge: The Edge references a Vertex '
                           'which is not part of the Graph I am adding the Edge'
@@ -326,13 +326,16 @@ class Edge(GraphElement):
                           ' which does not reference back to the Edge.')
                 raise ModelGenIncongruentGraphStateError
 
-    def neighbours(self):
+    def get_neighbour_vertices(self) -> List[Vertex]:
         result = []
         if self.vertex1 is not None:
             result.append(self.vertex1)
         if self.vertex2 is not None:
             result.append(self.vertex2)
         return result
+
+    def neighbours(self):
+        return self.get_neighbour_vertices()
 
     def replace_connection(self,
                            get_replacement:
@@ -350,8 +353,8 @@ class Edge(GraphElement):
 
     def to_yaml(self):
         fields = super().to_yaml()
-        fields['vertex1'] = id(self.vertex1)
-        fields['vertex2'] = id(self.vertex2)
+        fields['vertex1'] = id(self.vertex1) if self.vertex1 is not None else None
+        fields['vertex2'] = id(self.vertex2) if self.vertex2 is not None else None
         return fields
 
     # noinspection PyDefaultArgument
@@ -359,8 +362,8 @@ class Edge(GraphElement):
     def from_yaml(data, mapping={}):
         if data['id'] in mapping:
             return mapping[data['id']]
-        vertex1 = mapping[data['vertex1']]
-        vertex2 = mapping[data['vertex2']]
+        vertex1 = mapping[data['vertex1']] if data['vertex1'] is not None else None
+        vertex2 = mapping[data['vertex2']] if data['vertex2'] is not None else None
         result = Edge(vertex1, vertex2)
         result.attr = data['attr']
         mapping[data['id']] = result

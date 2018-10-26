@@ -2,6 +2,6 @@ gui:
   attrs:
     background_color: [5, 5, 5]
     mask_color: [0, 0, 0]
-last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/l-sys_ex1_filament.yml
+last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/shape_test1_edited.yml
 max_derivations: 100
 show_all_labels: true

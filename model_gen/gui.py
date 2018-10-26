@@ -113,13 +113,16 @@ class GraphUI(wx.Frame):
             log.info('Exporting all graphs and productions.')
             path = file_dialog.GetPath()
             log.debug(f'Exporting to file »{path}«.')
+            host_graphs = self.notebook.host_graph_panel.list.get_data()
+            productions = self.notebook.production_panel.list.get_data()
+            result_graphs = self.notebook.result_panel.list.get_data()
             data = {
                 'host_graphs': {k: v.to_yaml() for k, v in
-                                self.host_graphs.items()},
+                                host_graphs.items()},
                 'productions': {k: v.to_yaml() for k, v in
-                                self.productions.items()},
+                                productions.items()},
                 'result_graphs': {k: v.to_yaml() for k, v in
-                                  self.result_graphs.items()}
+                                  result_graphs.items()}
             }
             try:
                 with open(path, 'w') as stream:

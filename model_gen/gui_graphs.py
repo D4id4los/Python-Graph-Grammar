@@ -294,8 +294,26 @@ class GraphPanel(wx.Panel):
             axes.add_artist(figure_vertex)
             i += 1
         for graph_edge in graph.edges:
-            figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
-            figure_vertex2 = self.graph_to_figure[graph_edge.vertex2]
+            if graph_edge.vertex1 is not None:
+                figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
+            else:
+                position = free_spaces[i]
+                add_new_free_spaces(position, free_spaces)
+                figure_vertex1 = FigureVertex(None, position, 0.5,
+                                              color='w', ec='w', zorder=10)
+                self.vertices.add(figure_vertex1)
+                axes.add_artist(figure_vertex1)
+                i += 1
+            if graph_edge.vertex2 is not None:
+                figure_vertex2 = self.graph_to_figure[graph_edge.vertex2]
+            else:
+                position = free_spaces[i]
+                add_new_free_spaces(position, free_spaces)
+                figure_vertex2 = FigureVertex(None, position, 0.5,
+                                              color='w', ec='w', zorder=10)
+                self.vertices.add(figure_vertex2)
+                axes.add_artist(figure_vertex2)
+                i += 1
             figure_edge = FigureEdge(graph_edge, vertex1=figure_vertex1,
                                      vertex2=figure_vertex2, c='k')
             self.edges.add(figure_edge)
@@ -748,6 +766,8 @@ class FigureElement(matplotlib.artist.Artist):
 
         :return: A string containing the hover text of the element.
         """
+        if self.graph_element is None:
+            return ''
         text = ''
         for name, value in self.graph_element.attr.items():
             text += f'{name}: {value}\n'
@@ -809,6 +829,8 @@ class FigureVertex(FigureElement, plt.Circle):
         plt.Circle.__init__(self, *args, **kwargs)
         self.edges: Set[FigureEdge] = set() if edges is None else edges
         """A set containing all Edges connected to this Vertex."""
+        if graph_element is None:
+            self.set_color('w')
         for edge in self.edges:
             if self not in {edge.vertex1, edge.vertex2}:
                 if edge.vertex1 is None:

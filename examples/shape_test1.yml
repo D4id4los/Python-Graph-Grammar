@@ -1,0 +1,7 @@
+host_graphs:
+  Host 1:
+    id: 1
+    vertices: []
+    edges: []
+productions: {}
+result_graphs: {}

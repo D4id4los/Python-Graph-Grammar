@@ -156,6 +156,15 @@ class GraphList(wx.ListCtrl):
             self.graphs[index] = (name, graph_data)
             i += 1
 
+    def get_data(self) -> Dict[str, Graph]:
+        """
+        Get the graph data associated with this list of graphs.
+
+        :return: A dictionary with all the data about the Graphs.
+        """
+        result = {name: graph for name, graph in self.graphs.values()}
+        return result
+
     def delete_selection(self) -> None:
         """
         Delete the currently selected graph from the list.
@@ -232,6 +241,17 @@ class ProductionList(wx.ListCtrl):
                 self.SetItem(index, 1, f'Daughter {sub_index}')
                 self.productions[index] = (name, production, sub_index)
                 self.graphs[index] = (mother_graph, mapping, daughter_graph)
+
+    def get_data(self) -> Dict[str, Production]:
+        """
+        Get the production data associated with this production list.
+
+        :return: A dictionary with all the data about the productions.
+        """
+        result = {name: production for name, production, _ in
+                  self.productions.values()}
+        return result
+
 
     def delete_selection(self) -> None:
         """
