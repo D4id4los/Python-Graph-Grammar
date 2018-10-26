@@ -1,5 +1,5 @@
 import abc
-from typing import Dict, Tuple, Set, MutableSequence
+from typing import Dict, Tuple, Set, MutableSequence, Union
 
 import wx
 from matplotlib import pyplot as plt
@@ -10,11 +10,12 @@ from matplotlib.figure import Figure
 from matplotlib.patches import ConnectionPatch
 import matplotlib.patheffects as pe
 import matplotlib.backend_bases
+import matplotlib.artist
 from pydispatch import dispatcher
 
-from exceptions import ModelGenArgumentError
-from graph import GraphElement, Graph, Vertex, Edge
-from utils import Bidict, Mapping, get_logger
+from model_gen.exceptions import ModelGenArgumentError
+from model_gen.graph import GraphElement, Graph, Vertex, Edge
+from model_gen.utils import Bidict, Mapping, get_logger
 from model_gen.opts import Opts
 
 log = get_logger('model_gen.' + __name__)
@@ -36,10 +37,10 @@ def _get_round_edges_bitmap(width: int, height: int, radius: int):
     bitmap = wx.Bitmap(width, height)
     dc = wx.MemoryDC(bitmap)
     dc.SetBrush(wx.Brush(mask_color))
-    dc.DrawRectangle(0,0,width,height)
+    dc.DrawRectangle(0, 0, width, height)
     dc.SetBrush(wx.Brush(background_color))
     dc.SetPen(wx.Pen(background_color))
-    dc.DrawRoundedRectangle(0,0,width,height,radius)
+    dc.DrawRoundedRectangle(0, 0, width, height, radius)
     bitmap.SetMaskColour(mask_color)
     return bitmap
 
@@ -49,10 +50,11 @@ class AttributeEditingFrame(wx.Frame):
     This frame is used to open a small window near a graph element
     to allow editing of the elements attribute.
     """
+
     def __init__(self, *args, position=(0, 0), element=None, **kwargs):
         style = wx.CLIP_CHILDREN | wx.NO_BORDER \
-                          | wx.FRAME_SHAPED | wx.FRAME_NO_TASKBAR \
-                          | wx.FRAME_NO_WINDOW_MENU
+                | wx.FRAME_SHAPED | wx.FRAME_NO_TASKBAR \
+                | wx.FRAME_NO_WINDOW_MENU
         super().__init__(*args, **kwargs, style=style)
         self.SetTransparent(240)
         self.SetPosition(position)
@@ -87,7 +89,7 @@ class AttributeEditingFrame(wx.Frame):
         Updates the list of displayed attribute text inputs.
         """
         self.flex_grid = wx.FlexGridSizer(cols=2, vgap=5, hgap=10)
-        wx_elements=[]
+        wx_elements = []
         for attr_id in self.attr_ids:
             label_input = self.attr_labels[attr_id]
             value_input = self.attr_values[attr_id]
@@ -128,11 +130,11 @@ class AttributeEditingFrame(wx.Frame):
             if self.element.attr[attr_label] != attr_value:
                 self.element.attr[attr_label] = attr_value
 
-    def add_attr(self, event: wx.CommandEvent) -> None:
+    def add_attr(self, _: wx.CommandEvent) -> None:
         """
         Add an attribute to the element on the push of a button.
 
-        :param event: The wx event of pushing a button.
+        :param _: The wx event of pushing a button.
         """
         new_id = len(self.attr_ids)
         self.attr_ids[new_id] = ''
@@ -307,7 +309,7 @@ class GraphPanel(wx.Panel):
         self.redraw()
 
     def annotate(self, text: str, position: Tuple[int, int],
-                 axes: plt.Axes = None) -> plt.Annotation:
+                 axes: plt.Axes = None) -> Union[plt.Annotation, None]:
         """
         Places an annotation on the subplot.
 
@@ -317,7 +319,7 @@ class GraphPanel(wx.Panel):
         :return: The Annotation object representing the annotation.
         """
         if text == '':
-            return
+            return None
         if axes is None:
             axes = self.subplot
         annotation = axes.annotate(text,
@@ -405,28 +407,63 @@ class GraphPanel(wx.Panel):
         graph.add(vertex)
         self._redraw_graph()
 
-    def connect_vertices(self, event: matplotlib.backend_bases.LocationEvent,
-                         vertex: 'FigureVertex') -> None:
+    def _add_mapping(self, mother_element: GraphElement,
+                     daughter_element: GraphElement) -> None:
         """
+        Add a mapping between the two elements to the production.
+
+        :param mother_element: The element on the left-hand side of
+            the production.
+        :param daughter_element: The element on the right-hand side
+            of the production.
+        """
+        pass
+
+    def _add_edge(self, graph: Graph, vertex1: Vertex, vertex2: Vertex) \
+            -> None:
+        """
+        Add an edge between two vertices to a graph.
+
+        :param graph: The graph to add the edge two.
+        :param vertex1: The first vertex of the edge.
+        :param vertex2: The second vertex of the edge.
+        """
+        new_edge = Edge(vertex1, vertex2)
+        graph.add(new_edge)
+
+    def connect_vertices(self, event: matplotlib.backend_bases.LocationEvent,
+                         element: 'FigureElement') -> None:
+        """
+        Connects any two elements if it makes sense in context.
+
         Adds a new Edge between two vertices, if self.selected_element
-        is not None. If it is None then it sets self.selected_element
+        is not None and both vertices are in the same axes. If
+        selected_element is None then it sets self.selected_element
         to the vertex passed as argument.
 
+        If two edges are in the same axes nothing happens.
+
+        If any two elements are in two different axes then a mapping
+        is created between them.
+
         :param event: The event that initiated this action.
-        :param vertex: Vertex to connect to another vertex.
+        :param element: Element to connect to another element.
         """
-        log.debug('connecting Vertices')
         if self.selected_element is None:
-            self.selected_element = vertex
-            vertex.add_extra_path_effect('selection',
-                                         pe.Stroke(linewidth=5,
-                                                   foreground='b'))
+            self.selected_element = element
+            element.add_extra_path_effect('selection',
+                                          pe.Stroke(linewidth=5,
+                                                    foreground='b'))
             return
         graph = self._get_connected_graph(event.inaxes)
         vertex1 = self.graph_to_figure.inverse[self.selected_element][0]
-        vertex2 = self.graph_to_figure.inverse[vertex][0]
-        new_edge = Edge(vertex1, vertex2)
-        graph.add(new_edge)
+        vertex2 = self.graph_to_figure.inverse[element][0]
+        if self.selected_element.axes != element.axes:
+            log.debug('Adding Mapping.')
+            self._add_mapping(vertex1, vertex2)
+        elif isinstance(vertex1, Vertex) and isinstance(vertex2, Vertex):
+            log.debug('Connecting Vertices.')
+            self._add_edge(graph, vertex1, vertex2)
         self.selected_element.remove_extra_path_effect('selection')
         self.selected_element = None
         self._redraw_graph()
@@ -468,7 +505,8 @@ class GraphPanel(wx.Panel):
         self.attr_editing_window.Close()
         self.attr_editing_window = None
 
-    def event_in_axes(self, event: matplotlib.backend_bases.Event) -> bool:
+    def event_in_axes(self, event: matplotlib.backend_bases.LocationEvent) \
+            -> bool:
         """
         Test if an event is inside the axes of this Panel.
 
@@ -620,6 +658,18 @@ class ProductionGraphsPanel(GraphPanel):
         self._clear_drawing()
         self._redraw_graph()
 
+    def _add_mapping(self, mother_element: GraphElement,
+                     daughter_element: GraphElement) -> None:
+        """
+        Add a mapping between the two elements to the production.
+
+        :param mother_element: The element on the left-hand side of
+            the production.
+        :param daughter_element: The element on the right-hand side
+            of the production.
+        """
+        self.mapping[mother_element] = daughter_element
+
     def draw_mappings(self, mapping: Mapping) -> None:
         """
         Draw arrows between the GraphElements that are mapped together.
@@ -661,7 +711,7 @@ class ProductionGraphsPanel(GraphPanel):
         else:
             raise KeyError('Specified Axes could not be found.')
 
-    def event_in_axes(self, event):
+    def event_in_axes(self, event: matplotlib.backend_bases.LocationEvent):
         if event.inaxes == self.subplot.axes \
                 or event.inaxes == self.subplot2.axes:
             return True
@@ -669,7 +719,7 @@ class ProductionGraphsPanel(GraphPanel):
             return False
 
 
-class FigureElement(abc.ABC):
+class FigureElement(matplotlib.artist.Artist):
     """
     Visual representation of a GraphElement inside a matplotlib figure.
 
