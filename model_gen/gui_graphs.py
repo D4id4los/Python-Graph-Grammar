@@ -63,17 +63,17 @@ class AttributeEditingFrame(wx.Frame):
         self.attr_values: Dict[int, wx.TextCtrl] = {}
         self.attr_ids: Dict[int, str] = {}
         self.element = element
-        box = wx.BoxSizer(wx.VERTICAL)
-        self.flex_grid = None
-        self._load_attrs()
+        self.box = wx.BoxSizer(wx.VERTICAL)
+        self.flex_grid = wx.FlexGridSizer(0,0,0)
         self.add_attr_button = wx.Button(self, wx.ID_ANY, label='+')
-        box.AddMany([
+        self.box.AddMany([
             (self.flex_grid, 0),
             (self.add_attr_button, 0, wx.ALIGN_LEFT)
         ])
-        self.SetSizer(box)
+        self.SetSizer(self.box)
         self.Bind(wx.EVT_MOTION, self.on_mouse_movement)
         self.Bind(wx.EVT_BUTTON, self.add_attr)
+        self._load_attrs()
         self.Show(True)
         self._drag_start_pos = None
 
@@ -88,6 +88,7 @@ class AttributeEditingFrame(wx.Frame):
         """
         Updates the list of displayed attribute text inputs.
         """
+        old_flex_grid = self.flex_grid
         self.flex_grid = wx.FlexGridSizer(cols=2, vgap=5, hgap=10)
         wx_elements = []
         for attr_id in self.attr_ids:
@@ -98,7 +99,9 @@ class AttributeEditingFrame(wx.Frame):
                 (value_input, 1, wx.EXPAND)
             ])
         self.flex_grid.AddMany(wx_elements)
-        self.Layout()
+        if old_flex_grid is not None:
+            self.box.Replace(old_flex_grid, self.flex_grid)
+        self.box.Layout()
 
     def _load_attrs(self) -> None:
         """
@@ -124,10 +127,13 @@ class AttributeEditingFrame(wx.Frame):
             orig_label = self.attr_ids[attr_id]
             attr_label = self.attr_labels[attr_id].GetValue()
             attr_value = self.attr_values[attr_id].GetValue()
-            if orig_label != attr_label:
+            if  attr_label == '':
+                continue
+            if orig_label != attr_label and orig_label != '':
                 self.element.attr.pop(orig_label)
                 self.attr_ids[attr_id] = attr_label
-            if self.element.attr[attr_label] != attr_value:
+            if attr_label not in self.element.attr \
+                    or self.element.attr[attr_label] != attr_value:
                 self.element.attr[attr_label] = attr_value
 
     def add_attr(self, _: wx.CommandEvent) -> None:

@@ -48,9 +48,9 @@ productions:
         - id: 114
           attr: {}
         - id: 103
-          attr: {label: a_l}
+          attr: {label: '''a_l'''}
         - id: 104
-          attr: {label: b_r}
+          attr: {label: '''b_r'''}
         - id: 115
           attr: {}
         edges:
@@ -104,9 +104,9 @@ productions:
         - id: 118
           attr: {}
         - id: 106
-          attr: {label: b_l}
+          attr: {label: '''b_l'''}
         - id: 107
-          attr: {label: a_r}
+          attr: {label: '''a_r'''}
         - id: 119
           attr: {}
         edges:
@@ -146,7 +146,7 @@ productions:
         id: 007
         vertices:
         - id: 109
-          attr: {label: a_r}
+          attr: {label: '''a_r'''}
         edges: []
       mapping:
         id: 503
@@ -167,7 +167,7 @@ productions:
         id: 009
         vertices:
         - id: 111
-          attr: {label: a_l}
+          attr: {label: '''a_l'''}
         edges: []
       mapping:
         id: 504

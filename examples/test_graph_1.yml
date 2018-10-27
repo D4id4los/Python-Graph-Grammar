@@ -55,7 +55,7 @@ productions:
         vertices:
         - attr: *id002
           id: 139837365641904
-        - attr: *id003
+        - attr: {label: '''a'''}
           id: 139837365641960
       id: 139837365642128
       mapping:

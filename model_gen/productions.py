@@ -1,6 +1,6 @@
 import random
 from functools import partial
-from typing import Iterable, Sized, Union
+from typing import Iterable, Sized, Union, Tuple, Sequence
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement
@@ -75,6 +75,33 @@ class ProductionApplicationHierarchy:
                 'down': self.daughter_to_copy.inverse
             }
         }
+
+    def map_sequence(self,
+                     elements: Sequence[GraphElement],
+                     source_levels: Sequence[Union[int, str]],
+                     target_levels: Sequence[Union[int, str]]) \
+            -> Tuple[Union[GraphElement, None]]:
+        """
+        Translates a sequence of elements to from one level of the
+        hierarchy to another.
+
+        :param elements: Sequence of the GraphElements to be mapped.
+        :param source_levels: The levels the GraphElements are on.
+        :param target_levels: The levels the GraphElements should be
+            mapped to.
+        :return: A Sequence where all GraphElement are mapped to
+            their respective target graph.
+        """
+        if len(elements) != len(source_levels) \
+                or len(source_levels) != len(target_levels):
+            raise ModelGenArgumentError
+        result = ()
+        for index in range(0, len(elements)):
+            element = self.map(elements[index],
+                               source_levels[index],
+                               target_levels[index])
+            result += (element,)
+        return result
 
     def map(self, element: GraphElement, source_level: Union[int, str],
             target_level: Union[int, str]) -> Union[GraphElement, None]:
@@ -250,6 +277,10 @@ class Production:
         to_add = {hierarchy.map(x, 'D', 'C') for x in option.to_add}
         to_change = {hierarchy.map(x, 'D', 'R') for x in option.to_change}
         to_remove = {hierarchy.map(x, 'M', 'R') for x in option.to_remove}
+        to_calc_attr = {(x, hierarchy.map(x, 'D', 'C'), None) for x in option.to_add}
+        to_calc_attr.union({
+            (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
+            for x in option.to_change})
         # First remove the now unnecessary Elements, this will remove them
         # from any neighbourhood lists.
         for R_element in to_remove:
@@ -264,18 +295,20 @@ class Production:
             valid_inconsistencies = {x for x in C_element.neighbours()
                                      if x in to_add}
             result_graph.add(C_element, ignore_errors=valid_inconsistencies)
-        # At last, change the properties and neighbourhood lists of any
+        # Then change the neighbourhood lists of any
         # elements that remained un-deleted. It is especially important to
         # make sure all elements are connected correctly
         for R_element in to_change:
-            # noinspection PyPep8Naming
-            D_element = hierarchy.map(R_element, 'R', 'D')
-            for name, value in D_element.attr.items():
-                R_element.attr[name] = value
             R_element.replace_connection(
                 partial(map_elements_to_be_removed, source_level='R',
                         target_level='C', to_be_removed=to_remove)
             )
+        # Now calculate the new attributes for all elements that where part of
+        # the daughter graph.
+        for D_element, target_element, old_element in to_calc_attr:
+            for attr_name, attr_func_text in D_element.attr.items():
+                def attr_func (old): return eval(attr_func_text)
+                target_element.attr[attr_name] = attr_func(old_element)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         return result_graph
