@@ -1,5 +1,6 @@
 import abc
 from typing import Dict, Tuple, Set, MutableSequence, Union
+from functools import partial
 
 import wx
 from matplotlib import pyplot as plt
@@ -59,12 +60,13 @@ class AttributeEditingFrame(wx.Frame):
         self.SetTransparent(240)
         self.SetPosition(position)
         self._set_frame_shape()
+        self.attr_buttons: Dict[int, wx.Button] = {}
         self.attr_labels: Dict[int, wx.TextCtrl] = {}
         self.attr_values: Dict[int, wx.TextCtrl] = {}
         self.attr_ids: Dict[int, str] = {}
         self.element = element
         self.box = wx.BoxSizer(wx.VERTICAL)
-        self.flex_grid = wx.FlexGridSizer(0,0,0)
+        self.flex_grid = wx.FlexGridSizer(0, 0, 0)
         self.add_attr_button = wx.Button(self, wx.ID_ANY, label='+')
         self.box.AddMany([
             (self.flex_grid, 0),
@@ -72,7 +74,7 @@ class AttributeEditingFrame(wx.Frame):
         ])
         self.SetSizer(self.box)
         self.Bind(wx.EVT_MOTION, self.on_mouse_movement)
-        self.Bind(wx.EVT_BUTTON, self.add_attr)
+        self.Bind(wx.EVT_BUTTON, self.add_attr, self.add_attr_button)
         self._load_attrs()
         self.Show(True)
         self._drag_start_pos = None
@@ -89,13 +91,15 @@ class AttributeEditingFrame(wx.Frame):
         Updates the list of displayed attribute text inputs.
         """
         old_flex_grid = self.flex_grid
-        self.flex_grid = wx.FlexGridSizer(cols=2, vgap=5, hgap=10)
+        self.flex_grid = wx.FlexGridSizer(cols=3, vgap=5, hgap=10)
         wx_elements = []
         for attr_id in self.attr_ids:
+            button = self.attr_buttons[attr_id]
             label_input = self.attr_labels[attr_id]
             value_input = self.attr_values[attr_id]
             wx_elements.extend([
-                (label_input, 0, wx.ALIGN_CENTER_VERTICAL),
+                (button, 0, wx.ALIGN_CENTER_VERTICAL),
+                (label_input, 0, wx.EXPAND),
                 (value_input, 1, wx.EXPAND)
             ])
         self.flex_grid.AddMany(wx_elements)
@@ -108,15 +112,8 @@ class AttributeEditingFrame(wx.Frame):
         Load the attributes from the connected element.
         """
         self.attr_ids.clear()
-        for i, attr_label in enumerate(self.element.attr):
-            self.attr_ids[i] = attr_label
-        for attr_id in self.attr_ids:
-            attr_label = self.attr_ids[attr_id]
-            attr_value = self.element.attr[attr_label]
-            text_label = wx.TextCtrl(self, value=attr_label)
-            text_value = wx.TextCtrl(self, value=attr_value)
-            self.attr_labels[attr_id] = text_label
-            self.attr_values[attr_id] = text_value
+        for attr_label, attr_value in self.element.attr.items():
+            self.add_attr(None, attr_label, attr_value)
         self._update_attr_list()
 
     def _save_attrs(self) -> None:
@@ -127,7 +124,7 @@ class AttributeEditingFrame(wx.Frame):
             orig_label = self.attr_ids[attr_id]
             attr_label = self.attr_labels[attr_id].GetValue()
             attr_value = self.attr_values[attr_id].GetValue()
-            if  attr_label == '':
+            if attr_label == '':
                 continue
             if orig_label != attr_label and orig_label != '':
                 self.element.attr.pop(orig_label)
@@ -136,19 +133,43 @@ class AttributeEditingFrame(wx.Frame):
                     or self.element.attr[attr_label] != attr_value:
                 self.element.attr[attr_label] = attr_value
 
-    def add_attr(self, _: wx.CommandEvent) -> None:
+    def add_attr(self, event: Union[wx.CommandEvent, None], attr_label: str = '',
+                 attr_value: str = '') -> None:
         """
         Add an attribute to the element on the push of a button.
-
-        :param _: The wx event of pushing a button.
+        :param event: The wx event of pushing a button.
+        :param attr_label: The label of the attribute.
+        :param attr_value: The value to set the attribute to.
         """
         new_id = len(self.attr_ids)
-        self.attr_ids[new_id] = ''
-        text_label = wx.TextCtrl(self, value='')
-        text_value = wx.TextCtrl(self, value='')
+        self.attr_ids[new_id] = attr_label
+        button_remove = wx.Button(self, wx.ID_ANY, label='-')
+        self.Bind(wx.EVT_BUTTON, partial(self.remove_attr, attr_id=new_id),
+                  button_remove)
+        text_label = wx.TextCtrl(self, value=attr_label)
+        text_value = wx.TextCtrl(self, value=attr_value)
         self.attr_labels[new_id] = text_label
         self.attr_values[new_id] = text_value
-        self._update_attr_list()
+        self.attr_buttons[new_id] = button_remove
+        if event is not None:
+            self._update_attr_list()
+
+    def remove_attr(self, event: Union[wx.CommandEvent, None],
+                    attr_id: Union[int, None]) -> None:
+        """
+        Remove the specified attribute from the element and the gui.
+
+        :param event: The wx event initiating the action
+        :param attr_id: The ID of the attribute to remove.
+        """
+        self.attr_buttons.pop(attr_id).Destroy()
+        self.attr_values.pop(attr_id).Destroy()
+        self.attr_labels.pop(attr_id).Destroy()
+        attr_label = self.attr_ids.pop(attr_id)
+        if attr_label != '':
+            self.element.attr.pop(attr_label)
+        if event is not None:
+            self._update_attr_list()
 
     def Close(self, *args, **kwargs):
         """
