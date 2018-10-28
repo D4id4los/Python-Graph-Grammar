@@ -455,7 +455,7 @@ class GraphPanel(wx.Panel):
         new_edge = Edge(vertex1, vertex2)
         graph.add(new_edge)
 
-    def connect_vertices(self, event: matplotlib.backend_bases.LocationEvent,
+    def connect_elements(self, event: matplotlib.backend_bases.LocationEvent,
                          element: 'FigureElement') -> None:
         """
         Connects any two elements if it makes sense in context.
@@ -576,9 +576,9 @@ class GraphPanel(wx.Panel):
                     dispatcher.disconnect(receiver=element.on_position_change,
                                           signal='element_position_changed')
         elif event.button == 3:  # 3 = right click
-            for vertex in self.vertices:
-                if vertex.contains(event)[0]:
-                    self.connect_vertices(event, vertex)
+            for element in self.vertices | self.edges:
+                if element.contains(event)[0]:
+                    self.connect_elements(event, element)
                     return
             if self.selected_element is not None:
                 self.selected_element.remove_extra_path_effect('selection')
@@ -829,7 +829,8 @@ class FigureVertex(FigureElement, plt.Circle):
     The visual representation of a Vertex.
     """
 
-    def __init__(self, graph_element: GraphElement, *args, edges=None,
+    def __init__(self, graph_element: Union[GraphElement, None], *args,
+                 edges=None,
                  **kwargs):
         FigureElement.__init__(self, graph_element)
         plt.Circle.__init__(self, *args, **kwargs)
