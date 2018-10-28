@@ -219,7 +219,7 @@ class ProductionList(wx.ListCtrl):
         self.InsertColumn(0, 'name', width=150)
         self.InsertColumn(1, 'daughters', width=150)
         self.productions: Dict[int, Tuple[str, Production, int]] = {}
-        self.graphs: Dict[int, Tuple[Graph, Mapping, Graph]] = {}
+        self.graphs: Dict[int, Tuple[Graph, Mapping, Graph, Dict]] = {}
         self.selected = None
 
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select)
@@ -237,10 +237,12 @@ class ProductionList(wx.ListCtrl):
             for sub_index, daughter_mapping in enumerate(production.mappings):
                 mapping = daughter_mapping.mapping
                 daughter_graph = daughter_mapping.daughter_graph
+                attr_requirements = daughter_mapping.attr_requirements
                 self.InsertItem(index, name)
                 self.SetItem(index, 1, f'Daughter {sub_index}')
                 self.productions[index] = (name, production, sub_index)
-                self.graphs[index] = (mother_graph, mapping, daughter_graph)
+                self.graphs[index] = (mother_graph, mapping, daughter_graph,
+                                      attr_requirements)
 
     def get_data(self) -> Dict[str, Production]:
         """
@@ -251,7 +253,6 @@ class ProductionList(wx.ListCtrl):
         result = {name: production for name, production, _ in
                   self.productions.values()}
         return result
-
 
     def delete_selection(self) -> None:
         """

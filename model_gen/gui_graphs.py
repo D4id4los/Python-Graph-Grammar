@@ -133,7 +133,8 @@ class AttributeEditingFrame(wx.Frame):
                     or self.element.attr[attr_label] != attr_value:
                 self.element.attr[attr_label] = attr_value
 
-    def add_attr(self, event: Union[wx.CommandEvent, None], attr_label: str = '',
+    def add_attr(self, event: Union[wx.CommandEvent, None],
+                 attr_label: str = '',
                  attr_value: str = '') -> None:
         """
         Add an attribute to the element on the push of a button.
@@ -159,7 +160,7 @@ class AttributeEditingFrame(wx.Frame):
         """
         Remove the specified attribute from the element and the gui.
 
-        :param event: The wx event initiating the action
+        :param event: The wx event initiating the action.
         :param attr_id: The ID of the attribute to remove.
         """
         self.attr_buttons.pop(attr_id).Destroy()
@@ -168,6 +169,162 @@ class AttributeEditingFrame(wx.Frame):
         attr_label = self.attr_ids.pop(attr_id)
         if attr_label != '':
             self.element.attr.pop(attr_label)
+        if event is not None:
+            self._update_attr_list()
+
+    def Close(self, *args, **kwargs):
+        """
+        Override to save changes to arguments before closing the
+        frame.
+        """
+        self._save_attrs()
+        super().Close(*args, **kwargs)
+
+    def on_mouse_movement(self, event: wx.MouseEvent) -> None:
+        """
+        This handles the dragging of the window.
+
+        :param event: The wx event object.
+        """
+        if not event.Dragging():
+            self._drag_start_pos = None
+            return
+        # self.CaptureMouse()
+        if self._drag_start_pos is None:
+            self._drag_start_pos = event.GetPosition()
+        else:
+            current_pos = event.GetPosition()
+            change = self._drag_start_pos - current_pos
+            self.SetPosition(self.GetPosition() - change)
+
+
+class AttributeRequirementEditingFrame(wx.Frame):
+    """
+    This frame is used to open a small window near a graph element
+    to allow editing of the elements attribute.
+    """
+
+    def __init__(self, *args, position=(0, 0), element=None,
+                 attr_requirements=None, **kwargs):
+        style = wx.CLIP_CHILDREN | wx.NO_BORDER \
+                | wx.FRAME_SHAPED | wx.FRAME_NO_TASKBAR \
+                | wx.FRAME_NO_WINDOW_MENU
+        super().__init__(*args, **kwargs, style=style)
+        self.SetTransparent(240)
+        self.SetPosition(position)
+        self._set_frame_shape()
+        self.attr_req_buttons: Dict[int, wx.Button] = {}
+        self.attr_req_labels: Dict[int, wx.TextCtrl] = {}
+        self.attr_req_elements: Dict[int, wx.StaticText] = {}
+        self.attr_req_ids: Dict[int, str] = {}
+        self.element = element
+        self.attr_requirements = attr_requirements
+        self.box = wx.BoxSizer(wx.VERTICAL)
+        self.flex_grid = wx.FlexGridSizer(0, 0, 0)
+        self.box.AddMany([
+            (self.flex_grid, 0)
+        ])
+        self.SetSizer(self.box)
+        self.Bind(wx.EVT_MOTION, self.on_mouse_movement)
+        self._load_attrs_requirements()
+        self.Show(True)
+        self._drag_start_pos = None
+
+    def _set_frame_shape(self) -> None:
+        """
+        Sets this frames shape to a rounded rectangle.
+        """
+        width, height = self.GetSize()
+        self.SetShape(wx.Region(_get_round_edges_bitmap(width, height, 10)))
+
+    def _update_attr_list(self) -> None:
+        """
+        Updates the list of displayed attribute text inputs.
+        """
+        old_flex_grid = self.flex_grid
+        self.flex_grid = wx.FlexGridSizer(cols=3, vgap=5, hgap=10)
+        wx_elements = []
+        for attr_id in self.attr_req_ids:
+            button = self.attr_req_buttons[attr_id]
+            attr_req_label_ctrl = self.attr_req_labels[attr_id]
+            attr_req_element_ctrl = self.attr_req_elements[attr_id]
+            wx_elements.extend([
+                (button, 0, wx.ALIGN_CENTER_VERTICAL),
+                (attr_req_label_ctrl, 0, wx.EXPAND),
+                (attr_req_element_ctrl, 1, wx.EXPAND)
+            ])
+        self.flex_grid.AddMany(wx_elements)
+        if old_flex_grid is not None:
+            self.box.Replace(old_flex_grid, self.flex_grid)
+        self.box.Layout()
+
+    def _load_attrs_requirements(self) -> None:
+        """
+        Load the attributes from the connected element.
+        """
+        if self.element not in self.attr_requirements:
+            return
+        self.attr_req_ids.clear()
+        for attr_req_label, attr_req_value in \
+                self.attr_requirements[self.element].items():
+            self.add_attr_requirement(None, attr_req_label, attr_req_value)
+        self._update_attr_list()
+
+    def _save_attrs(self) -> None:
+        """
+        Save the changes to the attributes to the connected element.
+        """
+        for attr_req_id in self.attr_req_ids:
+            orig_label = self.attr_req_ids[attr_req_id]
+            attr_req_label = self.attr_req_labels[attr_req_id].GetValue()
+            attr_req_element = self.attr_requirements[self.element][orig_label]
+            if attr_req_label == '':
+                continue
+            if orig_label != attr_req_label and orig_label != '':
+                self.attr_requirements[self.element].pop(orig_label)
+                self.attr_req_ids[attr_req_id] = attr_req_label
+            if attr_req_label not in self.attr_requirements[self.element] \
+                    or self.attr_requirements[self.element][
+                attr_req_label] != attr_req_element:
+                self.attr_requirements[self.element][
+                    attr_req_label] = attr_req_element
+
+    def add_attr_requirement(self, event: Union[wx.CommandEvent, None],
+                             attr_req_label: str = '',
+                             attr_req_element: GraphElement = None) -> None:
+        """
+        Add an attribute to the element on the push of a button.
+        :param event: The wx event of pushing a button.
+        :param attr_req_label: The label of the attribute.
+        :param attr_req_element: The value to set the attribute to.
+        """
+        new_id = len(self.attr_req_ids)
+        self.attr_req_ids[new_id] = attr_req_label
+        button_remove = wx.Button(self, wx.ID_ANY, label='-')
+        self.Bind(wx.EVT_BUTTON, partial(self.remove_attr, attr_id=new_id),
+                  button_remove)
+        attr_req_label_ctrl = wx.TextCtrl(self, value=attr_req_label)
+        attr_req_element_ctrl = wx.StaticText(self, label=str(attr_req_element))
+        self.attr_req_labels[new_id] = attr_req_label_ctrl
+        self.attr_req_elements[new_id] = attr_req_element_ctrl
+        self.attr_req_buttons[new_id] = button_remove
+        if event is not None:
+            self._update_attr_list()
+
+    def remove_attr(self, event: Union[wx.CommandEvent, None],
+                    attr_id: Union[int, None]) -> None:
+        """
+        Remove the specified attribute from the element and the gui.
+
+        :param event: The wx event initiating the action.
+        :param attr_id: The ID of the attribute to remove.
+        """
+        self.attr_req_buttons.pop(attr_id).Destroy()
+        self.attr_req_elements.pop(attr_id).Destroy()
+        self.attr_req_labels.pop(attr_id).Destroy()
+        attr_label = self.attr_req_ids.pop(attr_id)
+        if attr_label != '':
+            self.attr_requirements[self.element].pop(attr_label)
         if event is not None:
             self._update_attr_list()
 
@@ -233,6 +390,7 @@ class GraphPanel(wx.Panel):
         self.pressed_keys: Dict[str, bool] = {}
         self.selected_element: FigureElement = None
         self.attr_editing_window = None
+        self.attr_req_editing_window = None
 
         self.graph: Graph = None
         self.graph_to_figure: Bidict[GraphElement, FigureElement] = Bidict()
@@ -464,6 +622,17 @@ class GraphPanel(wx.Panel):
         """
         pass
 
+    def _add_attr_requirement(self, mother_element: GraphElement,
+                              daughter_element: GraphElement) -> None:
+        """
+        Adds an attribute requirement between the two specified elements.
+
+        :param mother_element: The element on the left-hand side of
+            the production.
+        :param daughter_element: The element on the right-hand side
+            of the production.
+        """
+
     def _add_edge(self, graph: Graph, vertex1: Vertex, vertex2: Vertex) \
             -> None:
         """
@@ -501,14 +670,18 @@ class GraphPanel(wx.Panel):
                                                     foreground='b'))
             return
         graph = self._get_connected_graph(event.inaxes)
-        vertex1 = self.graph_to_figure.inverse[self.selected_element][0]
-        vertex2 = self.graph_to_figure.inverse[element][0]
+        element1 = self.graph_to_figure.inverse[self.selected_element][0]
+        element2 = self.graph_to_figure.inverse[element][0]
         if self.selected_element.axes != element.axes:
-            log.debug('Adding Mapping.')
-            self._add_mapping(vertex1, vertex2)
-        elif isinstance(vertex1, Vertex) and isinstance(vertex2, Vertex):
+            if event.guiEvent.CmdDown():
+                log.debug('Adding Attribute Requirement.')
+                self._add_attr_requirement(element1, element2)
+            else:
+                log.debug('Adding Mapping.')
+                self._add_mapping(element1, element2)
+        elif isinstance(element1, Vertex) and isinstance(element2, Vertex):
             log.debug('Connecting Vertices.')
-            self._add_edge(graph, vertex1, vertex2)
+            self._add_edge(graph, element1, element2)
         self.selected_element.remove_extra_path_effect('selection')
         self.selected_element = None
         self._redraw_graph()
@@ -550,6 +723,19 @@ class GraphPanel(wx.Panel):
         self.attr_editing_window.Close()
         self.attr_editing_window = None
 
+    def open_attr_req_editing(self, element) -> None:
+        """
+        Display a window that allows for editing the requirements of
+        attributes of a specific element.
+        """
+        pass
+
+    def close_attr_req_editing(self) -> None:
+        """
+        Closes an opened element attribute requirement editing window.
+        """
+        pass
+
     def event_in_axes(self, event: matplotlib.backend_bases.LocationEvent) \
             -> bool:
         """
@@ -570,6 +756,8 @@ class GraphPanel(wx.Panel):
         if self.attr_editing_window is not None:
             self.close_attr_editing()
             self.redraw()
+        if self.attr_req_editing_window is not None:
+            self.close_attr_req_editing()
         if event.button == 1:  # 1 = left click
             self.press_start_position = (event.xdata, event.ydata)
             for element in self.elements:
@@ -581,6 +769,14 @@ class GraphPanel(wx.Panel):
                     self.pressed_elements[element] = element.get_center()
                     dispatcher.connect(receiver=element.on_position_change,
                                        signal='element_position_changed')
+        if event.button == 3:  # 3 = right click
+            for element in self.elements:
+                if element.contains(event)[0]:
+                    if event.guiEvent.ShiftDown() \
+                            and self.attr_editing_window is None:
+                        self.open_attr_req_editing(
+                            self.graph_to_figure.inverse[element][0])
+                        return
 
     def on_release(self, event: matplotlib.backend_bases.MouseEvent):
         if not self.event_in_axes(event):
@@ -596,7 +792,7 @@ class GraphPanel(wx.Panel):
                     self.pressed_elements.pop(element)
                     dispatcher.disconnect(receiver=element.on_position_change,
                                           signal='element_position_changed')
-        elif event.button == 3:  # 3 = right click
+        elif event.button == 3 and not event.guiEvent.ShiftDown():  # 3 = right click
             for element in self.vertices | self.edges:
                 if element.contains(event)[0]:
                     self.connect_elements(event, element)
@@ -668,6 +864,8 @@ class ProductionGraphsPanel(GraphPanel):
         self.subplot2 = self.figure.add_subplot(122)
         self.graph2: Graph = None
         self.mapping: Mapping = None
+        self.attr_requirements: \
+            Dict[GraphElement, Dict[str, GraphElement]] = None
         self.setup_mpl_visuals(self.subplot)
         self.setup_mpl_visuals(self.subplot2)
         self.mappings: Set[ConnectionPatch] = set()
@@ -691,7 +889,8 @@ class ProductionGraphsPanel(GraphPanel):
         self.draw_graph(graph=self.graph2, axes=self.subplot2)
         self.draw_mappings(self.mapping)
 
-    def load_graph(self, graph_data: Tuple[Graph, Mapping, Graph]) -> None:
+    def load_graph(self,
+                   graph_data: Tuple[Graph, Mapping, Graph, Dict]) -> None:
         """
         Load graphs into the two graph displays.
 
@@ -700,8 +899,33 @@ class ProductionGraphsPanel(GraphPanel):
         self.graph = graph_data[0]
         self.graph2 = graph_data[2]
         self.mapping = graph_data[1]
+        self.attr_requirements: \
+            Dict[GraphElement, Dict[str, GraphElement]] = graph_data[3]
         self._clear_drawing()
         self._redraw_graph()
+
+    def open_attr_req_editing(self, element) -> None:
+        """
+        Display a window that allows for editing the requirements of
+        attributes of a specific element.
+        """
+        if self.attr_req_editing_window is not None:
+            self.close_attr_editing()
+        else:
+            position = wx.GetMousePosition()
+            self.attr_req_editing_window = AttributeRequirementEditingFrame(
+                self, wx.ID_ANY,
+                position=position,
+                element=element,
+                attr_requirements=self.attr_requirements
+            )
+
+    def close_attr_req_editing(self) -> None:
+        """
+        Closes an opened element attribute requirement editing window.
+        """
+        self.attr_req_editing_window.Close()
+        self.attr_req_editing_window = None
 
     def _add_mapping(self, mother_element: GraphElement,
                      daughter_element: GraphElement) -> None:
@@ -714,6 +938,22 @@ class ProductionGraphsPanel(GraphPanel):
             of the production.
         """
         self.mapping[mother_element] = daughter_element
+
+    def _add_attr_requirement(self, mother_element: GraphElement,
+                              daughter_element: GraphElement) -> None:
+        """
+        Adds an attribute requirement between the two specified elements.
+
+        :param mother_element: The element on the left-hand side of
+            the production.
+        :param daughter_element: The element on the right-hand side
+            of the production.
+        """
+        if not daughter_element in self.attr_requirements:
+            self.attr_requirements[daughter_element] = {}
+        requirement_num = len(self.attr_requirements[daughter_element])
+        requirement_name = f'arg{requirement_num}'
+        self.attr_requirements[daughter_element][requirement_name] = mother_element
 
     def draw_mappings(self, mapping: Mapping) -> None:
         """

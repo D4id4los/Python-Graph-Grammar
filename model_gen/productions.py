@@ -1,6 +1,6 @@
 import random
 from functools import partial
-from typing import Iterable, Sized, Union, Tuple, Sequence
+from typing import Iterable, Sized, Union, Tuple, Sequence, Dict
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement
@@ -155,6 +155,8 @@ class ProductionOption:
         self.daughter_graph = daughter_graph
         self.mother_graph = mother_graph
         self.weight = weight
+        self.attr_requirements: Dict[
+            GraphElement, Dict[str, GraphElement]] = {}
 
         mother_elements = mother_graph.element_list('vef')
         daughter_elements = daughter_graph.element_list('vef')
@@ -175,11 +177,18 @@ class ProductionOption:
 
         :return: A list or dict representing the DaughterMapping.
         """
+        attr_requirements = {}
+        for daughter_element, requirements in self.attr_requirements.items():
+            attr_requirements[id(daughter_element)] = {
+                name: id(mother_element)
+                for name, mother_element in requirements.items()
+            }
         fields = {
             'mother_graph': id(self.mother_graph),
             'mapping': self.mapping.to_yaml(),
             'daughter_graph': self.daughter_graph.to_yaml(),
             'weight': self.weight,
+            'attr_requirements': attr_requirements,
             'id': id(self),
         }
         return fields
@@ -201,11 +210,22 @@ class ProductionOption:
         if data['id'] in mapping:
             return mapping[data['id']]
         mother_graph = mapping[data['mother_graph']]
-        daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping)
-        mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping)
-        weight = data['weight']
+        daughter_graph = Graph.from_yaml(data['daughter_graph'], mapping) \
+            if 'daughter_graph' in data else Graph()
+        mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping) \
+            if 'mapping' in data else Mapping()
+        weight = data['weight'] if 'weight' in data else 1
         result = ProductionOption(mother_graph, mother_to_daughter_map,
                                   daughter_graph, weight)
+        if 'attr_requirements' in data:
+            attr_requirements = {}
+            for daughter_element, requirements in data[
+                'attr_requirements'].items():
+                attr_requirements[mapping[daughter_element]] = {
+                    name: mapping[mother_element]
+                    for name, mother_element in requirements.items()
+                }
+            result.attr_requirements = attr_requirements
         mapping[data['id']] = result
         return result
 
@@ -277,7 +297,8 @@ class Production:
         to_add = {hierarchy.map(x, 'D', 'C') for x in option.to_add}
         to_change = {hierarchy.map(x, 'D', 'R') for x in option.to_change}
         to_remove = {hierarchy.map(x, 'M', 'R') for x in option.to_remove}
-        to_calc_attr = {(x, hierarchy.map(x, 'D', 'C'), None) for x in option.to_add}
+        to_calc_attr = {(x, hierarchy.map(x, 'D', 'C'), None) for x in
+                        option.to_add}
         to_calc_attr.union({
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
@@ -307,7 +328,8 @@ class Production:
         # the daughter graph.
         for D_element, target_element, old_element in to_calc_attr:
             for attr_name, attr_func_text in D_element.attr.items():
-                def attr_func (old): return eval(attr_func_text)
+                def attr_func(old): return eval(attr_func_text)
+
                 target_element.attr[attr_name] = attr_func(old_element)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
