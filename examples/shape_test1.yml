@@ -3,5 +3,22 @@ host_graphs:
     id: 1
     vertices: []
     edges: []
-productions: {}
+productions:
+  Prod 1:
+    mother_graph:
+      edges: []
+      vertices: []
+      id: 2
+    mappings:
+    - id: 3
+      weight: 1
+      mother_graph: 2
+      daughter_graph:
+        edges: []
+        vertices: []
+        id: 4
+      mapping:
+        id: 5
+        dict: {}
+    id: 6
 result_graphs: {}
