@@ -69,7 +69,7 @@ class AttributeEditingFrame(wx.Frame):
         self.flex_grid = wx.FlexGridSizer(0, 0, 0)
         self.add_attr_button = wx.Button(self, wx.ID_ANY, label='+')
         self.box.AddMany([
-            (self.flex_grid, 0),
+            (self.flex_grid, 1, wx.EXPAND),
             (self.add_attr_button, 0, wx.ALIGN_LEFT)
         ])
         self.SetSizer(self.box)
@@ -102,6 +102,7 @@ class AttributeEditingFrame(wx.Frame):
                 (label_input, 0, wx.EXPAND),
                 (value_input, 1, wx.EXPAND)
             ])
+        self.flex_grid.AddGrowableCol(2, 1)
         self.flex_grid.AddMany(wx_elements)
         if old_flex_grid is not None:
             self.box.Replace(old_flex_grid, self.flex_grid)

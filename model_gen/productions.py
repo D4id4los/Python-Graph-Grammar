@@ -327,10 +327,19 @@ class Production:
         # Now calculate the new attributes for all elements that where part of
         # the daughter graph.
         for D_element, target_element, old_element in to_calc_attr:
+            attr_requirements = {}
+            if D_element in option.attr_requirements:
+                attr_requirements = {
+                    name: hierarchy.map(M_element, 'M', 'H')
+                    for name, M_element in option.attr_requirements[D_element].items()
+                }
             for attr_name, attr_func_text in D_element.attr.items():
-                def attr_func(old): return eval(attr_func_text)
-
-                target_element.attr[attr_name] = attr_func(old_element)
+                def attr_func(old, **kwargs):
+                    for name, value in kwargs.items():
+                        locals()[name] = value
+                    return eval(attr_func_text)
+                target_element.attr[attr_name] = attr_func(old_element,
+                                                           **attr_requirements)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         return result_graph
