@@ -260,7 +260,7 @@ class Production:
                            production is matched.
         :return: All possible matching subgraphs of the target graph.
         """
-        return host_graph.match(self.mother_graph)
+        return host_graph.match(self.mother_graph, eval_attrs=True)
 
     def apply(self, host_graph: Graph,
               map_mother_to_host: Mapping) -> Graph:

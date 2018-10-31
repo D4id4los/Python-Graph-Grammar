@@ -22,7 +22,7 @@ class GraphElement(abc.ABC):
         self.attr: Dict[AnyStr, Any] = {}
 
     @abc.abstractmethod
-    def matches(self, graph_element) -> bool:
+    def matches(self, graph_element, eval_attr=False) -> bool:
         """
         Test if the two graph elements match based on their attributes.
 
@@ -32,15 +32,24 @@ class GraphElement(abc.ABC):
         function to return true.
 
         :param graph_element: The graph element to test for matching
-        attributes.
+            attributes.
+        :param eval_attr: If true then the function will evaluate the
+            attribute of the graph_element as a boolean expression
+            rather than compare equality.
         :return: True if the attributes of the two elements are matching.
         """
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError()
         try:
             for attr_key in graph_element.attr.keys():
-                if self.attr[attr_key] != graph_element.attr[attr_key]:
-                    return False
+                if eval_attr:
+                    def matching_function(attr):
+                        return eval(graph_element.attr[attr_key])
+                    if not matching_function(self.attr[attr_key]):
+                        return False
+                else:
+                    if self.attr[attr_key] != graph_element.attr[attr_key]:
+                        return False
         except KeyError:
             return False
         return True
@@ -175,12 +184,12 @@ class Vertex(GraphElement):
                 setattr(result, key, copy.deepcopy(value))
         return result
 
-    def matches(self, graph_element):
+    def matches(self, graph_element, eval_attr=False):
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError()
         if not isinstance(graph_element, Vertex):
             return False
-        return super().matches(graph_element)
+        return super().matches(graph_element, eval_attr)
 
     def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.vertices.append(self)
@@ -298,12 +307,12 @@ class Edge(GraphElement):
                 setattr(result, key, copy.deepcopy(value))
         return result
 
-    def matches(self, graph_element):
+    def matches(self, graph_element, eval_attr=False):
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError
         if not isinstance(graph_element, Edge):
             return False
-        return super().matches(graph_element)
+        return super().matches(graph_element, eval_attr)
 
     def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.edges.append(self)
@@ -583,7 +592,7 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
-    def match(self, other_graph: 'Graph') -> \
+    def match(self, other_graph: 'Graph', eval_attrs: bool=False) -> \
             List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
@@ -592,6 +601,9 @@ class Graph(MutableSet):
         this graph from a graph theoretical point of view.
 
         :param other_graph: The graph to match against this graph.
+        :param eval_attrs: If true then the attributes will be
+            evaluated as boolean expression rather than testing for
+            equality. Use for matching productions to host graphs.
         :return: A list of all possible matches, empty of there are
                  none.
         """
@@ -603,13 +615,13 @@ class Graph(MutableSet):
         for own_element in self:
             if own_element.matches(start_element):
                 matches.extend(
-                    self.match_at(own_element, other_elements))
+                    self.match_at(own_element, other_elements, eval_attrs))
         log.debug(f'Found {len(matches)} matches.')
         return matches
 
     @staticmethod
-    def match_at(start: GraphElement, target_elements: Sequence) -> \
-            List[Mapping]:
+    def match_at(start: GraphElement, target_elements: Sequence,
+                 eval_attrs: bool=False) -> List[Mapping]:
         """
         Try to find a match for the graph defined by the list of target
         elements at the specific starting element of this graph.
@@ -618,6 +630,9 @@ class Graph(MutableSet):
         :param target_elements: The elements of the graph that is to be
                                 matched in such an order that it always
                                 builds into a connected graph.
+        :param eval_attrs: If true then the attributes will be
+            evaluated as boolean expression rather than testing for
+            equality. Use for matching productions to host graphs.
         :return: A list of mappings between this graph and the other
                  graph, if such a mapping exists.
         """
@@ -644,7 +659,7 @@ class Graph(MutableSet):
             candidates = get_candidates(matching.values())
             target = target_elements[index]
             for candidate in candidates:
-                if candidate.matches(target):
+                if candidate.matches(target, eval_attrs):
                     new_matching = Mapping(matching)
                     new_matching[target] = candidate
                     problems.append((index + 1, new_matching))
