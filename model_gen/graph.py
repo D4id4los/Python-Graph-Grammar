@@ -613,7 +613,7 @@ class Graph(MutableSet):
         other_elements = other_graph.element_list()
         start_element = other_elements[0]
         for own_element in self:
-            if own_element.matches(start_element):
+            if own_element.matches(start_element, eval_attrs):
                 matches.extend(
                     self.match_at(own_element, other_elements, eval_attrs))
         log.debug(f'Found {len(matches)} matches.')
@@ -625,6 +625,9 @@ class Graph(MutableSet):
         """
         Try to find a match for the graph defined by the list of target
         elements at the specific starting element of this graph.
+
+        The resulting matching mapps the mother graph element to host
+        graph elements: [M->H]
 
         :param start: The starting element of this graph.
         :param target_elements: The elements of the graph that is to be

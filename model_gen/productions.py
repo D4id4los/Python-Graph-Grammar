@@ -299,7 +299,7 @@ class Production:
         to_remove = {hierarchy.map(x, 'M', 'R') for x in option.to_remove}
         to_calc_attr = {(x, hierarchy.map(x, 'D', 'C'), None) for x in
                         option.to_add}
-        to_calc_attr.union({
+        to_calc_attr = to_calc_attr.union({
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
         # First remove the now unnecessary Elements, this will remove them
