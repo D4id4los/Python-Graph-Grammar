@@ -592,8 +592,8 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
-    def match(self, other_graph: 'Graph', eval_attrs: bool=False) -> \
-            List[Mapping]:
+    def match(self, other_graph: 'Graph', eval_attrs: bool=False
+               ) -> List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
 
@@ -607,66 +607,53 @@ class Graph(MutableSet):
         :return: A list of all possible matches, empty of there are
                  none.
         """
-        log.debug(f'Matching graph {id(self)} against graph '
-                  f'{id(other_graph)}.')
-        matches = []
-        other_elements = other_graph.element_list()
-        start_element = other_elements[0]
+        log.debug(f'Matching graph {id(self):#x} against graph '
+                  f'{id(other_graph):#x}.')
+        tasks: List[Tuple[Mapping,Dict[GraphElement, GraphElement]]] = []
+        start_other_element = None
+        for other_element in other_graph:
+            start_other_element = other_element
+            break
         for own_element in self:
-            if own_element.matches(start_element, eval_attrs):
-                matches.extend(
-                    self.match_at(own_element, other_elements, eval_attrs))
-        log.debug(f'Found {len(matches)} matches.')
-        return matches
+            if own_element.matches(start_other_element, eval_attrs):
+                tasks.append(
+                    (Mapping({start_other_element: own_element}),
+                     {n: start_other_element for n
+                     in start_other_element.neighbours()})
+                )
+        result = []
+        while len(tasks) > 0:
+            matches, elements_left = tasks.pop()
+            if len(matches) == len(other_graph) and len(elements_left) == 0:
+                if len(matches) > len(self):
+                    raise ValueError
+                log.debug(f'Found match len {len(matches)} of graph len '
+                          f'{len(self)} with graph len {len(other_graph)}.')
+                result.append(matches)
+                continue
+            elif len(matches) == len(other_graph):
+                raise ValueError
+            other_neighbour, other_element = elements_left.popitem()
+            if other_neighbour in matches:
+                continue
+            own_element = matches[other_element]
+            new_elements_left = dict(elements_left)
+            for new_other_neighbour in other_neighbour.neighbours():
+                if new_other_neighbour in matches:
+                    continue
+                if new_other_neighbour in elements_left:
+                    continue
+                new_elements_left[new_other_neighbour] = other_neighbour
+            for own_neighbour in own_element.neighbours():
+                if own_neighbour in matches.values():
+                    continue
+                if own_neighbour.matches(other_neighbour, eval_attrs):
+                    new_matches = Mapping(matches)
+                    new_matches[other_neighbour] = own_neighbour
+                    tasks.append((new_matches, new_elements_left))
 
-    @staticmethod
-    def match_at(start: GraphElement, target_elements: Sequence,
-                 eval_attrs: bool=False) -> List[Mapping]:
-        """
-        Try to find a match for the graph defined by the list of target
-        elements at the specific starting element of this graph.
-
-        The resulting matching mapps the mother graph element to host
-        graph elements: [M->H]
-
-        :param start: The starting element of this graph.
-        :param target_elements: The elements of the graph that is to be
-                                matched in such an order that it always
-                                builds into a connected graph.
-        :param eval_attrs: If true then the attributes will be
-            evaluated as boolean expression rather than testing for
-            equality. Use for matching productions to host graphs.
-        :return: A list of mappings between this graph and the other
-                 graph, if such a mapping exists.
-        """
-        def get_candidates(matches: Iterable[GraphElement]) \
-                -> List[GraphElement]:
-            """
-            Return a list of all non-matched neighbours of matched elements.
-            """
-            result = []
-            for element in matches:
-                for neighbour in element.neighbours():
-                    if neighbour not in matches:
-                        result.append(neighbour)
-            return result
-
-        problems: List[Tuple[int, Mapping]] = \
-            [(1, Mapping({target_elements[0]: start}))]
-        solutions = []
-        while len(problems) > 0:
-            index, matching = problems.pop()
-            if index == len(target_elements):
-                solutions.append(matching)
-                break
-            candidates = get_candidates(matching.values())
-            target = target_elements[index]
-            for candidate in candidates:
-                if candidate.matches(target, eval_attrs):
-                    new_matching = Mapping(matching)
-                    new_matching[target] = candidate
-                    problems.append((index + 1, new_matching))
-        return solutions
+        log.debug(f'Found {len(result)} matches.')
+        return result
 
     def is_isomorph(self, other_graph: 'Graph') -> bool:
         """
