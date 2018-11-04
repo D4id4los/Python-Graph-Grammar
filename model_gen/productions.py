@@ -352,16 +352,12 @@ class Production:
         :return: A tuple containing the mapping between mother and daughter
                  graphs and the corresponding daughter graph.
         """
-        rand_num = random.randint(0, len(self.mappings) - 1)
-        index = 0
-        lower_bound = 0
-        while True:
-            if lower_bound <= rand_num \
-                    < lower_bound + self.mappings[index].weight:
-                return self.mappings[index]
-            else:
-                lower_bound += self.mappings[index].weight
-                index += 1
+        rand_num = random.randint(0, self.total_weight-1)
+        for mapping in self.mappings:
+            if rand_num < mapping.weight:
+                return mapping
+            rand_num -= mapping.weight
+        raise ValueError
 
     def to_yaml(self) -> Iterable:
         """
