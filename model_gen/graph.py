@@ -1,8 +1,9 @@
 import abc
 import itertools
 import copy
-from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List
+from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List, Set
 from typing import MutableSequence, Tuple, Callable, AbstractSet
+from types import SimpleNamespace
 from model_gen.exceptions import ModelGenArgumentError
 from model_gen.exceptions import ModelGenIncongruentGraphStateError
 from model_gen.utils import get_logger, Mapping
@@ -592,7 +593,7 @@ class Graph(MutableSet):
                     neighbours.add(candidate)
         return neighbours
 
-    def match(self, other_graph: 'Graph', eval_attrs: bool=False
+    def match3(self, other_graph: 'Graph', eval_attrs: bool=False
                ) -> List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
@@ -607,6 +608,8 @@ class Graph(MutableSet):
         :return: A list of all possible matches, empty of there are
                  none.
         """
+        all_other_elements = set(other_graph)
+        not_seen_elements = all_other_elements
         log.debug(f'Matching graph {id(self):#x} against graph '
                   f'{id(other_graph):#x}.')
         tasks: List[Tuple[Mapping,Dict[GraphElement, GraphElement]]] = []
@@ -614,16 +617,27 @@ class Graph(MutableSet):
         for other_element in other_graph:
             start_other_element = other_element
             break
+        start_elements_left = {n: start_other_element for n
+                               in start_other_element.neighbours()}
+        start_it_map = {x for x in start_elements_left.keys()}
+        start_it_map.add(start_other_element)
         for own_element in self:
             if own_element.matches(start_other_element, eval_attrs):
                 tasks.append(
                     (Mapping({start_other_element: own_element}),
-                     {n: start_other_element for n
-                     in start_other_element.neighbours()})
+                     start_elements_left,
+                     {start_other_element},
+                     0, {0: start_it_map})
                 )
         result = []
         while len(tasks) > 0:
-            matches, elements_left = tasks.pop()
+            matches, elements_left, processed_elements, iteration, it_map = tasks.pop()
+            iteration += 1
+            new_it_map = dict(it_map)
+            new_it_map[iteration] = set(elements_left.keys())
+            processed_items = set()
+            for d in it_map.values():
+                processed_items = processed_items | {x for x in d}
             if len(matches) == len(other_graph) and len(elements_left) == 0:
                 if len(matches) > len(self):
                     raise ValueError
@@ -639,21 +653,168 @@ class Graph(MutableSet):
             own_element = matches[other_element]
             new_elements_left = dict(elements_left)
             for new_other_neighbour in other_neighbour.neighbours():
-                if new_other_neighbour in matches:
+                new_it_map[iteration].add(new_other_neighbour)
+                if new_other_neighbour in processed_elements:
                     continue
                 if new_other_neighbour in elements_left:
                     continue
                 new_elements_left[new_other_neighbour] = other_neighbour
+                new_it_map[iteration].add(new_other_neighbour)
             for own_neighbour in own_element.neighbours():
                 if own_neighbour in matches.values():
                     continue
                 if own_neighbour.matches(other_neighbour, eval_attrs):
                     new_matches = Mapping(matches)
                     new_matches[other_neighbour] = own_neighbour
-                    tasks.append((new_matches, new_elements_left))
+                    new_processed_elements = set(processed_elements)
+                    new_processed_elements.add(other_neighbour)
+                    tasks.append((new_matches, new_elements_left, new_processed_elements, iteration, new_it_map))
 
         log.debug(f'Found {len(result)} matches.')
         return result
+
+    def get_any_element(self) -> GraphElement:
+        """
+        Returns a single element from this graph.
+
+        :return: A graph element
+        """
+        for element in self:
+            return element
+
+    def check_matching(self, matching: Mapping) -> bool:
+        """
+        Check if the mapping is internally consistent.
+
+        This means that if two elements connected within the mother
+        graph must also be connected in the matching.
+
+        :param matching: The matching calculated by the match function.
+        :return: True if the matching is valid and false otherwise
+        """
+        for mother_element, host_element in matching.items():
+            for mother_neighbour in mother_element.neighbours():
+                if matching[mother_neighbour] not in host_element.neighbours():
+                    return False
+        return True
+
+    def matched_neighbours_compatible(self, matching: Mapping,
+                                      own_element: GraphElement,
+                                      other_element: GraphElement) -> bool:
+        """
+        Tests if the already matched neighbours of a mother element
+        are compatable with a prospective new match.
+
+        :param matching: A dict of the already matched elements.
+        :param own_element: The host element to check.
+        :param other_element: The mother element to check.
+        :return:
+        """
+        for other_neighbour in other_element.neighbours():
+            if other_neighbour in matching:
+                if matching[other_neighbour] not in own_element.neighbours():
+                    return False
+        return True
+
+    def match(self, other_graph: 'Graph', eval_attrs: bool=False) -> List[Mapping]:
+        """
+        Find all possible matches of the other graph in this graph.
+
+        These matches are partial isomorphism from the other graph to
+        this graph from a graph theoretical point of view.
+
+        :param other_graph: The graph to match against this graph.
+        :param eval_attrs: If true then the attributes will be
+            evaluated as boolean expression rather than testing for
+            equality. Use for matching productions to host graphs.
+        :return: A list of all possible matches, empty of there are
+                 none.
+        """
+        log.debug(f'Matching graph {id(self):#x} against graph '
+                  f'{id(other_graph):#x}.')
+        other_element = other_graph.get_any_element()
+        task_list: List[Tuple] = []
+        results: List[Mapping] = []
+        """List of (Mapping, UnmappedElements[UnmappedElement: MappedConnectedElement])"""
+        for own_element in self:
+            if not own_element.matches(other_element, eval_attrs):
+                continue
+            mapping = Mapping({other_element: own_element})
+            unmapped_elements = {e: other_element for e
+                                 in other_element.neighbours()}
+            debug = SimpleNamespace()
+            debug.log = []
+            debug.log.append(f'Mapped {other_element} to {own_element}.')
+            debug.log.append(f'Unmapped elements found: '
+                             f'{other_element.neighbours()} -> '
+                             f'{other_element}.')
+            task_list.append(
+                (mapping, unmapped_elements, debug)
+            )
+        while len(task_list) > 0:
+            mapping, unmapped_elements, debug = task_list.pop()
+            if len(mapping) == len(other_graph) and len(unmapped_elements) == 0:
+                if not self.check_matching(mapping):
+                    raise ModelGenIncongruentGraphStateError
+                if mapping not in results:
+                    results.append(mapping)
+                continue
+            elif len(mapping) == len(other_graph):
+                raise ValueError('Finished mapping, but unmapped_elements is '
+                                 'not empty')
+            elif len(unmapped_elements) == 0:
+                raise ValueError('Did not finish mapping, but '
+                                 'unmapped_elements is empty')
+            other_element, other_element_parent = unmapped_elements.popitem()
+            own_element_parent = mapping[other_element_parent]
+            debug.log.append(f'Searching for mapping for {other_element}.')
+            possible_new_mappings = []
+            for own_element in own_element_parent.neighbours():
+                debug.log.append(f'    Testing against {own_element}')
+                if own_element in mapping.values():
+                    debug.log.append(f'    {own_element} already in mapping.')
+                    continue
+                elif not own_element.matches(other_element, eval_attrs):
+                    debug.log.append(f'    {own_element} does not match.')
+                    continue
+                elif not self.matched_neighbours_compatible(mapping,
+                                                            own_element,
+                                                            other_element):
+                    debug.log.append(f'    {own_element}\' neighbours are '
+                                     f'incompatible with current mapping.')
+                    continue
+                new_mapping = Mapping(mapping)
+                new_mapping[other_element] = own_element
+                possible_new_mappings.append(new_mapping)
+                debug.log.append(f'    Found mapping from {other_element} -> '
+                                 f'{own_element}.')
+            if len(possible_new_mappings) == 0:
+                debug.log.append('Found no possible matching; discarding this '
+                                 'branch.')
+                continue
+            debug.log.append(f'Searching for new unmapped elements connected '
+                             f'to {other_element}.')
+            new_unmapped_elements = dict(unmapped_elements)
+            for other_neighbour in other_element.neighbours():
+                debug.log.append(f'    Testing element {other_neighbour}.')
+                if other_neighbour in mapping:
+                    debug.log.append(f'    {other_neighbour} already in '
+                                     f'mapping.')
+                    continue
+                elif other_neighbour in unmapped_elements:
+                    debug.log.append(f'    {other_neighbour} already in '
+                                     f'unmapped_elements.')
+                new_unmapped_elements[other_neighbour] = other_element
+                debug.log.append(f'    Adding {other_neighbour} -> '
+                                 f'{other_element} to unmapped_elements')
+            debug.log.append('Adding to tasks to task list.')
+            for new_mapping in possible_new_mappings:
+                task_list.append((new_mapping,
+                                  dict(new_unmapped_elements),
+                                  debug))
+        log.debug(f'Found {len(results)} matches.')
+        return results
+
 
     def is_isomorph(self, other_graph: 'Graph') -> bool:
         """

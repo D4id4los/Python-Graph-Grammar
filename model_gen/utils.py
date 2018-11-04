@@ -64,6 +64,9 @@ class Mapping(UniqueBidict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     # TODO: Check if inserted types match,
     # e.g. Edge -> Edge, but not Vert -> Edge
 
