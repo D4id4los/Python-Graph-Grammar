@@ -238,11 +238,12 @@ class ProductionList(wx.ListCtrl):
                 mapping = daughter_mapping.mapping
                 daughter_graph = daughter_mapping.daughter_graph
                 attr_requirements = daughter_mapping.attr_requirements
-                self.InsertItem(index, name)
-                self.SetItem(index, 1, f'Daughter {sub_index}')
-                self.productions[index] = (name, production, sub_index)
-                self.graphs[index] = (mother_graph, mapping, daughter_graph,
-                                      attr_requirements)
+                new_index = index + sub_index
+                self.InsertItem(new_index, name)
+                self.SetItem(new_index, 1, f'Daughter {sub_index}')
+                self.productions[new_index] = (name, production, sub_index)
+                self.graphs[new_index] = (mother_graph, mapping, daughter_graph,
+                                          attr_requirements)
 
     def get_data(self) -> Dict[str, Production]:
         """
