@@ -1,0 +1,158 @@
+host_graphs:
+  Seedling:
+    edges: []
+    id: 140710596343568
+    vertices:
+    - attr: {label: growth}
+      id: 140710596341888
+productions:
+  Branch growth:
+    id: 140710596342224
+    mappings:
+    - attr_requirements: {}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140710596342896
+          vertex1: 140710596342448
+          vertex2: null
+        - attr: {label: '''branch'''}
+          id: 140710596342784
+          vertex1: 140710596342448
+          vertex2: 140710596342336
+        - attr: {label: '''branch'''}
+          id: 140710596342560
+          vertex1: 140710596342336
+          vertex2: 140710596342000
+        - attr: {label: '''branch'''}
+          id: 140710596343064
+          vertex1: 140710596342336
+          vertex2: 140710596342672
+        id: 140710596342504
+        vertices:
+        - attr: {}
+          id: 140710596342448
+        - attr: {label: '''branch'''}
+          id: 140710596342672
+        - attr: {label: '''branch'''}
+          id: 140710596342336
+        - attr: {label: '''branch'''}
+          id: 140710596342000
+      id: 140710596341944
+      mapping:
+        dict: {140710596342112: 140710596342448, 140710596342280: 140710596342896}
+        id: 140710742298472
+      mother_graph: 140710596342056
+      weight: 1
+    - attr_requirements: {}
+      daughter_graph:
+        edges:
+        - attr: {label: '''grown_branch'''}
+          id: 140710596646280
+          vertex1: 140710594762960
+          vertex2: null
+        id: 140710596342728
+        vertices:
+        - attr: {label: '''grown_branch'''}
+          id: 140710594762960
+      id: 140710596342616
+      mapping:
+        dict: {140710596342112: 140710594762960, 140710596342280: 140710596646280}
+        id: 140710742298032
+      mother_graph: 140710596342056
+      weight: 7
+    mother_graph:
+      edges:
+      - attr: {label: attr=='branch'}
+        id: 140710596342280
+        vertex1: 140710596342112
+        vertex2: null
+      id: 140710596342056
+      vertices:
+      - attr: {label: attr=='branch'}
+        id: 140710596342112
+  Trunk Growth:
+    id: 140710596343176
+    mappings:
+    - attr_requirements: {}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140710596343960
+          vertex1: 140710596345696
+          vertex2: 140710596343624
+        - attr: {}
+          id: 140710596343792
+          vertex1: 140710596343624
+          vertex2: 140710596343120
+        - attr: {label: '''branch'''}
+          id: 140710596343400
+          vertex1: 140710596343624
+          vertex2: 140710596343008
+        id: 140710596343456
+        vertices:
+        - attr: {label: '''branch'''}
+          id: 140710596343008
+        - attr: {label: '''growth'''}
+          id: 140710596343120
+        - attr: {label: '''trunk'''}
+          id: 140710596343624
+        - attr: {label: '''trunk'''}
+          id: 140710596345696
+      id: 140710596343232
+      mapping:
+        dict: {140710596342952: 140710596345696}
+        id: 140710742460376
+      mother_graph: 140710596343288
+      weight: 10
+    - attr_requirements: {}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140710596344296
+          vertex1: 140710596343512
+          vertex2: 140710596343848
+        id: 140710596344128
+        vertices:
+        - attr: {label: '''trunk'''}
+          id: 140710596343512
+        - attr: {label: '''growth'''}
+          id: 140710596343848
+      id: 140710596344520
+      mapping:
+        dict: {140710596342952: 140710596343512}
+        id: 140710741794752
+      mother_graph: 140710596343288
+      weight: 10
+    - attr_requirements: {}
+      daughter_graph:
+        edges:
+        - attr: {label: '''branch'''}
+          id: 140710596344464
+          vertex1: 140710596344072
+          vertex2: 140710596344016
+        - attr: {label: '''branch'''}
+          id: 140710596344352
+          vertex1: 140710596344072
+          vertex2: 140710596344688
+        id: 140710596344184
+        vertices:
+        - attr: {label: '''trunk'''}
+          id: 140710596344072
+        - attr: {label: '''branch'''}
+          id: 140710596344016
+        - attr: {label: '''branch'''}
+          id: 140710596344688
+      id: 140710596344576
+      mapping:
+        dict: {140710596342952: 140710596344072}
+        id: 140710741793872
+      mother_graph: 140710596343288
+      weight: 7
+    mother_graph:
+      edges: []
+      id: 140710596343288
+      vertices:
+      - attr: {label: attr=='growth'}
+        id: 140710596342952
+result_graphs: {}
