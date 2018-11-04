@@ -232,18 +232,19 @@ class ProductionList(wx.ListCtrl):
         """
         self.DeleteAllItems()
         self.productions.clear()
+        new_index = 0
         for index, (name, production) in enumerate(data.items()):
             mother_graph = production.mother_graph
             for sub_index, daughter_mapping in enumerate(production.mappings):
                 mapping = daughter_mapping.mapping
                 daughter_graph = daughter_mapping.daughter_graph
                 attr_requirements = daughter_mapping.attr_requirements
-                new_index = index + sub_index
                 self.InsertItem(new_index, name)
                 self.SetItem(new_index, 1, f'Daughter {sub_index}')
                 self.productions[new_index] = (name, production, sub_index)
                 self.graphs[new_index] = (mother_graph, mapping, daughter_graph,
                                           attr_requirements)
+                new_index += 1
 
     def get_data(self) -> Dict[str, Production]:
         """
