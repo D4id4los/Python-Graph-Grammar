@@ -43,6 +43,8 @@ class GraphElement(abc.ABC):
             raise ModelGenArgumentError()
         try:
             for attr_key in graph_element.attr.keys():
+                if attr_key in ('x', 'y'):
+                    continue
                 if eval_attr:
                     def matching_function(attr):
                         return eval(graph_element.attr[attr_key])

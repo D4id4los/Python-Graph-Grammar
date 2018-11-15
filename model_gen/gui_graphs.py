@@ -149,7 +149,7 @@ class AttributeEditingFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, partial(self.remove_attr, attr_id=new_id),
                   button_remove)
         text_label = wx.TextCtrl(self, value=attr_label)
-        text_value = wx.TextCtrl(self, value=attr_value)
+        text_value = wx.TextCtrl(self, value=str(attr_value))
         self.attr_labels[new_id] = text_label
         self.attr_values[new_id] = text_value
         self.attr_buttons[new_id] = button_remove
@@ -471,14 +471,19 @@ class GraphPanel(wx.Panel):
         i = 0
         free_spaces = [(0, 0)]
         for graph_vertex in graph.vertices:
-            position = free_spaces[i]
-            add_new_free_spaces(position, free_spaces)
+            if 'x' in graph_vertex.attr and 'y' in graph_vertex.attr:
+                x = float(graph_vertex.attr['x'])
+                y = float(graph_vertex.attr['y'])
+                position = (x, y)
+            else:
+                position = free_spaces[i]
+                add_new_free_spaces(position, free_spaces)
+                i += 1
             figure_vertex = FigureVertex(graph_vertex, position, 0.5,
                                          color='w', ec='k', zorder=10)
             self.vertices.add(figure_vertex)
             self.graph_to_figure[graph_vertex] = figure_vertex
             axes.add_artist(figure_vertex)
-            i += 1
         for graph_edge in graph.edges:
             if graph_edge.vertex1 is not None:
                 figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
@@ -1038,6 +1043,8 @@ class FigureElement(matplotlib.artist.Artist):
             return ''
         text = ''
         for name, value in self.graph_element.attr.items():
+            if name in ('x', 'y'):
+                continue
             text += f'{name}: {value}\n'
         return text[:-1]
 
@@ -1146,6 +1153,10 @@ class FigureVertex(FigureElement, plt.Circle):
         self.update_path_effects()
 
     def on_position_change(self):
+        if self.graph_element is not None:
+            x, y = self.center
+            self.graph_element.attr['x'] = float(x)
+            self.graph_element.attr['y'] = float(y)
         for edge in self.edges:
             edge.on_position_change()
         if self.annotation is not None:

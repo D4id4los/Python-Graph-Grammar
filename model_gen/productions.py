@@ -3,7 +3,7 @@ from functools import partial
 from typing import Iterable, Sized, Union, Tuple, Sequence, Dict
 
 from model_gen.utils import Mapping, get_logger
-from model_gen.graph import Graph, GraphElement
+from model_gen.graph import Graph, GraphElement, Vertex, Edge
 from model_gen.exceptions import ModelGenArgumentError
 
 log = get_logger('model_gen.' + __name__)
@@ -313,6 +313,14 @@ class Production:
             C_element.replace_connection(
                 partial(hierarchy.map, source_level='C', target_level='R')
             )
+            if isinstance(C_element, Vertex) and (
+                    'new_x' not in C_element.attr
+                    or 'new_y' not in C_element.attr):
+                x, y = _calculate_new_position(C_element, option, hierarchy)
+                if 'new_x' not in C_element.attr:
+                    C_element.attr['x'] = x
+                if 'new_y' not in C_element.attr:
+                    C_element.attr['y'] = y
             valid_inconsistencies = {x for x in C_element.neighbours()
                                      if x in to_add}
             result_graph.add(C_element, ignore_errors=valid_inconsistencies)
@@ -334,6 +342,14 @@ class Production:
                     for name, M_element in option.attr_requirements[D_element].items()
                 }
             for attr_name, attr_func_text in D_element.attr.items():
+                if attr_name in ('x', 'y'):
+                    continue
+                if attr_name == 'new_x':
+                    attr_name = 'x'
+                    target_element.attr.pop('new_x')
+                elif attr_name == 'new_y':
+                    attr_name = 'y'
+                    target_element.attr.pop('new_y')
                 def attr_func(old, **kwargs):
                     for name, value in kwargs.items():
                         locals()[name] = value
@@ -395,3 +411,107 @@ class Production:
         result = Production(mother_graph, mappings)
         mapping[data['id']] = result
         return result
+
+
+def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
+    """
+    Calculate the position of a newly added element dependend on the
+    barycenter of all mapped daughter elements.
+
+    :param new_element: The element hose new position is to be
+        calculated.
+    :param option: The matched production option.
+    :param hierarchy: The production application hierarchy of this
+        application of the production option.
+    :return:
+    """
+    daughter_barycenter = _calculate_daughter_barycenter(option)
+    host_barycenter = _calculate_host_barycenter(option, hierarchy)
+    x = float(new_element.attr['x'])
+    y = float(new_element.attr['y'])
+    dx = x - daughter_barycenter[0]
+    dy = y - daughter_barycenter[1]
+    new_x = host_barycenter[0] + dx
+    new_y = host_barycenter[1] + dy
+    log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.: '
+              f'{host_barycenter}, delta: {(dx, dy)}.')
+    log.debug(f'   Old position: {(x, y)} new position: {(new_x, new_y)}.')
+    return new_x, new_y
+
+
+def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
+    """
+    Calculate the barycenter of mapped elements in the daughter graph
+    of a production option.
+
+    :param option: The production option whose barycenter is to be
+        calculated.
+    :return: A tuple with the position of the barycenter.
+    """
+    num_elements = 0
+    x = 0
+    y = 0
+    for daughter_element in option.mapping.values():
+        if isinstance(daughter_element, Vertex):
+            num_elements += 1
+            x += float(daughter_element.attr['x'])
+            y += float(daughter_element.attr['y'])
+        elif isinstance(daughter_element, Edge):
+            if daughter_element.vertex1 is not None:
+                num_elements += 1
+                x += float(daughter_element.vertex1.attr['x'])
+                y += float(daughter_element.vertex1.attr['y'])
+            if daughter_element.vertex2 is not None:
+                num_elements += 1
+                x += float(daughter_element.vertex1.attr['x'])
+                y += float(daughter_element.vertex1.attr['y'])
+    x /= num_elements
+    y /= num_elements
+    return x, y
+
+
+def _calculate_host_barycenter(
+        option: ProductionOption,
+        hierarchy: ProductionApplicationHierarchy
+) -> (float, float):
+    """
+    Calculate the barycenter of elements of a host graph which have
+    been mapped to daughter elements by a match.
+
+    :param option: The production option whose barycenter is to be
+        calculated.
+    :return: A tuple with the position of the barycenter.
+    """
+    num_elements = 0
+    x = 0
+    y = 0
+    for daughter_element in option.mapping.values():
+        host_element = hierarchy.map(daughter_element, 'D', 'H')
+        if isinstance(host_element, Vertex):
+            num_elements += 1
+            x += float(host_element.attr['x'])
+            y += float(host_element.attr['y'])
+        elif isinstance(host_element, Edge):
+            mother_element = hierarchy.map(daughter_element, 'D', 'M')
+            if mother_element.vertex1 is not None:
+                host_vertex1 = hierarchy.map(mother_element.vertex1, 'M', 'H')
+                host_x = float(host_vertex1.attr["x"])
+                host_y = float(host_vertex1.attr["y"])
+                log.debug(f'      Host vertex1 position: '
+                          f'{(host_x, host_y)} {host_vertex1}.')
+                num_elements += 1
+                x += host_x
+                y += host_y
+            if mother_element.vertex2 is not None:
+                host_vertex2 = hierarchy.map(mother_element.vertex2, 'M', 'H')
+                host_x = host_vertex2.attr["x"]
+                host_y = host_vertex2.attr["y"]
+                log.debug(f'      Host vertex2 position: '
+                          f'{(host_x, host_y)} {host_vertex1}.')
+                num_elements += 1
+                x += host_x
+                y += host_y
+            #TODO: Handle the case without any vertices
+    x /= num_elements
+    y /= num_elements
+    return x, y
