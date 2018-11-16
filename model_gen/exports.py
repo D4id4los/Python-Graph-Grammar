@@ -4,7 +4,8 @@ Contains export functions for graphs.
 
 import svgwrite
 from svgwrite import cm, mm
-from model_gen.graph import Graph, GraphElement, Vertex, Edge
+from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
+    get_min_max_points
 
 
 def add_graphelement_to_svg_drawing(element: GraphElement,
@@ -37,8 +38,12 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
 
 
 def export_graph_to_svg(graph: Graph, filename: str) -> None:
+    min_point, max_point = get_min_max_points(graph)
+    size = (max_point[0] - min_point[0], max_point[1] - min_point[1])
+    view_box = f'{min_point[0]*100} {min_point[1]*100} {size[0]*100} {size[1]*100}'
+    size = size[0] * cm, size[1] * cm
     drawing = svgwrite.Drawing(filename=filename, debug=True,
-                               profile='tiny')
+                               profile='tiny', size=size, viewBox=view_box)
     for element in graph:
         add_graphelement_to_svg_drawing(element, drawing)
     drawing.save()
