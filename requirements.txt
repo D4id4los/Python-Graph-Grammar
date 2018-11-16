@@ -5,3 +5,4 @@ pytest
 mock
 pytest-mock
 PyDispatcher
+svgwrite

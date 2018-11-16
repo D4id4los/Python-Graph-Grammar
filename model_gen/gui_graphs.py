@@ -1043,7 +1043,7 @@ class FigureElement(matplotlib.artist.Artist):
             return ''
         text = ''
         for name, value in self.graph_element.attr.items():
-            if name in ('x', 'y'):
+            if name in ('x', 'y') or name.startswith('.'):
                 continue
             text += f'{name}: {value}\n'
         return text[:-1]

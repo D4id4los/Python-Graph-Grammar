@@ -3,11 +3,15 @@ from typing import Dict, Tuple
 import wx
 import wx.lib.newevent
 from wx.lib.agw import aui as aui
+from pydispatch import dispatcher
 
-from graph import Graph
-from gui_graphs import GraphPanel, ProductionGraphsPanel
-from productions import Production
-from utils import Mapping
+from model_gen.graph import Graph
+from model_gen.gui_graphs import GraphPanel, ProductionGraphsPanel
+from model_gen.productions import Production
+from model_gen.utils import Mapping, get_logger
+from model_gen.exports import export_graph_to_svg
+
+log = get_logger('model_gen.' + __name__)
 
 RunGrammarEvent, EVT_RUN_GRAMMAR = wx.lib.newevent.NewCommandEvent()
 
@@ -98,10 +102,11 @@ class ResultGraphPanel(wx.Panel):
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.list = GraphList(self, graph_panel=self.graph_panel)
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-        self.del_button = wx.Button(self, label='Delete')
+        self.export_button = wx.Button(self, label='Export SVG')
+        self.export_button.Bind(wx.EVT_BUTTON, self.on_export_button)
         self.run_button = wx.Button(self, label='Run')
         self.run_button.Bind(wx.EVT_BUTTON, self.on_run_button)
-        hbox2.Add(self.del_button, proportion=0, flag=wx.ALIGN_LEFT)
+        hbox2.Add(self.export_button, proportion=0, flag=wx.ALIGN_LEFT)
         hbox2.Add(self.run_button, proportion=0, flag=wx.ALIGN_LEFT)
         vbox.Add(self.list, proportion=1, flag=wx.EXPAND)
         vbox.Add(hbox2, proportion=0, flag=wx.EXPAND)
@@ -123,6 +128,21 @@ class ResultGraphPanel(wx.Panel):
         """
         event = RunGrammarEvent(wx.ID_ANY)
         wx.PostEvent(self, event)
+
+    def on_export_button(self, _) -> None:
+        """
+        Dispatch a ExportGraphEvent when the export graph button is pushed.
+        """
+        with wx.FileDialog(self, 'Export Graph to SVG',
+                           wildcard='SVG files (*.svg)|*.svg',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+                           ) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = file_dialog.GetPath()
+            log.info(f'Exporting graph to file {path}')
+            graph = self.list.get_active()
+            export_graph_to_svg(graph, path)
 
 
 class GraphList(wx.ListCtrl):
