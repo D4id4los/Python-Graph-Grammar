@@ -16,7 +16,7 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
             args[attr[5:]] = value
     if isinstance(element, Vertex):
         x = float(element.attr['x'])
-        y = float(element.attr['y'])
+        y = -float(element.attr['y'])
         args.setdefault('r', '0.4cm')
         args.setdefault('stroke_width', '1mm')
         args.setdefault('stroke', 'black')
@@ -26,9 +26,9 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
         v1 = element.vertex1
         v2 = element.vertex2
         x1 = float(v1.attr['x'])
-        y1 = float(v1.attr['y'])
+        y1 = -float(v1.attr['y'])
         x2 = float(v2.attr['x'])
-        y2 = float(v2.attr['y'])
+        y2 = -float(v2.attr['y'])
         args.setdefault('stroke_width', '1mm')
         args.setdefault('stroke', 'black')
         drawing.add(drawing.line(start=(x1*cm, y1*cm), end=(x2*cm, y2*cm),
@@ -43,7 +43,8 @@ def export_graph_to_svg(graph: Graph, filename: str) -> None:
     view_box = f'{min_point[0]*100} {min_point[1]*100} {size[0]*100} {size[1]*100}'
     size = size[0] * cm, size[1] * cm
     drawing = svgwrite.Drawing(filename=filename, debug=True,
-                               profile='tiny', size=size, viewBox=view_box)
+                               profile='full', size=size, viewBox=view_box,
+                               preserveAspectRatio='xMidYMid meet')
     for element in graph:
         add_graphelement_to_svg_drawing(element, drawing)
     drawing.save()
