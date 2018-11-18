@@ -6,6 +6,7 @@ from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
     get_max_generation
 from model_gen.exceptions import ModelGenArgumentError
+from model_gen.geometry import Vec, calc_angle, norm, perp_right, perp_left
 
 log = get_logger('model_gen.' + __name__)
 
@@ -252,6 +253,9 @@ class Production:
                  mappings: Sized and Iterable[ProductionOption]):
         self.mother_graph: Graph = mother_graph
         self.mappings: Sized and Iterable[ProductionOption] = mappings
+        self.vectors: \
+            Dict[str, Union[Vertex, Tuple[Vertex, Vertex]]] \
+            = {}
         self.total_weight = 0
         for mapping in self.mappings:
             self.total_weight += mapping.weight
@@ -341,6 +345,13 @@ class Production:
             )
         # Now calculate the new attributes for all elements that where part of
         # the daughter graph.
+        vectors = {}
+        for vec_name, vec_info in self.vectors.items():
+            if isinstance(vec_info, Vertex):
+                vectors[vec_name] = Vec(hierarchy.map(vec_info, 'M', 'H'))
+            else:
+                vectors[vec_name] = Vec(hierarchy.map(vec_info[0], 'M', 'H'),
+                                        hierarchy.map(vec_info[1], 'M', 'H'))
         for D_element, target_element, old_element in to_calc_attr:
             attr_requirements = {}
             if D_element in option.attr_requirements:
@@ -349,7 +360,7 @@ class Production:
                     for name, M_element in option.attr_requirements[D_element].items()
                 }
             for attr_name, attr_func_text in D_element.attr.items():
-                if attr_name in ('x', 'y') or attr_name.startswith('.'):
+                if attr_name in ('x', 'y'):
                     continue
                 if attr_name == 'new_x':
                     attr_name = 'x'
@@ -359,9 +370,21 @@ class Production:
                     target_element.attr.pop('new_y')
 
                 def attr_func(old, **kwargs):
+                    from math import acos, sqrt, pi
                     for name, value in kwargs.items():
                         locals()[name] = value
                     return eval(attr_func_text)
+
+                if attr_name == '.new_pos':
+                    log.debug(f'   Angle={calc_angle(vectors["v1"], vectors["v2"])}')
+                    pos = attr_func(old_element, **attr_requirements,
+                                    **vectors)
+                    target_element.attr['x'] = pos.x
+                    target_element.attr['y'] = pos.y
+                    target_element.attr.pop('.new_pos')
+                    continue
+                elif attr_name.startswith('.'):
+                    continue
                 target_element.attr[attr_name] = attr_func(old_element,
                                                            **attr_requirements)
 
@@ -393,6 +416,9 @@ class Production:
         fields = {
             'mother_graph': self.mother_graph.to_yaml(),
             'mappings': [x.to_yaml() for x in self.mappings],
+            'vectors': {k: id(v) if isinstance(v, GraphElement)
+                        else (id(v[0]), id(v[1]))
+                        for k,v in self.vectors.items()},
             'id': id(self)
         }
         return fields
@@ -417,6 +443,16 @@ class Production:
         mappings = [ProductionOption.from_yaml(x, mapping) for x in
                     data['mappings']]
         result = Production(mother_graph, mappings)
+        if 'vectors' in data:
+            vectors = {}
+            for k, v in data['vectors'].items():
+                if isinstance(v, int):
+                    vectors[k] = mapping[v]
+                elif len(v) == 2:
+                    vectors[k] = (mapping[v[0]], mapping[v[1]])
+                else:
+                    raise ValueError
+            result.vectors = vectors
         mapping[data['id']] = result
         return result
 
@@ -512,8 +548,8 @@ def _calculate_host_barycenter(
                 y += host_y
             if mother_element.vertex2 is not None:
                 host_vertex2 = hierarchy.map(mother_element.vertex2, 'M', 'H')
-                host_x = host_vertex2.attr["x"]
-                host_y = host_vertex2.attr["y"]
+                host_x = float(host_vertex2.attr["x"])
+                host_y = float(host_vertex2.attr["y"])
                 log.debug(f'      Host vertex2 position: '
                           f'{(host_x, host_y)} {host_vertex1}.')
                 num_elements += 1
