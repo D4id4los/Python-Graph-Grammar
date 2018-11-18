@@ -955,23 +955,36 @@ class Generations:
         return True
 
     def __lt__(self, other):
-        for i in range(0, len(self._generations)):
-            if i in self._generations:
-                if i in other._generations:
-                    if self._generations[i] < other._generations[i]:
-                        return True
-                    elif self._generations[i] == other._generations[i]:
-                        continue
-                    else:
-                        return False
-                else:
-                    return False
-            else:
-                if i in other._generations:
-                    return True
-                else:
-                    continue
-        return False
+        own_average = 0
+        own_total = 0
+        for gen, num in self._generations.items():
+            own_average += gen * num
+            own_total += num
+        own_average /= own_total
+        other_average = 0
+        other_total = 0
+        for gen, num in other._generations.items():
+            other_average += gen * num
+            other_total += num
+        other_average /= other_total
+        return own_average > other_average
+        # for i in range(0, len(self._generations)):
+        #     if i in self._generations:
+        #         if i in other._generations:
+        #             if self._generations[i] < other._generations[i]:
+        #                 return True
+        #             elif self._generations[i] == other._generations[i]:
+        #                 continue
+        #             else:
+        #                 return False
+        #         else:
+        #             return False
+        #     else:
+        #         if i in other._generations:
+        #             return True
+        #         else:
+        #             continue
+        # return False
 
     def __repr__(self):
         return f'Generations({self._generations})'
