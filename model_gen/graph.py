@@ -914,32 +914,77 @@ def get_min_max_points(graph: Graph
     return (min_x, min_y), (max_x, max_y)
 
 
-def get_max_generation(graph: Graph) -> int:
+def get_max_generation(graph_elements: Iterable[GraphElement]) -> int:
     """
     Find the maximum (highest) generation present within an element of
     the passed graph.
 
-    :param graph: The graph to analyze.
+    :param graph_elements: The graph_elements to analyze.
     :return: The highest generation value present within the graph.
         Returns 0 if there are no elements or no elements with a
         .generation attribute.
     """
     max_generation = 0
-    for element in graph:
+    for element in graph_elements:
         element_generation = int(element.attr['.generation'])
         if element_generation > max_generation:
             max_generation = element_generation
     return max_generation
 
 
-def get_generation_dict(graph: Graph) -> Dict[int, int]:
+class Generations:
+    """
+    Saves a dict containting the generations of a graph and how many
+    elements are member of each generation.
+
+    Provides a nice interface to compare the generations of different
+    graphs.
+    """
+
+    def __init__(self, generations: Dict[int, int]):
+        self._generations = generations
+
+    def __eq__(self, other):
+        if len(self._generations) != len(other._generations):
+            return False
+        for gen in self._generations.keys():
+            if gen not in other._generations:
+                return False
+            if self._generations[gen] != other._generations[gen]:
+                return False
+        return True
+
+    def __lt__(self, other):
+        for i in range(0, len(self._generations)):
+            if i in self._generations:
+                if i in other._generations:
+                    if self._generations[i] < other._generations[i]:
+                        return True
+                    elif self._generations[i] == other._generations[i]:
+                        continue
+                    else:
+                        return False
+                else:
+                    return False
+            else:
+                if i in other._generations:
+                    return True
+                else:
+                    continue
+        return False
+
+    def __repr__(self):
+        return f'Generations({self._generations})'
+
+
+def get_generations(graph_elements: Iterable[GraphElement]) -> Generations:
     """
 
     :param graph:
     :return:
     """
     generations = {}
-    for element in graph:
+    for element in graph_elements:
         generation = int(element.attr['.generation'])
         generations[generation] = generations.setdefault(generation, 0) + 1
-    return generations
+    return Generations(generations)

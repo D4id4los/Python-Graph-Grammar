@@ -2,6 +2,7 @@ from typing import List, TypeVar, Tuple
 from timeit import default_timer as timer
 from model_gen.utils import *
 from model_gen.productions import *
+from model_gen.graph import get_generations
 
 log = get_logger('model_gen.' + __name__)
 
@@ -44,7 +45,8 @@ class Grammar:
             )
             if production is None:
                 break
-            matching_mapping = self._select_match(matches)
+            production_option = production.select_option()
+            matching_mapping = self._select_match(matches, production_option)
             new_host_graph = production.apply(new_host_graph, matching_mapping)
             result_graphs.append(new_host_graph)
             log.info(f'Resulted in a graph with {len(new_host_graph)} elements.')
@@ -82,15 +84,34 @@ class Grammar:
         return result
 
     @staticmethod
-    def _select_match(matches: List[T]) -> T:
+    def _select_match(matches: List[Mapping],
+                      production_option: ProductionOption) -> Mapping:
         """
         Select a singe match out of a list of possible matches.
 
         :param matches: The list of matches from which to select one.
+        :param production_option: The production option which is being matched.
         :return: The selected match
         """
-        i = random.randint(0, len(matches) - 1)
-        return matches[i]
+        valid_matches = matches
+        if production_option.conditions['generation'] == 'oldest':
+            best_generations = None
+            best_mappings = []
+            for mapping in matches:
+                generations = get_generations(mapping.values())
+                if best_generations is None:
+                    best_generations = generations
+                    best_mappings = [mapping]
+                    continue
+                if generations > best_generations:
+                    best_generations = generations
+                    best_mappings = [mapping]
+                elif generations == best_generations:
+                    best_mappings.append(mapping)
+            valid_matches = best_mappings
+            log.debug(f'Oldest generations were {repr(best_generations)}.')
+        i = random.randint(0, len(valid_matches)-1)
+        return valid_matches[i]
 
     def to_yaml(self) -> Iterable:
         """

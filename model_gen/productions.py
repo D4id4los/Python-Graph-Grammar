@@ -158,6 +158,7 @@ class ProductionOption:
         self.weight = weight
         self.attr_requirements: Dict[
             GraphElement, Dict[str, GraphElement]] = {}
+        self.conditions: Dict[str, str] = {}
 
         mother_elements = mother_graph.element_list('vef')
         daughter_elements = daughter_graph.element_list('vef')
@@ -190,6 +191,7 @@ class ProductionOption:
             'daughter_graph': self.daughter_graph.to_yaml(),
             'weight': self.weight,
             'attr_requirements': attr_requirements,
+            'conditions': self.conditions,
             'id': id(self),
         }
         return fields
@@ -227,6 +229,8 @@ class ProductionOption:
                     for name, mother_element in requirements.items()
                 }
             result.attr_requirements = attr_requirements
+        if 'conditions' in data:
+            result.conditions = data['conditions']
         mapping[data['id']] = result
         return result
 
@@ -288,7 +292,7 @@ class Production:
                 return None
 
         log.debug(f'Applying {self} to graph {id(host_graph)}.')
-        option = self._select_option()
+        option = self.select_option()
         hierarchy = ProductionApplicationHierarchy(
             host_graph,
             map_mother_to_host,
@@ -303,7 +307,7 @@ class Production:
         to_calc_attr = to_calc_attr.union({
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
-        new_generation = get_max_generation(host_graph) + 1
+        new_generation = get_max_generation(map_mother_to_host.values()) + 1
         # First remove the now unnecessary Elements, this will remove them
         # from any neighbourhood lists.
         for R_element in to_remove:
@@ -353,6 +357,7 @@ class Production:
                 elif attr_name == 'new_y':
                     attr_name = 'y'
                     target_element.attr.pop('new_y')
+
                 def attr_func(old, **kwargs):
                     for name, value in kwargs.items():
                         locals()[name] = value
@@ -363,7 +368,7 @@ class Production:
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         return result_graph
 
-    def _select_option(self) -> ProductionOption:
+    def select_option(self) -> ProductionOption:
         """
         Randomly select a mapping and daughter graph from the list of possible
         mappings.

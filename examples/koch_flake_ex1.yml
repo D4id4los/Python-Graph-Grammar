@@ -82,6 +82,8 @@ productions:
         dict: {140467590664656: 140467590665272, 140467590665440: 140467590665832}
         id: 140467637107880
       mother_graph: 140467590666056
+      conditions:
+        generation: oldest
       weight: 1
     mother_graph:
       edges:
