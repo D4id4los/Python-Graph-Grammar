@@ -416,6 +416,7 @@ class GraphPanel(wx.Panel):
         if axes is None:
             axes = self.subplot
         axes.patch.set_facecolor('white')
+        axes.set_aspect('equal', 'box')
         axes.set_xlim(-10, 10, auto=True)
         axes.set_ylim(-10, 10, auto=True)
         # TODO: Make XYLim confort to window size/dimensions

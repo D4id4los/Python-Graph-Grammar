@@ -3,7 +3,8 @@ from functools import partial
 from typing import Iterable, Sized, Union, Tuple, Sequence, Dict
 
 from model_gen.utils import Mapping, get_logger
-from model_gen.graph import Graph, GraphElement, Vertex, Edge
+from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
+    get_max_generation
 from model_gen.exceptions import ModelGenArgumentError
 
 log = get_logger('model_gen.' + __name__)
@@ -302,6 +303,7 @@ class Production:
         to_calc_attr = to_calc_attr.union({
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
+        new_generation = get_max_generation(host_graph) + 1
         # First remove the now unnecessary Elements, this will remove them
         # from any neighbourhood lists.
         for R_element in to_remove:
@@ -321,6 +323,7 @@ class Production:
                     C_element.attr['x'] = x
                 if 'new_y' not in C_element.attr:
                     C_element.attr['y'] = y
+            C_element.attr['.generation'] = new_generation
             valid_inconsistencies = {x for x in C_element.neighbours()
                                      if x in to_add}
             result_graph.add(C_element, ignore_errors=valid_inconsistencies)
@@ -342,7 +345,7 @@ class Production:
                     for name, M_element in option.attr_requirements[D_element].items()
                 }
             for attr_name, attr_func_text in D_element.attr.items():
-                if attr_name in ('x', 'y'):
+                if attr_name in ('x', 'y') or attr_name.startswith('.'):
                     continue
                 if attr_name == 'new_x':
                     attr_name = 'x'

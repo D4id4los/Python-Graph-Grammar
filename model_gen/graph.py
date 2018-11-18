@@ -43,7 +43,7 @@ class GraphElement(abc.ABC):
             raise ModelGenArgumentError()
         try:
             for attr_key in graph_element.attr.keys():
-                if attr_key in ('x', 'y'):
+                if attr_key in ('x', 'y') or attr_key.startswith('.'):
                     continue
                 if eval_attr:
                     def matching_function(attr):
@@ -512,6 +512,9 @@ class Graph(MutableSet):
         return result
 
     def add(self, element: GraphElement, ignore_errors: AbstractSet=None):
+        if '.generation' not in element.attr:
+            generation = get_max_generation(self)
+            element.attr['.generation'] = generation
         element.add_to(self, ignore_errors)
 
     def discard(self, element: GraphElement, ignore_errors: AbstractSet=None):
@@ -594,86 +597,6 @@ class Graph(MutableSet):
                 if candidate not in self:
                     neighbours.add(candidate)
         return neighbours
-
-    def match3(self, other_graph: 'Graph', eval_attrs: bool=False
-               ) -> List[Mapping]:
-        """
-        Find all possible matches of the other graph in this graph.
-
-        These matches are partial isomorphism from the other graph to
-        this graph from a graph theoretical point of view.
-
-        :param other_graph: The graph to match against this graph.
-        :param eval_attrs: If true then the attributes will be
-            evaluated as boolean expression rather than testing for
-            equality. Use for matching productions to host graphs.
-        :return: A list of all possible matches, empty of there are
-                 none.
-        """
-        all_other_elements = set(other_graph)
-        not_seen_elements = all_other_elements
-        log.debug(f'Matching graph {id(self):#x} against graph '
-                  f'{id(other_graph):#x}.')
-        tasks: List[Tuple[Mapping,Dict[GraphElement, GraphElement]]] = []
-        start_other_element = None
-        for other_element in other_graph:
-            start_other_element = other_element
-            break
-        start_elements_left = {n: start_other_element for n
-                               in start_other_element.neighbours()}
-        start_it_map = {x for x in start_elements_left.keys()}
-        start_it_map.add(start_other_element)
-        for own_element in self:
-            if own_element.matches(start_other_element, eval_attrs):
-                tasks.append(
-                    (Mapping({start_other_element: own_element}),
-                     start_elements_left,
-                     {start_other_element},
-                     0, {0: start_it_map})
-                )
-        result = []
-        while len(tasks) > 0:
-            matches, elements_left, processed_elements, iteration, it_map = tasks.pop()
-            iteration += 1
-            new_it_map = dict(it_map)
-            new_it_map[iteration] = set(elements_left.keys())
-            processed_items = set()
-            for d in it_map.values():
-                processed_items = processed_items | {x for x in d}
-            if len(matches) == len(other_graph) and len(elements_left) == 0:
-                if len(matches) > len(self):
-                    raise ValueError
-                log.debug(f'Found match len {len(matches)} of graph len '
-                          f'{len(self)} with graph len {len(other_graph)}.')
-                result.append(matches)
-                continue
-            elif len(matches) == len(other_graph):
-                raise ValueError
-            other_neighbour, other_element = elements_left.popitem()
-            if other_neighbour in matches:
-                continue
-            own_element = matches[other_element]
-            new_elements_left = dict(elements_left)
-            for new_other_neighbour in other_neighbour.neighbours():
-                new_it_map[iteration].add(new_other_neighbour)
-                if new_other_neighbour in processed_elements:
-                    continue
-                if new_other_neighbour in elements_left:
-                    continue
-                new_elements_left[new_other_neighbour] = other_neighbour
-                new_it_map[iteration].add(new_other_neighbour)
-            for own_neighbour in own_element.neighbours():
-                if own_neighbour in matches.values():
-                    continue
-                if own_neighbour.matches(other_neighbour, eval_attrs):
-                    new_matches = Mapping(matches)
-                    new_matches[other_neighbour] = own_neighbour
-                    new_processed_elements = set(processed_elements)
-                    new_processed_elements.add(other_neighbour)
-                    tasks.append((new_matches, new_elements_left, new_processed_elements, iteration, new_it_map))
-
-        log.debug(f'Found {len(result)} matches.')
-        return result
 
     def get_any_element(self) -> GraphElement:
         """
@@ -956,7 +879,7 @@ class Graph(MutableSet):
 def get_min_max_points(graph: Graph
                        ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
     """
-    Retrun the minimum and maximum extend of a graphs elements.
+    Return the minimum and maximum extend of a graphs elements.
 
     I.e.: Return the upper left and the lower right point in a coordinate
     system containing between them all graph elements, which have x and y
@@ -989,3 +912,34 @@ def get_min_max_points(graph: Graph
         if max_y < y:
             max_y = y
     return (min_x, min_y), (max_x, max_y)
+
+
+def get_max_generation(graph: Graph) -> int:
+    """
+    Find the maximum (highest) generation present within an element of
+    the passed graph.
+
+    :param graph: The graph to analyze.
+    :return: The highest generation value present within the graph.
+        Returns 0 if there are no elements or no elements with a
+        .generation attribute.
+    """
+    max_generation = 0
+    for element in graph:
+        element_generation = int(element.attr['.generation'])
+        if element_generation > max_generation:
+            max_generation = element_generation
+    return max_generation
+
+
+def get_generation_dict(graph: Graph) -> Dict[int, int]:
+    """
+
+    :param graph:
+    :return:
+    """
+    generations = {}
+    for element in graph:
+        generation = int(element.attr['.generation'])
+        generations[generation] = generations.setdefault(generation, 0) + 1
+    return generations
