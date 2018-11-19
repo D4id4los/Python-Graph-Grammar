@@ -65,9 +65,16 @@ class Vec:
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
+    def __repr__(self):
+        return f'Vec(x1={self.x},y1={self.y})'
+
 
 def norm(vec: Vec):
     return math.sqrt(vec.x*vec.x + vec.y*vec.y)
+
+
+def cross(vec1: Vec, vec2: Vec):
+    return vec1.x*vec2.y - vec1.y*vec2.x
 
 
 def perp_left(vec: Vec):
@@ -78,7 +85,7 @@ def perp_right(vec: Vec):
     return Vec(x1=vec.y, y1=-vec.x)
 
 
-def calc_angle(vec1: Vec, vec2: Vec):
+def angle(vec1: Vec, vec2: Vec):
     angle = math.acos((vec1 * vec2) / (norm(vec1) * norm(vec2)))
     return angle
 

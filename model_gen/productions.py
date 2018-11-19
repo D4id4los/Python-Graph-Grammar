@@ -6,7 +6,8 @@ from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
     get_max_generation
 from model_gen.exceptions import ModelGenArgumentError
-from model_gen.geometry import Vec, calc_angle, norm, perp_right, perp_left
+from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
+    cross
 
 log = get_logger('model_gen.' + __name__)
 
@@ -376,9 +377,14 @@ class Production:
                     return eval(attr_func_text)
 
                 if attr_name == '.new_pos':
-                    log.debug(f'   Angle={calc_angle(vectors["v1"], vectors["v2"])}')
+                    from math import pi
                     pos = attr_func(old_element, **attr_requirements,
                                     **vectors)
+                    v1 = vectors["v1"]
+                    # v2 = vectors["v2"]
+                    # log.debug(f'   d={cross(v1, v2)}')
+                    # log.debug(f'   angle={angle(v1, v2)}')
+                    # log.debug(f'   chose {"left" if (cross(v1,v2) < 0 if angle(v1,v2) > pi/2 else cross(v1,v2) > 0) else "right"}')
                     target_element.attr['x'] = pos.x
                     target_element.attr['y'] = pos.y
                     target_element.attr.pop('.new_pos')

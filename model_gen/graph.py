@@ -660,7 +660,6 @@ class Graph(MutableSet):
         other_element = other_graph.get_any_element()
         task_list: List[Tuple] = []
         results: List[Mapping] = []
-        """List of (Mapping, UnmappedElements[UnmappedElement: MappedConnectedElement])"""
         for own_element in self:
             if not own_element.matches(other_element, eval_attrs):
                 continue
@@ -695,6 +694,17 @@ class Graph(MutableSet):
             debug.log.append(f'Searching for mapping for {other_element}.')
             possible_new_mappings = []
             for own_element in own_element_parent.neighbours():
+                if (isinstance(other_element, Edge)
+                        and '.directed' in other_element.attr
+                        and other_element.attr['.directed']):
+                    if other_element.vertex1 == other_element_parent:
+                        if not own_element.vertex1 == own_element_parent:
+                            continue
+                    elif other_element.vertex2 == other_element_parent:
+                        if not own_element.vertex2 == own_element_parent:
+                            continue
+                    else:
+                        raise ModelGenIncongruentGraphStateError
                 debug.log.append(f'    Testing against {own_element}')
                 if own_element in mapping.values():
                     debug.log.append(f'    {own_element} already in mapping.')
@@ -968,23 +978,6 @@ class Generations:
             other_total += num
         other_average /= other_total
         return own_average > other_average
-        # for i in range(0, len(self._generations)):
-        #     if i in self._generations:
-        #         if i in other._generations:
-        #             if self._generations[i] < other._generations[i]:
-        #                 return True
-        #             elif self._generations[i] == other._generations[i]:
-        #                 continue
-        #             else:
-        #                 return False
-        #         else:
-        #             return False
-        #     else:
-        #         if i in other._generations:
-        #             return True
-        #         else:
-        #             continue
-        # return False
 
     def __repr__(self):
         return f'Generations({self._generations})'
