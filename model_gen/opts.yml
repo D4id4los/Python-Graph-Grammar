@@ -2,6 +2,6 @@ gui:
   attrs:
     background_color: [5, 5, 5]
     mask_color: [0, 0, 0]
-last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/koch_flake_ex1.yml
-max_derivations: 50
+last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/koch_flake_ex3.yml
+max_derivations: 25
 show_all_labels: false
