@@ -258,6 +258,7 @@ class Production:
             Dict[str, Union[Vertex, Tuple[Vertex, Vertex]]] \
             = {}
         self.total_weight = 0
+        self.priority = 0
         for mapping in self.mappings:
             self.total_weight += mapping.weight
 
@@ -425,6 +426,7 @@ class Production:
             'vectors': {k: id(v) if isinstance(v, GraphElement)
                         else (id(v[0]), id(v[1]))
                         for k,v in self.vectors.items()},
+            'priority': self.priority,
             'id': id(self)
         }
         return fields
@@ -459,6 +461,8 @@ class Production:
                 else:
                     raise ValueError
             result.vectors = vectors
+        if 'priority' in data:
+            result.priority = int(data['priority'])
         mapping[data['id']] = result
         return result
 

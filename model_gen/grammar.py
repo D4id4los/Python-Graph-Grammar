@@ -16,6 +16,11 @@ class Grammar:
     def __init__(self, productions: Iterable[Production]=None,
                  subgrammars: Iterable['Grammar']=None):
         self.productions: Iterable[Production] = productions
+        self.grouped_productions = {}
+        for production in self.productions:
+            self.grouped_productions.setdefault(
+                production.priority, []
+            ).append(production)
         self.subgrammars: Iterable['Grammar'] = subgrammars
 
     def apply(self, target_graph: Graph, max_steps: int = 0) \
@@ -74,13 +79,14 @@ class Grammar:
             (None,[]).
         """
         result = (None, [])
-        for production in randomly(self.productions):
-            matching_mappings = production.match(target_graph)
-            if len(matching_mappings) == 0:
-                continue
-            else:
-                result = (production, matching_mappings)
-                break
+        for priority in sorted(self.grouped_productions.keys()):
+            for production in randomly(self.grouped_productions[priority]):
+                matching_mappings = production.match(target_graph)
+                if len(matching_mappings) == 0:
+                    continue
+                else:
+                    result = (production, matching_mappings)
+                    break
         return result
 
     @staticmethod
