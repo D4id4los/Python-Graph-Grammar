@@ -517,8 +517,8 @@ def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
                 y += float(daughter_element.vertex1.attr['y'])
             if daughter_element.vertex2 is not None:
                 num_elements += 1
-                x += float(daughter_element.vertex1.attr['x'])
-                y += float(daughter_element.vertex1.attr['y'])
+                x += float(daughter_element.vertex2.attr['x'])
+                y += float(daughter_element.vertex2.attr['y'])
     if num_elements == 0:
         return 0,0
     x /= num_elements
