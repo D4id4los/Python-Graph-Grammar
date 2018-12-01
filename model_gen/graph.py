@@ -977,6 +977,13 @@ class Generations:
             other_average += gen * num
             other_total += num
         other_average /= other_total
+        if own_average == other_average:
+            for gen in self._generations.keys():
+                if gen not in other._generations:
+                    return True
+                if self._generations[gen] != other._generations[gen]:
+                    return self._generations[gen] > other._generations[gen]
+            return False
         return own_average > other_average
 
     def __repr__(self):
