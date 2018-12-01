@@ -87,6 +87,8 @@ class Grammar:
                 else:
                     result = (production, matching_mappings)
                     break
+            if result[0] is not None:
+                break
         return result
 
     @staticmethod

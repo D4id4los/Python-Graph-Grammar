@@ -883,6 +883,10 @@ class Graph(MutableSet):
                             self._unchecked_edges.remove(edge)
                             return edge
                     continue
+            if len(self._unchecked_vertices) > 0:
+                return self._unchecked_vertices.pop()
+            if len(self._unchecked_edges) > 0:
+                return self._unchecked_edges.pop()
             raise StopIteration
 
 
