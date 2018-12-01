@@ -100,7 +100,8 @@ class Grammar:
         :return: The selected match
         """
         valid_matches = matches
-        if production_option.conditions['generation'] == 'oldest':
+        if ('generation' in production_option.conditions
+                and production_option.conditions['generation'] == 'oldest'):
             best_generations = None
             best_mappings = []
             for mapping in matches:

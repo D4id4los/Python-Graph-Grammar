@@ -519,6 +519,8 @@ def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
                 num_elements += 1
                 x += float(daughter_element.vertex1.attr['x'])
                 y += float(daughter_element.vertex1.attr['y'])
+    if num_elements == 0:
+        return 0,0
     x /= num_elements
     y /= num_elements
     return x, y
@@ -566,6 +568,32 @@ def _calculate_host_barycenter(
                 x += host_x
                 y += host_y
             #TODO: Handle the case without any vertices
+    if num_elements == 0:
+        for mother_element in option.mother_graph:
+            host_element = hierarchy.map(mother_element, 'M', 'H')
+            if isinstance(host_element, Vertex):
+                num_elements += 1
+                x += float(host_element.attr['x'])
+                y += float(host_element.attr['y'])
+            elif isinstance(host_element, Edge):
+                if host_element.vertex1 is not None:
+                    host_vertex1 = host_element.vertex1
+                    host_x = float(host_vertex1.attr["x"])
+                    host_y = float(host_vertex1.attr["y"])
+                    log.debug(f'      Host vertex1 position: '
+                              f'{(host_x, host_y)} {host_vertex1}.')
+                    num_elements += 1
+                    x += host_x
+                    y += host_y
+                if host_element.vertex2 is not None:
+                    host_vertex2 = host_element.vertex2
+                    host_x = float(host_vertex2.attr["x"])
+                    host_y = float(host_vertex2.attr["y"])
+                    log.debug(f'      Host vertex1 position: '
+                              f'{(host_x, host_y)} {host_vertex2}.')
+                    num_elements += 1
+                    x += host_x
+                    y += host_y
     x /= num_elements
     y /= num_elements
     return x, y
