@@ -4,8 +4,9 @@ from typing import Iterable, Sized, Union, Tuple, Sequence, Dict
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
-    get_max_generation
-from model_gen.exceptions import ModelGenArgumentError
+    get_max_generation, graph_is_consistent
+from model_gen.exceptions import ModelGenArgumentError, \
+    ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
     cross
 
@@ -81,8 +82,8 @@ class ProductionApplicationHierarchy:
 
     def map_sequence(self,
                      elements: Sequence[GraphElement],
-                     source_levels: Sequence[Union[int, str]],
-                     target_levels: Sequence[Union[int, str]]) \
+                     source_levels: Union[Sequence[Union[int, str]], str],
+                     target_levels: Union[Sequence[Union[int, str]], str]) \
             -> Tuple[Union[GraphElement, None]]:
         """
         Translates a sequence of elements to from one level of the
@@ -95,7 +96,10 @@ class ProductionApplicationHierarchy:
         :return: A Sequence where all GraphElement are mapped to
             their respective target graph.
         """
-        if len(elements) != len(source_levels) \
+        if isinstance(source_levels, str) and isinstance(target_levels, str):
+            source_levels = [source_levels] * len(elements)
+            target_levels = [target_levels] * len(elements)
+        elif len(elements) != len(source_levels) \
                 or len(source_levels) != len(target_levels):
             raise ModelGenArgumentError
         result = ()
@@ -166,9 +170,19 @@ class ProductionOption:
         daughter_elements = daughter_graph.element_list('vef')
         self.to_remove = []
         self.to_change = []
+        self.edge_conn_to_remove = []
         for element in mother_elements:
             if element in mapping:
-                self.to_change.append(mapping[element])
+                D_element = mapping[element]
+                self.to_change.append(D_element)
+                if not isinstance(element, Edge):
+                    continue
+                for vertex in element.neighbours():
+                    if (vertex in mapping
+                            and mapping[vertex] not in D_element.neighbours()):
+                        self.edge_conn_to_remove.append(
+                            (element, vertex)
+                        )
             else:
                 self.to_remove.append(element)
         self.to_add = [element for element in daughter_elements if
@@ -314,10 +328,22 @@ class Production:
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
         new_generation = get_max_generation(map_mother_to_host.values()) + 1
+        # For edges which get reconnected to a different vertex in the daugter
+        # graph, set the old connection to None in the result graph
+        for M_edge, M_vertex in option.edge_conn_to_remove:
+            R_edge = hierarchy.map(M_edge, 'M', 'R')
+            R_vertex = hierarchy.map(M_vertex, 'M', 'R')
+            R_edge.replace_connection(lambda x: None if x == R_vertex else x,
+                                      True)
+            R_vertex.edges.remove(R_edge)
         # First remove the now unnecessary Elements, this will remove them
         # from any neighbourhood lists.
         for R_element in to_remove:
-            result_graph.discard(R_element)
+            D_edges_to_ignore = [hierarchy.map(e, 'M', 'R') for e, _ in option.edge_conn_to_remove]
+            # D_edges_to_ignore = []
+            result_graph.discard(R_element,
+                                 set(hierarchy.map_sequence(
+                                     D_edges_to_ignore, 'D', 'R')))
         # Second add the new elements, which can now have their references
         # contained entirely within the Graph and also add themselves to
         # any neighbourhood lists, if they border any pre-existing elements.
@@ -396,6 +422,8 @@ class Production:
                                                            **attr_requirements)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
+        if not graph_is_consistent(result_graph):
+            raise ModelGenIncongruentGraphStateError
         return result_graph
 
     def select_option(self) -> ProductionOption:
@@ -563,7 +591,7 @@ def _calculate_host_barycenter(
                 host_x = float(host_vertex2.attr["x"])
                 host_y = float(host_vertex2.attr["y"])
                 log.debug(f'      Host vertex2 position: '
-                          f'{(host_x, host_y)} {host_vertex1}.')
+                          f'{(host_x, host_y)} {host_vertex2}.')
                 num_elements += 1
                 x += host_x
                 y += host_y

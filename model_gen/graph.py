@@ -351,14 +351,19 @@ class Edge(GraphElement):
 
     def replace_connection(self,
                            get_replacement:
-                           Callable[['GraphElement'], 'GraphElement']):
+                           Callable[['GraphElement'], 'GraphElement'],
+                           replace_on_none: bool=False):
         result = get_replacement(self.vertex1)
-        if result is not None:
+        if result is None and replace_on_none:
+            self.vertex1 = None
+        elif result is not None:
             if not isinstance(result, Vertex):
                 raise ValueError()
             self.vertex1 = result
         result = get_replacement(self.vertex2)
-        if result is not None:
+        if result is None and replace_on_none:
+            self.vertex2 = None
+        elif result is not None:
             if not isinstance(result, Vertex):
                 raise ValueError()
             self.vertex2 = result
@@ -1005,3 +1010,18 @@ def get_generations(graph_elements: Iterable[GraphElement]) -> Generations:
         generation = int(element.attr['.generation'])
         generations[generation] = generations.setdefault(generation, 0) + 1
     return Generations(generations)
+
+
+def graph_is_consistent(graph: Graph) -> bool:
+    """
+    Tests if the graph is consistent, i.e. all connections between
+    graph elements are reciprocal.
+
+    :param graph: The graph to check for consistency
+    :return: True if the graph is consistent, False otherwise
+    """
+    for element in graph:
+        for neighbour in element.neighbours():
+            if element not in neighbour.neighbours():
+                return False
+    return True
