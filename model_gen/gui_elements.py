@@ -1,15 +1,17 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import wx
 import wx.lib.newevent
 from wx.lib.agw import aui as aui
 from pydispatch import dispatcher
+import os.path
 
 from model_gen.graph import Graph
 from model_gen.gui_graphs import GraphPanel, ProductionGraphsPanel
 from model_gen.productions import Production
 from model_gen.utils import Mapping, get_logger
-from model_gen.exports import export_graph_to_svg
+from model_gen.exports import export_graph_to_svg, export_production_to_TIKZ, \
+    export_graph_to_TIKZ
 
 log = get_logger('model_gen.' + __name__)
 
@@ -44,8 +46,13 @@ class HostGraphPanel(wx.Panel):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.graph_panel = GraphPanel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
         self.list = GraphList(self, graph_panel=self.graph_panel)
-        hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
+        self.export_tikz_button = wx.Button(self, label='Export TIKZ')
+        self.export_tikz_button.Bind(wx.EVT_BUTTON, self.on_export_tikz_button)
+        vbox.Add(self.list, proportion=1, flag=wx.EXPAND)
+        vbox.Add(self.export_tikz_button, proportion=0, flag=wx.EXPAND)
+        hbox.Add(vbox, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.graph_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
 
@@ -65,6 +72,21 @@ class HostGraphPanel(wx.Panel):
         """
         return self.list.get_active()
 
+    def on_export_tikz_button(self, _):
+        """
+        Export the production to tikz when the button is pushed.
+        """
+        with wx.FileDialog(self, 'Export Production to TIKZ',
+                           wildcard='LaTeX files (*.tex)|*.tex',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+                           ) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = file_dialog.GetPath()
+            log.info(f'Exporting production to file {path}')
+            graph = self.list.get_active()
+            export_graph_to_TIKZ(graph, path)
+
 
 class ProductionPanel(wx.Panel):
     """
@@ -75,9 +97,19 @@ class ProductionPanel(wx.Panel):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.production_panel = ProductionGraphsPanel(self)
+        vbox = wx.BoxSizer(wx.VERTICAL)
         self.list = ProductionList(self,
                                    production_panel=self.production_panel)
-        hbox.Add(self.list, proportion=0, flag=wx.EXPAND)
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        self.export_tikz_button = wx.Button(self, label='Export TIKZ')
+        self.export_tikz_button.Bind(wx.EVT_BUTTON, self.on_export_tikz_button)
+        self.export_all_button = wx.Button(self, label='Export All')
+        self.export_all_button.Bind(wx.EVT_BUTTON, self.on_export_all_button)
+        hbox2.Add(self.export_tikz_button, proportion=1, flag=wx.EXPAND)
+        hbox2.Add(self.export_all_button, proportion=1, flag=wx.EXPAND)
+        vbox.Add(self.list, proportion=1, flag=wx.EXPAND)
+        vbox.Add(hbox2, proportion=0, flag=wx.EXPAND)
+        hbox.Add(vbox, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.production_panel, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
 
@@ -88,6 +120,36 @@ class ProductionPanel(wx.Panel):
         :param data: The productions to load.
         """
         self.list.load_data(data)
+
+    def on_export_tikz_button(self, _):
+        """
+        Export the production to tikz when the button is pushed.
+        """
+        with wx.FileDialog(self, 'Export Production to TIKZ',
+                           wildcard='LaTeX files (*.tex)|*.tex',
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+                           ) as file_dialog:
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = file_dialog.GetPath()
+            log.info(f'Exporting production to file {path}')
+            production = self.list.get_active()
+            export_production_to_TIKZ(production, path)
+
+    def on_export_all_button(self, _):
+        """
+        Export the production to tikz when the button is pushed.
+        """
+        with wx.DirDialog(self, 'Export All Productions to TIKZ', '',
+                           style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST
+                           ) as dir_dialog:
+            if dir_dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            path = dir_dialog.GetPath()
+            log.info(f'Exporting production to file {path}')
+            for _, (name, production, _) in self.list.productions.items():
+                export_production_to_TIKZ(production,
+                                          os.path.join(path, name + '.tex'))
 
 
 class ResultGraphPanel(wx.Panel):
@@ -295,3 +357,14 @@ class ProductionList(wx.ListCtrl):
         self.selected = item_index
         graphs = self.graphs[item_index]
         self.production_panel.load_graph(graphs)
+
+    def get_active(self) -> Union[Production, None]:
+        """
+        Return the currently active Production.
+
+        :return: The currently active Production
+        """
+        if self.selected is not None:
+            _, active_production, _ = self.productions[self.selected]
+            return active_production
+        return None
