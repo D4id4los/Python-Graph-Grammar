@@ -1,0 +1,2766 @@
+host_graphs:
+  Floor Start:
+    edges: []
+    id: 140236894338072
+    vertices:
+    - attr: {height: '20', label: Floor, length: '20', level: '0'}
+      id: 140235090810472
+  Wall:
+    edges:
+    - attr: {label: wall, length: '10'}
+      id: 140235918509728
+      vertex1: 140235090808960
+      vertex2: 140235918508664
+    - attr: {}
+      id: 140235918509168
+      vertex1: 140235918510512
+      vertex2: 140235090808960
+    - attr: {}
+      id: 140235918510904
+      vertex1: 140235918510512
+      vertex2: 140235918508664
+    - attr: {}
+      id: 140235918509672
+      vertex1: 140235918509112
+      vertex2: 140235090808960
+    - attr: {}
+      id: 140235929316264
+      vertex1: 140235918509112
+      vertex2: 140235918508664
+    id: 140236894337904
+    vertices:
+    - attr: {}
+      id: 140235090808960
+    - attr: {}
+      id: 140235918508664
+    - attr: {label: floor}
+      id: 140235918509112
+    - attr: {label: floor}
+      id: 140235918510512
+productions:
+  Add Windows:
+    id: 140235929316880
+    mappings:
+    - attr_requirements:
+        140235216843720: {arg0: 140235929799704}
+        140235216846520: {arg0: 140235929799704}
+      daughter_graph:
+        edges:
+        - attr: {label: '''Wall''', length: 'float(arg0.attr[''length''])/2'}
+          id: 140235216843720
+          vertex1: 140235216845736
+          vertex2: 140235216843272
+        - attr: {label: '''Wall''', length: 'float(arg0.attr[''length''])/2'}
+          id: 140235216846520
+          vertex1: 140235216843272
+          vertex2: 140235216846632
+        - attr: {}
+          id: 140235216845176
+          vertex1: 140235216845736
+          vertex2: 140235216846744
+        - attr: {}
+          id: 140235216846128
+          vertex1: 140235216846744
+          vertex2: 140235216843272
+        - attr: {}
+          id: 140235216846688
+          vertex1: 140235216846744
+          vertex2: 140235216846632
+        - attr: {}
+          id: 140235216844560
+          vertex1: 140235216846352
+          vertex2: 140235216845736
+        - attr: {}
+          id: 140235216844336
+          vertex1: 140235216843272
+          vertex2: 140235216846352
+        - attr: {}
+          id: 140235216844728
+          vertex1: 140235216846632
+          vertex2: 140235216846352
+        id: 140235929799760
+        vertices:
+        - attr: {}
+          id: 140235216845736
+        - attr: {}
+          id: 140235216846352
+        - attr: {label: '''window'''}
+          id: 140235216843272
+        - attr: {}
+          id: 140235216846632
+        - attr: {}
+          id: 140235216846744
+      id: 140235216844280
+      mapping:
+        dict: {140235929316152: 140235216846632, 140235929316488: 140235216845736,
+          140235929316824: 140235216846352, 140235929796848: 140235216846744, 140235929799032: 140235216844560,
+          140235929799144: 140235216845176, 140235929799368: 140235216846688, 140235929799480: 140235216844728}
+        id: 140235823598056
+      mother_graph: 140235090809072
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {label: attr=='Wall', length: float(attr)>3}
+        id: 140235929799704
+        vertex1: 140235929316488
+        vertex2: 140235929316152
+      - attr: {}
+        id: 140235929799032
+        vertex1: 140235929316488
+        vertex2: 140235929316824
+      - attr: {}
+        id: 140235929799480
+        vertex1: 140235929316152
+        vertex2: 140235929316824
+      - attr: {}
+        id: 140235929799144
+        vertex1: 140235929796848
+        vertex2: 140235929316488
+      - attr: {}
+        id: 140235929799368
+        vertex1: 140235929316152
+        vertex2: 140235929796848
+      id: 140235090809072
+      vertices:
+      - attr: {}
+        id: 140235929316488
+      - attr: {label: attr=="FloorEnd"}
+        id: 140235929316824
+      - attr: {}
+        id: 140235929316152
+      - attr: {label: attr=="FloorEnd"}
+        id: 140235929796848
+  Grow Facade:
+    id: 140235216846408
+    mappings:
+    - attr_requirements:
+        140235823239744: {}
+        140235823239856: {arg0: 140236051168448}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140235823240136
+          vertex1: 140235823239744
+          vertex2: 140235823239856
+        id: 140236051165816
+        vertices:
+        - attr: {height: '10', label: '"Floor"', length: 'old.attr[''length'']', level: 'old.attr[''level'']'}
+          id: 140235823239744
+        - attr: {height: 'float(arg0.attr[''height''])-10', label: '"Floor"', length: 'arg0.attr[''length'']',
+            level: 'int(arg0.attr[''level''])+1'}
+          id: 140235823239856
+      id: 140236051168112
+      mapping:
+        dict: {140236051168448: 140235823239744}
+        id: 140236074825424
+      mother_graph: 140235216845792
+      weight: 1
+    mother_graph:
+      edges: []
+      id: 140235216845792
+      vertices:
+      - attr: {height: float(attr)>=20, label: attr=="Floor"}
+        id: 140236051168448
+  Split Floors:
+    id: 140235823239240
+    mappings:
+    - attr_requirements:
+        140236894300984: {arg0: 140235823239464}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140236894302048
+          vertex1: 140235823239632
+          vertex2: 140235823242040
+        - attr: {label: '"Wall"', length: 'arg0.attr[''length'']', level: 'arg0.attr[''level'']'}
+          id: 140236894300984
+          vertex1: 140235823239632
+          vertex2: 140235823241928
+        - attr: {}
+          id: 140236894301936
+          vertex1: 140235823239632
+          vertex2: 140235823239576
+        - attr: {}
+          id: 140236894301992
+          vertex1: 140235823239576
+          vertex2: 140235823241928
+        - attr: {}
+          id: 140236894301656
+          vertex1: 140235823241928
+          vertex2: 140235823242040
+        - attr: {}
+          id: 140236894300256
+          vertex1: 140235823242040
+          vertex2: null
+        - attr: {}
+          id: 140236894301040
+          vertex1: 140235823239576
+          vertex2: null
+        id: 140235823239800
+        vertices:
+        - attr: {label: '"FloorSide"'}
+          id: 140235823239632
+        - attr: {label: '"FloorEnd"'}
+          id: 140235823242040
+        - attr: {label: '"FloorSide"'}
+          id: 140235823241928
+        - attr: {label: '"FloorEnd"'}
+          id: 140235823239576
+      id: 140235823239408
+      mapping:
+        dict: {140235823242208: 140236894301040, 140235823242544: 140236894300256}
+        id: 140236074826128
+      mother_graph: 140235823239688
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {}
+        id: 140235823242544
+        vertex1: 140235823239464
+        vertex2: null
+      - attr: {}
+        id: 140235823242208
+        vertex1: 140235823239464
+        vertex2: null
+      id: 140235823239688
+      vertices:
+      - attr: {label: attr=="Floor"}
+        id: 140235823239464
+  Split Floors (End):
+    id: 140236894302160
+    mappings:
+    - attr_requirements:
+        140236842767248: {arg0: 140236842768088}
+      daughter_graph:
+        edges:
+        - attr: {}
+          id: 140236842766912
+          vertex1: 140236842766856
+          vertex2: 140236842766632
+        - attr: {label: '"Wall"', length: 'arg0.attr[''length'']', level: 'arg0.attr[''level'']'}
+          id: 140236842767248
+          vertex1: 140236842766856
+          vertex2: 140236842766464
+        - attr: {}
+          id: 140236842767080
+          vertex1: 140236842766856
+          vertex2: 140236842766744
+        - attr: {}
+          id: 140236842767472
+          vertex1: 140236842766744
+          vertex2: 140236842766464
+        - attr: {}
+          id: 140236842767360
+          vertex1: 140236842766464
+          vertex2: 140236842766632
+        - attr: {}
+          id: 140236842767136
+          vertex1: 140236842766632
+          vertex2: null
+        id: 140236842766576
+        vertices:
+        - attr: {label: '"FloorSide"'}
+          id: 140236842766856
+        - attr: {label: '"FloorEnd"'}
+          id: 140236842766632
+        - attr: {label: '"FloorSide"'}
+          id: 140236842766464
+        - attr: {label: '"FloorEnd"'}
+          id: 140236842766744
+      id: 140236842766520
+      mapping:
+        dict: {140236842766800: 140236842767136}
+        id: 140236074824104
+      mother_graph: 140236894301376
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {}
+        id: 140236842766800
+        vertex1: 140236842768088
+        vertex2: null
+      id: 140236894301376
+      vertices:
+      - attr: {label: attr=="Floor"}
+        id: 140236842768088
+result_graphs:
+  Result 0:
+    edges:
+    - attr: {}
+      id: 140235929568256
+      vertex1: 140236894337624
+      vertex2: 140235929570608
+    id: 140235220889216
+    vertices:
+    - attr: {height: 10, label: Floor, length: '20', level: '0'}
+      id: 140236894337624
+    - attr: {height: 10.0, label: Floor, length: '20', level: 1}
+      id: 140235929570608
+  Result 1:
+    edges:
+    - attr: {}
+      id: 140235929567416
+      vertex1: 140236842768592
+      vertex2: 140235929569096
+    - attr: {}
+      id: 140236842769992
+      vertex1: 140236842767640
+      vertex2: 140236842769152
+    - attr: {label: Wall, length: '20', level: '0'}
+      id: 140236842766968
+      vertex1: 140236842767024
+      vertex2: 140236842769152
+    - attr: {}
+      id: 140236842770104
+      vertex1: 140236842767024
+      vertex2: 140236842768592
+    - attr: {}
+      id: 140236842768704
+      vertex1: 140236842769152
+      vertex2: 140236842768592
+    - attr: {}
+      id: 140236842767192
+      vertex1: 140236842767024
+      vertex2: 140236842767640
+    id: 140235929527184
+    vertices:
+    - attr: {height: 10.0, label: Floor, length: '20', level: 1}
+      id: 140235929569096
+    - attr: {label: FloorSide}
+      id: 140236842767024
+    - attr: {label: FloorEnd}
+      id: 140236842768592
+    - attr: {label: FloorSide}
+      id: 140236842769152
+    - attr: {label: FloorEnd}
+      id: 140236842767640
+  Result 10:
+    edges:
+    - attr: {}
+      id: 140236842891584
+      vertex1: 140236842891192
+      vertex2: 140236842890688
+    - attr: {}
+      id: 140236842526256
+      vertex1: 140236842526480
+      vertex2: 140236842527488
+    - attr: {}
+      id: 140236842891416
+      vertex1: 140236842891080
+      vertex2: 140236842891192
+    - attr: {}
+      id: 140236842527320
+      vertex1: 140236842527488
+      vertex2: 140236842891192
+    - attr: {}
+      id: 140236842527152
+      vertex1: 140236842891080
+      vertex2: 140236842526480
+    - attr: {}
+      id: 140236842526592
+      vertex1: 140236842924016
+      vertex2: 140236842924408
+    - attr: {}
+      id: 140236842524800
+      vertex1: 140236842924408
+      vertex2: 140236842525136
+    - attr: {}
+      id: 140236842890912
+      vertex1: 140236842924016
+      vertex2: 140236842890688
+    - attr: {}
+      id: 140236842526200
+      vertex1: 140236842525136
+      vertex2: 140236842890688
+    - attr: {}
+      id: 140236842526368
+      vertex1: 140236842923792
+      vertex2: 140236842924408
+    - attr: {}
+      id: 140236842830872
+      vertex1: 140236842890688
+      vertex2: 140236842923792
+    - attr: {}
+      id: 140236842924800
+      vertex1: 140236842925136
+      vertex2: 140236842890688
+    - attr: {}
+      id: 140236842924296
+      vertex1: 140236842924408
+      vertex2: 140236842925136
+    - attr: {}
+      id: 140236842525864
+      vertex1: 140236842526872
+      vertex2: 140236842891192
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842526984
+      vertex1: 140236842527488
+      vertex2: 140236842526872
+    - attr: {}
+      id: 140236842528048
+      vertex1: 140236842526480
+      vertex2: 140236842526872
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842831152
+      vertex1: 140236842923792
+      vertex2: 140236842831376
+    - attr: {}
+      id: 140236842527096
+      vertex1: 140236842924408
+      vertex2: 140236842831376
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842525192
+      vertex1: 140236842831376
+      vertex2: 140236842525136
+    - attr: {}
+      id: 140236842526536
+      vertex1: 140236842831376
+      vertex2: 140236842890688
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842925248
+      vertex1: 140236842925584
+      vertex2: 140236842924016
+    - attr: {}
+      id: 140236842922784
+      vertex1: 140236842924408
+      vertex2: 140236842925584
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842924688
+      vertex1: 140236842925136
+      vertex2: 140236842925584
+    - attr: {}
+      id: 140236842924744
+      vertex1: 140236842925584
+      vertex2: 140236842890688
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842526032
+      vertex1: 140236842925136
+      vertex2: 140236842925360
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842924520
+      vertex1: 140236842925360
+      vertex2: 140236842923792
+    - attr: {}
+      id: 140236842923512
+      vertex1: 140236842924408
+      vertex2: 140236842925360
+    - attr: {}
+      id: 140236842526704
+      vertex1: 140236842925360
+      vertex2: 140236842890688
+    - attr: {}
+      id: 140236842525976
+      vertex1: 140236842526480
+      vertex2: 140236842526816
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842527656
+      vertex1: 140236842526816
+      vertex2: 140236842891080
+    - attr: {}
+      id: 140236842527040
+      vertex1: 140236842526816
+      vertex2: 140236842891192
+    - attr: {}
+      id: 140236842527376
+      vertex1: 140236842527768
+      vertex2: 140236842891192
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842528440
+      vertex1: 140236842526872
+      vertex2: 140236842527768
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842527992
+      vertex1: 140236842527768
+      vertex2: 140236842526816
+    - attr: {}
+      id: 140236842528104
+      vertex1: 140236842526480
+      vertex2: 140236842527768
+    id: 140236842892648
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842891080
+    - attr: {label: FloorEnd}
+      id: 140236842891192
+    - attr: {label: FloorSide}
+      id: 140236842527488
+    - attr: {label: FloorEnd}
+      id: 140236842526480
+    - attr: {label: FloorEnd}
+      id: 140236842924408
+    - attr: {label: FloorSide}
+      id: 140236842525136
+    - attr: {label: FloorSide}
+      id: 140236842924016
+    - attr: {label: FloorEnd}
+      id: 140236842890688
+    - attr: {label: window}
+      id: 140236842923792
+    - attr: {label: window}
+      id: 140236842925136
+    - attr: {label: window}
+      id: 140236842526872
+    - attr: {label: window}
+      id: 140236842831376
+    - attr: {label: window}
+      id: 140236842925584
+    - attr: {label: window}
+      id: 140236842925360
+    - attr: {label: window}
+      id: 140236842526816
+    - attr: {label: window}
+      id: 140236842527768
+  Result 11:
+    edges:
+    - attr: {}
+      id: 140236842599312
+      vertex1: 140236842527208
+      vertex2: 140236842598584
+    - attr: {}
+      id: 140236842598472
+      vertex1: 140236842602000
+      vertex2: 140236842527936
+    - attr: {}
+      id: 140236842528664
+      vertex1: 140236842526424
+      vertex2: 140236842527208
+    - attr: {}
+      id: 140236842528552
+      vertex1: 140236842527936
+      vertex2: 140236842527208
+    - attr: {}
+      id: 140236842598752
+      vertex1: 140236842526424
+      vertex2: 140236842602000
+    - attr: {}
+      id: 140236842600320
+      vertex1: 140236842600264
+      vertex2: 140236842599648
+    - attr: {}
+      id: 140236842599480
+      vertex1: 140236842599648
+      vertex2: 140236842599368
+    - attr: {}
+      id: 140236842600824
+      vertex1: 140236842600264
+      vertex2: 140236842598584
+    - attr: {}
+      id: 140236842599984
+      vertex1: 140236842599368
+      vertex2: 140236842598584
+    - attr: {}
+      id: 140236842599256
+      vertex1: 140236842601832
+      vertex2: 140236842599648
+    - attr: {}
+      id: 140236842599032
+      vertex1: 140236842598584
+      vertex2: 140236842601832
+    - attr: {}
+      id: 140236842598864
+      vertex1: 140236842600208
+      vertex2: 140236842598584
+    - attr: {}
+      id: 140236842600376
+      vertex1: 140236842599648
+      vertex2: 140236842600208
+    - attr: {}
+      id: 140236842601160
+      vertex1: 140236842528496
+      vertex2: 140236842527208
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842528608
+      vertex1: 140236842527936
+      vertex2: 140236842528496
+    - attr: {}
+      id: 140236842598976
+      vertex1: 140236842602000
+      vertex2: 140236842528496
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842599872
+      vertex1: 140236842601832
+      vertex2: 140236842600600
+    - attr: {}
+      id: 140236842600096
+      vertex1: 140236842599648
+      vertex2: 140236842600600
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842599816
+      vertex1: 140236842600600
+      vertex2: 140236842599368
+    - attr: {}
+      id: 140236842599536
+      vertex1: 140236842600600
+      vertex2: 140236842598584
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842600656
+      vertex1: 140236842599704
+      vertex2: 140236842600264
+    - attr: {}
+      id: 140236842600152
+      vertex1: 140236842599648
+      vertex2: 140236842599704
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842600488
+      vertex1: 140236842600208
+      vertex2: 140236842599704
+    - attr: {}
+      id: 140236842600544
+      vertex1: 140236842599704
+      vertex2: 140236842598584
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842600432
+      vertex1: 140236842600208
+      vertex2: 140236842600992
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842599592
+      vertex1: 140236842600992
+      vertex2: 140236842601832
+    - attr: {}
+      id: 140236842601216
+      vertex1: 140236842599648
+      vertex2: 140236842600992
+    - attr: {}
+      id: 140236842599928
+      vertex1: 140236842600992
+      vertex2: 140236842598584
+    - attr: {}
+      id: 140236842598528
+      vertex1: 140236842602000
+      vertex2: 140236842598696
+    - attr: {}
+      id: 140236842598920
+      vertex1: 140236842598696
+      vertex2: 140236842527208
+    - attr: {}
+      id: 140236842599424
+      vertex1: 140236842600712
+      vertex2: 140236842527208
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842600768
+      vertex1: 140236842528496
+      vertex2: 140236842600712
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842598640
+      vertex1: 140236842600712
+      vertex2: 140236842598696
+    - attr: {}
+      id: 140236842602112
+      vertex1: 140236842602000
+      vertex2: 140236842600712
+    - attr: {}
+      id: 140236842601048
+      vertex1: 140236842600936
+      vertex2: 140236842527208
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842601608
+      vertex1: 140236842600936
+      vertex2: 140236842526424
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842599200
+      vertex1: 140236842598696
+      vertex2: 140236842600936
+    - attr: {}
+      id: 140236842601328
+      vertex1: 140236842602000
+      vertex2: 140236842600936
+    id: 140236842769208
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842526424
+    - attr: {label: FloorEnd}
+      id: 140236842527208
+    - attr: {label: FloorSide}
+      id: 140236842527936
+    - attr: {label: FloorEnd}
+      id: 140236842602000
+    - attr: {label: FloorEnd}
+      id: 140236842599648
+    - attr: {label: FloorSide}
+      id: 140236842599368
+    - attr: {label: FloorSide}
+      id: 140236842600264
+    - attr: {label: FloorEnd}
+      id: 140236842598584
+    - attr: {label: window}
+      id: 140236842601832
+    - attr: {label: window}
+      id: 140236842600208
+    - attr: {label: window}
+      id: 140236842528496
+    - attr: {label: window}
+      id: 140236842600600
+    - attr: {label: window}
+      id: 140236842599704
+    - attr: {label: window}
+      id: 140236842600992
+    - attr: {label: window}
+      id: 140236842598696
+    - attr: {label: window}
+      id: 140236842600712
+    - attr: {label: window}
+      id: 140236842600936
+  Result 12:
+    edges:
+    - attr: {}
+      id: 140236842255136
+      vertex1: 140236842601664
+      vertex2: 140236842255024
+    - attr: {}
+      id: 140236842599088
+      vertex1: 140236842601944
+      vertex2: 140236842598808
+    - attr: {}
+      id: 140236842254464
+      vertex1: 140236842602224
+      vertex2: 140236842601664
+    - attr: {}
+      id: 140236842257432
+      vertex1: 140236842598808
+      vertex2: 140236842601664
+    - attr: {}
+      id: 140236842254632
+      vertex1: 140236842602224
+      vertex2: 140236842601944
+    - attr: {}
+      id: 140236842256872
+      vertex1: 140236842257096
+      vertex2: 140236842254856
+    - attr: {}
+      id: 140236842255360
+      vertex1: 140236842254856
+      vertex2: 140236842255416
+    - attr: {}
+      id: 140236842256648
+      vertex1: 140236842257096
+      vertex2: 140236842255024
+    - attr: {}
+      id: 140236842255304
+      vertex1: 140236842255416
+      vertex2: 140236842255024
+    - attr: {}
+      id: 140236842256088
+      vertex1: 140236842256312
+      vertex2: 140236842254856
+    - attr: {}
+      id: 140236842256032
+      vertex1: 140236842255024
+      vertex2: 140236842256312
+    - attr: {}
+      id: 140236842256144
+      vertex1: 140236842255808
+      vertex2: 140236842255024
+    - attr: {}
+      id: 140236842255696
+      vertex1: 140236842254856
+      vertex2: 140236842255808
+    - attr: {}
+      id: 140236842254800
+      vertex1: 140236842255080
+      vertex2: 140236842601664
+    - attr: {}
+      id: 140236842254968
+      vertex1: 140236842601944
+      vertex2: 140236842255080
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842256704
+      vertex1: 140236842256312
+      vertex2: 140236842255248
+    - attr: {}
+      id: 140236842255584
+      vertex1: 140236842254856
+      vertex2: 140236842255248
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842255192
+      vertex1: 140236842255248
+      vertex2: 140236842255416
+    - attr: {}
+      id: 140236842257376
+      vertex1: 140236842255248
+      vertex2: 140236842255024
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842256760
+      vertex1: 140236842255528
+      vertex2: 140236842257096
+    - attr: {}
+      id: 140236842258328
+      vertex1: 140236842254856
+      vertex2: 140236842255528
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842255976
+      vertex1: 140236842255808
+      vertex2: 140236842255528
+    - attr: {}
+      id: 140236842256816
+      vertex1: 140236842255528
+      vertex2: 140236842255024
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842257880
+      vertex1: 140236842255808
+      vertex2: 140236842256200
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842256424
+      vertex1: 140236842256200
+      vertex2: 140236842256312
+    - attr: {}
+      id: 140236842255864
+      vertex1: 140236842254856
+      vertex2: 140236842256200
+    - attr: {}
+      id: 140236842256928
+      vertex1: 140236842256200
+      vertex2: 140236842255024
+    - attr: {}
+      id: 140236842254744
+      vertex1: 140236842601944
+      vertex2: 140236842602280
+    - attr: {}
+      id: 140236842601552
+      vertex1: 140236842602280
+      vertex2: 140236842601664
+    - attr: {}
+      id: 140236842602448
+      vertex1: 140236842602336
+      vertex2: 140236842601664
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842254576
+      vertex1: 140236842255080
+      vertex2: 140236842602336
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842254912
+      vertex1: 140236842602336
+      vertex2: 140236842602280
+    - attr: {}
+      id: 140236842602168
+      vertex1: 140236842601944
+      vertex2: 140236842602336
+    - attr: {}
+      id: 140236842254408
+      vertex1: 140236842601720
+      vertex2: 140236842601664
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842602056
+      vertex1: 140236842601720
+      vertex2: 140236842602224
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842602392
+      vertex1: 140236842602280
+      vertex2: 140236842601720
+    - attr: {}
+      id: 140236842254520
+      vertex1: 140236842601944
+      vertex2: 140236842601720
+    - attr: {}
+      id: 140236842257488
+      vertex1: 140236842601664
+      vertex2: 140236842257040
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842257824
+      vertex1: 140236842255080
+      vertex2: 140236842257040
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842257768
+      vertex1: 140236842257040
+      vertex2: 140236842598808
+    - attr: {}
+      id: 140236842257320
+      vertex1: 140236842257040
+      vertex2: 140236842601944
+    id: 140236842891472
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842602224
+    - attr: {label: FloorEnd}
+      id: 140236842601664
+    - attr: {label: FloorSide}
+      id: 140236842598808
+    - attr: {label: FloorEnd}
+      id: 140236842601944
+    - attr: {label: FloorEnd}
+      id: 140236842254856
+    - attr: {label: FloorSide}
+      id: 140236842255416
+    - attr: {label: FloorSide}
+      id: 140236842257096
+    - attr: {label: FloorEnd}
+      id: 140236842255024
+    - attr: {label: window}
+      id: 140236842256312
+    - attr: {label: window}
+      id: 140236842255808
+    - attr: {label: window}
+      id: 140236842255080
+    - attr: {label: window}
+      id: 140236842255248
+    - attr: {label: window}
+      id: 140236842255528
+    - attr: {label: window}
+      id: 140236842256200
+    - attr: {label: window}
+      id: 140236842602280
+    - attr: {label: window}
+      id: 140236842602336
+    - attr: {label: window}
+      id: 140236842601720
+    - attr: {label: window}
+      id: 140236842257040
+  Result 13:
+    edges:
+    - attr: {}
+      id: 140236842285880
+      vertex1: 140236842601496
+      vertex2: 140236842285768
+    - attr: {}
+      id: 140236842600880
+      vertex1: 140236842527712
+      vertex2: 140236842601384
+    - attr: {}
+      id: 140236842601104
+      vertex1: 140236842601888
+      vertex2: 140236842601496
+    - attr: {}
+      id: 140236842601272
+      vertex1: 140236842601384
+      vertex2: 140236842601496
+    - attr: {}
+      id: 140236842286216
+      vertex1: 140236842601888
+      vertex2: 140236842527712
+    - attr: {}
+      id: 140236842284536
+      vertex1: 140236842283864
+      vertex2: 140236842283584
+    - attr: {}
+      id: 140236842283696
+      vertex1: 140236842283584
+      vertex2: 140236842283304
+    - attr: {}
+      id: 140236842284760
+      vertex1: 140236842283864
+      vertex2: 140236842285768
+    - attr: {}
+      id: 140236842284984
+      vertex1: 140236842283304
+      vertex2: 140236842285768
+    - attr: {}
+      id: 140236842283976
+      vertex1: 140236842285544
+      vertex2: 140236842283584
+    - attr: {}
+      id: 140236842284872
+      vertex1: 140236842285768
+      vertex2: 140236842285544
+    - attr: {}
+      id: 140236842283808
+      vertex1: 140236842284144
+      vertex2: 140236842285768
+    - attr: {}
+      id: 140236842283416
+      vertex1: 140236842283584
+      vertex2: 140236842284144
+    - attr: {}
+      id: 140236842286776
+      vertex1: 140236842528328
+      vertex2: 140236842601496
+    - attr: {}
+      id: 140236842528216
+      vertex1: 140236842527712
+      vertex2: 140236842528328
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842283192
+      vertex1: 140236842285544
+      vertex2: 140236842283080
+    - attr: {}
+      id: 140236842283752
+      vertex1: 140236842283584
+      vertex2: 140236842283080
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842285096
+      vertex1: 140236842283080
+      vertex2: 140236842283304
+    - attr: {}
+      id: 140236842283528
+      vertex1: 140236842283080
+      vertex2: 140236842285768
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842284480
+      vertex1: 140236842284088
+      vertex2: 140236842283864
+    - attr: {}
+      id: 140236842283920
+      vertex1: 140236842283584
+      vertex2: 140236842284088
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842284312
+      vertex1: 140236842284144
+      vertex2: 140236842284088
+    - attr: {}
+      id: 140236842284592
+      vertex1: 140236842284088
+      vertex2: 140236842285768
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842283472
+      vertex1: 140236842284144
+      vertex2: 140236842283136
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842285376
+      vertex1: 140236842283136
+      vertex2: 140236842285544
+    - attr: {}
+      id: 140236842284256
+      vertex1: 140236842283584
+      vertex2: 140236842283136
+    - attr: {}
+      id: 140236842284648
+      vertex1: 140236842283136
+      vertex2: 140236842285768
+    - attr: {}
+      id: 140236842526760
+      vertex1: 140236842527712
+      vertex2: 140236842527824
+    - attr: {}
+      id: 140236842258384
+      vertex1: 140236842527824
+      vertex2: 140236842601496
+    - attr: {}
+      id: 140236842255472
+      vertex1: 140236842527544
+      vertex2: 140236842601496
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842528160
+      vertex1: 140236842528328
+      vertex2: 140236842527544
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842527432
+      vertex1: 140236842527544
+      vertex2: 140236842527824
+    - attr: {}
+      id: 140236842526928
+      vertex1: 140236842527712
+      vertex2: 140236842527544
+    - attr: {}
+      id: 140236842255920
+      vertex1: 140236842257992
+      vertex2: 140236842601496
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842256256
+      vertex1: 140236842257992
+      vertex2: 140236842601888
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842255752
+      vertex1: 140236842527824
+      vertex2: 140236842257992
+    - attr: {}
+      id: 140236842258272
+      vertex1: 140236842527712
+      vertex2: 140236842257992
+    - attr: {}
+      id: 140236842254688
+      vertex1: 140236842601496
+      vertex2: 140236842258048
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842258160
+      vertex1: 140236842528328
+      vertex2: 140236842258048
+    - attr: {}
+      id: 140236842258216
+      vertex1: 140236842258048
+      vertex2: 140236842527712
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842285600
+      vertex1: 140236842601384
+      vertex2: 140236842285320
+    - attr: {}
+      id: 140236842284704
+      vertex1: 140236842285320
+      vertex2: 140236842527712
+    - attr: {}
+      id: 140236842285824
+      vertex1: 140236842601496
+      vertex2: 140236842285320
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842285040
+      vertex1: 140236842285320
+      vertex2: 140236842258048
+    id: 140236842601440
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842601888
+    - attr: {label: FloorEnd}
+      id: 140236842601496
+    - attr: {label: FloorSide}
+      id: 140236842601384
+    - attr: {label: FloorEnd}
+      id: 140236842527712
+    - attr: {label: FloorEnd}
+      id: 140236842283584
+    - attr: {label: FloorSide}
+      id: 140236842283304
+    - attr: {label: FloorSide}
+      id: 140236842283864
+    - attr: {label: FloorEnd}
+      id: 140236842285768
+    - attr: {label: window}
+      id: 140236842285544
+    - attr: {label: window}
+      id: 140236842284144
+    - attr: {label: window}
+      id: 140236842528328
+    - attr: {label: window}
+      id: 140236842283080
+    - attr: {label: window}
+      id: 140236842284088
+    - attr: {label: window}
+      id: 140236842283136
+    - attr: {label: window}
+      id: 140236842527824
+    - attr: {label: window}
+      id: 140236842527544
+    - attr: {label: window}
+      id: 140236842257992
+    - attr: {label: window}
+      id: 140236842258048
+    - attr: {label: window}
+      id: 140236842285320
+  Result 14:
+    edges:
+    - attr: {}
+      id: 140236842179944
+      vertex1: 140236842286944
+      vertex2: 140236842177816
+    - attr: {}
+      id: 140236842176640
+      vertex1: 140236842284928
+      vertex2: 140236842180224
+    - attr: {}
+      id: 140236842180168
+      vertex1: 140236842285656
+      vertex2: 140236842286944
+    - attr: {}
+      id: 140236842177256
+      vertex1: 140236842180224
+      vertex2: 140236842286944
+    - attr: {}
+      id: 140236842285936
+      vertex1: 140236842285656
+      vertex2: 140236842284928
+    - attr: {}
+      id: 140236842177536
+      vertex1: 140236842178376
+      vertex2: 140236842177200
+    - attr: {}
+      id: 140236842176808
+      vertex1: 140236842177200
+      vertex2: 140236842177424
+    - attr: {}
+      id: 140236842178264
+      vertex1: 140236842178376
+      vertex2: 140236842177816
+    - attr: {}
+      id: 140236842178712
+      vertex1: 140236842177424
+      vertex2: 140236842177816
+    - attr: {}
+      id: 140236842177760
+      vertex1: 140236842177592
+      vertex2: 140236842177200
+    - attr: {}
+      id: 140236842177368
+      vertex1: 140236842177816
+      vertex2: 140236842177592
+    - attr: {}
+      id: 140236842178096
+      vertex1: 140236842176864
+      vertex2: 140236842177816
+    - attr: {}
+      id: 140236842178544
+      vertex1: 140236842177200
+      vertex2: 140236842176864
+    - attr: {}
+      id: 140236842287000
+      vertex1: 140236842286664
+      vertex2: 140236842286944
+    - attr: {}
+      id: 140236842286832
+      vertex1: 140236842284928
+      vertex2: 140236842286664
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842176976
+      vertex1: 140236842177592
+      vertex2: 140236842176584
+    - attr: {}
+      id: 140236842177088
+      vertex1: 140236842177200
+      vertex2: 140236842176584
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842177032
+      vertex1: 140236842176584
+      vertex2: 140236842177424
+    - attr: {}
+      id: 140236842176696
+      vertex1: 140236842176584
+      vertex2: 140236842177816
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842177704
+      vertex1: 140236842178768
+      vertex2: 140236842178376
+    - attr: {}
+      id: 140236842178208
+      vertex1: 140236842177200
+      vertex2: 140236842178768
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842177872
+      vertex1: 140236842176864
+      vertex2: 140236842178768
+    - attr: {}
+      id: 140236842178040
+      vertex1: 140236842178768
+      vertex2: 140236842177816
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842176752
+      vertex1: 140236842176864
+      vertex2: 140236842177312
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842176920
+      vertex1: 140236842177312
+      vertex2: 140236842177592
+    - attr: {}
+      id: 140236842177480
+      vertex1: 140236842177200
+      vertex2: 140236842177312
+    - attr: {}
+      id: 140236842178488
+      vertex1: 140236842177312
+      vertex2: 140236842177816
+    - attr: {}
+      id: 140236842286160
+      vertex1: 140236842284928
+      vertex2: 140236842286440
+    - attr: {}
+      id: 140236842177648
+      vertex1: 140236842286440
+      vertex2: 140236842286944
+    - attr: {}
+      id: 140236842286104
+      vertex1: 140236842286328
+      vertex2: 140236842286944
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842286720
+      vertex1: 140236842286664
+      vertex2: 140236842286328
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842179552
+      vertex1: 140236842286328
+      vertex2: 140236842286440
+    - attr: {}
+      id: 140236842178936
+      vertex1: 140236842284928
+      vertex2: 140236842286328
+    - attr: {}
+      id: 140236842286608
+      vertex1: 140236842285432
+      vertex2: 140236842286944
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842178152
+      vertex1: 140236842285432
+      vertex2: 140236842285656
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842286272
+      vertex1: 140236842286440
+      vertex2: 140236842285432
+    - attr: {}
+      id: 140236842178824
+      vertex1: 140236842284928
+      vertex2: 140236842285432
+    - attr: {}
+      id: 140236842286552
+      vertex1: 140236842286944
+      vertex2: 140236842286048
+    - attr: {}
+      id: 140236842286888
+      vertex1: 140236842286048
+      vertex2: 140236842284928
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842285992
+      vertex1: 140236842180224
+      vertex2: 140236842286384
+    - attr: {}
+      id: 140236842178320
+      vertex1: 140236842286384
+      vertex2: 140236842284928
+    - attr: {}
+      id: 140236842177984
+      vertex1: 140236842286944
+      vertex2: 140236842286384
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842287056
+      vertex1: 140236842286384
+      vertex2: 140236842286048
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842179608
+      vertex1: 140236842286048
+      vertex2: 140236842178656
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842179328
+      vertex1: 140236842178656
+      vertex2: 140236842286664
+    - attr: {}
+      id: 140236842179384
+      vertex1: 140236842286944
+      vertex2: 140236842178656
+    - attr: {}
+      id: 140236842178992
+      vertex1: 140236842178656
+      vertex2: 140236842284928
+    id: 140236842891304
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842285656
+    - attr: {label: FloorEnd}
+      id: 140236842286944
+    - attr: {label: FloorSide}
+      id: 140236842180224
+    - attr: {label: FloorEnd}
+      id: 140236842284928
+    - attr: {label: FloorEnd}
+      id: 140236842177200
+    - attr: {label: FloorSide}
+      id: 140236842177424
+    - attr: {label: FloorSide}
+      id: 140236842178376
+    - attr: {label: FloorEnd}
+      id: 140236842177816
+    - attr: {label: window}
+      id: 140236842177592
+    - attr: {label: window}
+      id: 140236842176864
+    - attr: {label: window}
+      id: 140236842286664
+    - attr: {label: window}
+      id: 140236842176584
+    - attr: {label: window}
+      id: 140236842178768
+    - attr: {label: window}
+      id: 140236842177312
+    - attr: {label: window}
+      id: 140236842286440
+    - attr: {label: window}
+      id: 140236842286328
+    - attr: {label: window}
+      id: 140236842285432
+    - attr: {label: window}
+      id: 140236842286048
+    - attr: {label: window}
+      id: 140236842286384
+    - attr: {label: window}
+      id: 140236842178656
+  Result 15:
+    edges:
+    - attr: {}
+      id: 140236842206096
+      vertex1: 140236842179664
+      vertex2: 140236842206320
+    - attr: {}
+      id: 140236842205984
+      vertex1: 140236842179104
+      vertex2: 140236842205592
+    - attr: {}
+      id: 140236842179888
+      vertex1: 140236842179216
+      vertex2: 140236842179664
+    - attr: {}
+      id: 140236842205816
+      vertex1: 140236842205592
+      vertex2: 140236842179664
+    - attr: {}
+      id: 140236842206600
+      vertex1: 140236842179216
+      vertex2: 140236842179104
+    - attr: {}
+      id: 140236842206936
+      vertex1: 140236842207608
+      vertex2: 140236842207384
+    - attr: {}
+      id: 140236842205928
+      vertex1: 140236842207384
+      vertex2: 140236842207160
+    - attr: {}
+      id: 140236842206040
+      vertex1: 140236842207608
+      vertex2: 140236842206320
+    - attr: {}
+      id: 140236842206376
+      vertex1: 140236842207160
+      vertex2: 140236842206320
+    - attr: {}
+      id: 140236842208000
+      vertex1: 140236842207104
+      vertex2: 140236842207384
+    - attr: {}
+      id: 140236842208560
+      vertex1: 140236842206320
+      vertex2: 140236842207104
+    - attr: {}
+      id: 140236842206768
+      vertex1: 140236842206656
+      vertex2: 140236842206320
+    - attr: {}
+      id: 140236842208224
+      vertex1: 140236842207384
+      vertex2: 140236842206656
+    - attr: {}
+      id: 140236842206208
+      vertex1: 140236842180448
+      vertex2: 140236842179664
+    - attr: {}
+      id: 140236842178880
+      vertex1: 140236842179104
+      vertex2: 140236842180448
+    - attr: {}
+      id: 140236842207776
+      vertex1: 140236842207384
+      vertex2: 140236842206544
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842207272
+      vertex1: 140236842206544
+      vertex2: 140236842207160
+    - attr: {}
+      id: 140236842208112
+      vertex1: 140236842206544
+      vertex2: 140236842206320
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842207216
+      vertex1: 140236842207888
+      vertex2: 140236842207608
+    - attr: {}
+      id: 140236842207720
+      vertex1: 140236842207384
+      vertex2: 140236842207888
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842207496
+      vertex1: 140236842206656
+      vertex2: 140236842207888
+    - attr: {}
+      id: 140236842208056
+      vertex1: 140236842207888
+      vertex2: 140236842206320
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842207048
+      vertex1: 140236842206656
+      vertex2: 140236842206880
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842206488
+      vertex1: 140236842206880
+      vertex2: 140236842207104
+    - attr: {}
+      id: 140236842208392
+      vertex1: 140236842207384
+      vertex2: 140236842206880
+    - attr: {}
+      id: 140236842208448
+      vertex1: 140236842206880
+      vertex2: 140236842206320
+    - attr: {}
+      id: 140236842180392
+      vertex1: 140236842179104
+      vertex2: 140236842180336
+    - attr: {}
+      id: 140236842205872
+      vertex1: 140236842180336
+      vertex2: 140236842179664
+    - attr: {}
+      id: 140236842206432
+      vertex1: 140236842180504
+      vertex2: 140236842179664
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842180560
+      vertex1: 140236842180448
+      vertex2: 140236842180504
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842179832
+      vertex1: 140236842180504
+      vertex2: 140236842180336
+    - attr: {}
+      id: 140236842206264
+      vertex1: 140236842179104
+      vertex2: 140236842180504
+    - attr: {}
+      id: 140236842179272
+      vertex1: 140236842180056
+      vertex2: 140236842179664
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842206992
+      vertex1: 140236842180056
+      vertex2: 140236842179216
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842180000
+      vertex1: 140236842180336
+      vertex2: 140236842180056
+    - attr: {}
+      id: 140236842178600
+      vertex1: 140236842179104
+      vertex2: 140236842180056
+    - attr: {}
+      id: 140236842207664
+      vertex1: 140236842179664
+      vertex2: 140236842208168
+    - attr: {}
+      id: 140236842205256
+      vertex1: 140236842208168
+      vertex2: 140236842179104
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842205424
+      vertex1: 140236842205592
+      vertex2: 140236842205368
+    - attr: {}
+      id: 140236842205648
+      vertex1: 140236842205368
+      vertex2: 140236842179104
+    - attr: {}
+      id: 140236842205760
+      vertex1: 140236842179664
+      vertex2: 140236842205368
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842205312
+      vertex1: 140236842205368
+      vertex2: 140236842208168
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842208504
+      vertex1: 140236842208168
+      vertex2: 140236842208728
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842180280
+      vertex1: 140236842208728
+      vertex2: 140236842180448
+    - attr: {}
+      id: 140236842207328
+      vertex1: 140236842179664
+      vertex2: 140236842208728
+    - attr: {}
+      id: 140236842206152
+      vertex1: 140236842208728
+      vertex2: 140236842179104
+    - attr: {}
+      id: 140236842208784
+      vertex1: 140236842209008
+      vertex2: 140236842207384
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842179160
+      vertex1: 140236842207104
+      vertex2: 140236842209008
+    - attr: {}
+      id: 140236842179720
+      vertex1: 140236842206320
+      vertex2: 140236842209008
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842208672
+      vertex1: 140236842209008
+      vertex2: 140236842206544
+    id: 140236842255640
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842179216
+    - attr: {label: FloorEnd}
+      id: 140236842179664
+    - attr: {label: FloorSide}
+      id: 140236842205592
+    - attr: {label: FloorEnd}
+      id: 140236842179104
+    - attr: {label: FloorEnd}
+      id: 140236842207384
+    - attr: {label: FloorSide}
+      id: 140236842207160
+    - attr: {label: FloorSide}
+      id: 140236842207608
+    - attr: {label: FloorEnd}
+      id: 140236842206320
+    - attr: {label: window}
+      id: 140236842207104
+    - attr: {label: window}
+      id: 140236842206656
+    - attr: {label: window}
+      id: 140236842180448
+    - attr: {label: window}
+      id: 140236842206544
+    - attr: {label: window}
+      id: 140236842207888
+    - attr: {label: window}
+      id: 140236842206880
+    - attr: {label: window}
+      id: 140236842180336
+    - attr: {label: window}
+      id: 140236842180504
+    - attr: {label: window}
+      id: 140236842180056
+    - attr: {label: window}
+      id: 140236842208168
+    - attr: {label: window}
+      id: 140236842205368
+    - attr: {label: window}
+      id: 140236842208728
+    - attr: {label: window}
+      id: 140236842209008
+  Result 16:
+    edges:
+    - attr: {}
+      id: 140236842319944
+      vertex1: 140236842208336
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842322464
+      vertex1: 140236842285712
+      vertex2: 140236842323752
+    - attr: {}
+      id: 140236842320000
+      vertex1: 140236842283360
+      vertex2: 140236842208336
+    - attr: {}
+      id: 140236842321568
+      vertex1: 140236842323752
+      vertex2: 140236842208336
+    - attr: {}
+      id: 140236842283248
+      vertex1: 140236842283360
+      vertex2: 140236842285712
+    - attr: {}
+      id: 140236842322240
+      vertex1: 140236842322688
+      vertex2: 140236842320952
+    - attr: {}
+      id: 140236842321736
+      vertex1: 140236842320952
+      vertex2: 140236842321792
+    - attr: {}
+      id: 140236842322520
+      vertex1: 140236842322688
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842321344
+      vertex1: 140236842321792
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842322128
+      vertex1: 140236842321400
+      vertex2: 140236842320952
+    - attr: {}
+      id: 140236842323808
+      vertex1: 140236842320672
+      vertex2: 140236842321400
+    - attr: {}
+      id: 140236842320560
+      vertex1: 140236842320392
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842322856
+      vertex1: 140236842320952
+      vertex2: 140236842320392
+    - attr: {}
+      id: 140236842209232
+      vertex1: 140236842209120
+      vertex2: 140236842208336
+    - attr: {}
+      id: 140236842320728
+      vertex1: 140236842285712
+      vertex2: 140236842209120
+    - attr: {}
+      id: 140236842321512
+      vertex1: 140236842320952
+      vertex2: 140236842321624
+    - attr: {}
+      id: 140236842321960
+      vertex1: 140236842321624
+      vertex2: 140236842320672
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842322408
+      vertex1: 140236842320504
+      vertex2: 140236842322688
+    - attr: {}
+      id: 140236842321008
+      vertex1: 140236842320952
+      vertex2: 140236842320504
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842320840
+      vertex1: 140236842320392
+      vertex2: 140236842320504
+    - attr: {}
+      id: 140236842320056
+      vertex1: 140236842320504
+      vertex2: 140236842320672
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842321904
+      vertex1: 140236842320392
+      vertex2: 140236842321848
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842321680
+      vertex1: 140236842321848
+      vertex2: 140236842321400
+    - attr: {}
+      id: 140236842322296
+      vertex1: 140236842320952
+      vertex2: 140236842321848
+    - attr: {}
+      id: 140236842322072
+      vertex1: 140236842321848
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842285152
+      vertex1: 140236842285712
+      vertex2: 140236842285208
+    - attr: {}
+      id: 140236842206824
+      vertex1: 140236842285208
+      vertex2: 140236842208336
+    - attr: {}
+      id: 140236842320280
+      vertex1: 140236842320168
+      vertex2: 140236842208336
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842320896
+      vertex1: 140236842209120
+      vertex2: 140236842320168
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842320224
+      vertex1: 140236842320168
+      vertex2: 140236842285208
+    - attr: {}
+      id: 140236842320112
+      vertex1: 140236842285712
+      vertex2: 140236842320168
+    - attr: {}
+      id: 140236842320448
+      vertex1: 140236842285264
+      vertex2: 140236842208336
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842323640
+      vertex1: 140236842285264
+      vertex2: 140236842283360
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842285488
+      vertex1: 140236842285208
+      vertex2: 140236842285264
+    - attr: {}
+      id: 140236842284200
+      vertex1: 140236842285712
+      vertex2: 140236842285264
+    - attr: {}
+      id: 140236842320616
+      vertex1: 140236842208336
+      vertex2: 140236842207832
+    - attr: {}
+      id: 140236842320336
+      vertex1: 140236842207832
+      vertex2: 140236842285712
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842205480
+      vertex1: 140236842323752
+      vertex2: 140236842207440
+    - attr: {}
+      id: 140236842205704
+      vertex1: 140236842207440
+      vertex2: 140236842285712
+    - attr: {}
+      id: 140236842205536
+      vertex1: 140236842208336
+      vertex2: 140236842207440
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842207552
+      vertex1: 140236842207440
+      vertex2: 140236842207832
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842207944
+      vertex1: 140236842207832
+      vertex2: 140236842209176
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842208896
+      vertex1: 140236842209176
+      vertex2: 140236842209120
+    - attr: {}
+      id: 140236842208952
+      vertex1: 140236842208336
+      vertex2: 140236842209176
+    - attr: {}
+      id: 140236842209064
+      vertex1: 140236842209176
+      vertex2: 140236842285712
+    - attr: {}
+      id: 140236842321232
+      vertex1: 140236842321456
+      vertex2: 140236842320952
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842321120
+      vertex1: 140236842321400
+      vertex2: 140236842321456
+    - attr: {}
+      id: 140236842321288
+      vertex1: 140236842320672
+      vertex2: 140236842321456
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842321064
+      vertex1: 140236842321456
+      vertex2: 140236842321624
+    - attr: {}
+      id: 140236842323024
+      vertex1: 140236842323416
+      vertex2: 140236842320672
+    - attr: {}
+      id: 140236842323696
+      vertex1: 140236842320952
+      vertex2: 140236842323416
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842323248
+      vertex1: 140236842323416
+      vertex2: 140236842321624
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842323360
+      vertex1: 140236842321792
+      vertex2: 140236842323416
+    id: 140236842599144
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842283360
+    - attr: {label: FloorEnd}
+      id: 140236842208336
+    - attr: {label: FloorSide}
+      id: 140236842323752
+    - attr: {label: FloorEnd}
+      id: 140236842285712
+    - attr: {label: FloorEnd}
+      id: 140236842320952
+    - attr: {label: FloorSide}
+      id: 140236842321792
+    - attr: {label: FloorSide}
+      id: 140236842322688
+    - attr: {label: FloorEnd}
+      id: 140236842320672
+    - attr: {label: window}
+      id: 140236842321400
+    - attr: {label: window}
+      id: 140236842320392
+    - attr: {label: window}
+      id: 140236842209120
+    - attr: {label: window}
+      id: 140236842321624
+    - attr: {label: window}
+      id: 140236842320504
+    - attr: {label: window}
+      id: 140236842321848
+    - attr: {label: window}
+      id: 140236842285208
+    - attr: {label: window}
+      id: 140236842320168
+    - attr: {label: window}
+      id: 140236842285264
+    - attr: {label: window}
+      id: 140236842207832
+    - attr: {label: window}
+      id: 140236842207440
+    - attr: {label: window}
+      id: 140236842209176
+    - attr: {label: window}
+      id: 140236842321456
+    - attr: {label: window}
+      id: 140236842323416
+  Result 2:
+    edges:
+    - attr: {}
+      id: 140236842767528
+      vertex1: 140236842767752
+      vertex2: 140236842768816
+    - attr: {}
+      id: 140236842769824
+      vertex1: 140236842768144
+      vertex2: 140236842768480
+    - attr: {label: Wall, length: '20', level: '0'}
+      id: 140236842767976
+      vertex1: 140236842767696
+      vertex2: 140236842768480
+    - attr: {}
+      id: 140236842768032
+      vertex1: 140236842767696
+      vertex2: 140236842767752
+    - attr: {}
+      id: 140236842768312
+      vertex1: 140236842768480
+      vertex2: 140236842767752
+    - attr: {}
+      id: 140236842767584
+      vertex1: 140236842767696
+      vertex2: 140236842768144
+    - attr: {}
+      id: 140236842768424
+      vertex1: 140236842768256
+      vertex2: 140236842767920
+    - attr: {}
+      id: 140236842768984
+      vertex1: 140236842767920
+      vertex2: 140236842768536
+    - attr: {label: Wall, length: '20', level: 1}
+      id: 140236842768648
+      vertex1: 140236842768256
+      vertex2: 140236842768536
+    - attr: {}
+      id: 140236842768760
+      vertex1: 140236842768256
+      vertex2: 140236842768816
+    - attr: {}
+      id: 140236842767808
+      vertex1: 140236842768536
+      vertex2: 140236842768816
+    id: 140235220889384
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842767696
+    - attr: {label: FloorEnd}
+      id: 140236842767752
+    - attr: {label: FloorSide}
+      id: 140236842768480
+    - attr: {label: FloorEnd}
+      id: 140236842768144
+    - attr: {label: FloorEnd}
+      id: 140236842767920
+    - attr: {label: FloorSide}
+      id: 140236842768536
+    - attr: {label: FloorSide}
+      id: 140236842768256
+    - attr: {label: FloorEnd}
+      id: 140236842768816
+  Result 3:
+    edges:
+    - attr: {}
+      id: 140236842769096
+      vertex1: 140236842769376
+      vertex2: 140236842769040
+    - attr: {}
+      id: 140236842770048
+      vertex1: 140236842769712
+      vertex2: 140236842770216
+    - attr: {label: Wall, length: '20', level: '0'}
+      id: 140236842770272
+      vertex1: 140236842767864
+      vertex2: 140236842770216
+    - attr: {}
+      id: 140236842768872
+      vertex1: 140236842767864
+      vertex2: 140236842769376
+    - attr: {}
+      id: 140236842768200
+      vertex1: 140236842770216
+      vertex2: 140236842769376
+    - attr: {}
+      id: 140236842770384
+      vertex1: 140236842767864
+      vertex2: 140236842769712
+    - attr: {}
+      id: 140236842769880
+      vertex1: 140236842769600
+      vertex2: 140236842769320
+    - attr: {}
+      id: 140236842769432
+      vertex1: 140236842769320
+      vertex2: 140236842769264
+    - attr: {}
+      id: 140236842768928
+      vertex1: 140236842769600
+      vertex2: 140236842769040
+    - attr: {}
+      id: 140236842769768
+      vertex1: 140236842769264
+      vertex2: 140236842769040
+    - attr: {}
+      id: 140236842769936
+      vertex1: 140235929760096
+      vertex2: 140236842769320
+    - attr: {label: Wall, length: 10.0}
+      id: 140235929761888
+      vertex1: 140235929760096
+      vertex2: 140236842769264
+    - attr: {label: Wall, length: 10.0}
+      id: 140235929760432
+      vertex1: 140236842769600
+      vertex2: 140235929760096
+    - attr: {}
+      id: 140235929763288
+      vertex1: 140236842769040
+      vertex2: 140235929760096
+    id: 140235929568480
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842767864
+    - attr: {label: FloorEnd}
+      id: 140236842769376
+    - attr: {label: FloorSide}
+      id: 140236842770216
+    - attr: {label: FloorEnd}
+      id: 140236842769712
+    - attr: {label: FloorEnd}
+      id: 140236842769320
+    - attr: {label: FloorSide}
+      id: 140236842769264
+    - attr: {label: FloorSide}
+      id: 140236842769600
+    - attr: {label: FloorEnd}
+      id: 140236842769040
+    - attr: {label: window}
+      id: 140235929760096
+  Result 4:
+    edges:
+    - attr: {}
+      id: 140235921269760
+      vertex1: 140235921270880
+      vertex2: 140235921272280
+    - attr: {}
+      id: 140235929762280
+      vertex1: 140235929763680
+      vertex2: 140235929760208
+    - attr: {label: Wall, length: '20', level: '0'}
+      id: 140235929763792
+      vertex1: 140235929760488
+      vertex2: 140235929760208
+    - attr: {}
+      id: 140235929717000
+      vertex1: 140235929760488
+      vertex2: 140235921270880
+    - attr: {}
+      id: 140235921272784
+      vertex1: 140235929760208
+      vertex2: 140235921270880
+    - attr: {}
+      id: 140235929761608
+      vertex1: 140235929760488
+      vertex2: 140235929763680
+    - attr: {}
+      id: 140235921271944
+      vertex1: 140235921270712
+      vertex2: 140235921269536
+    - attr: {}
+      id: 140235921269928
+      vertex1: 140235921269536
+      vertex2: 140235921272168
+    - attr: {}
+      id: 140235921270040
+      vertex1: 140235921270712
+      vertex2: 140235921272280
+    - attr: {}
+      id: 140235929717392
+      vertex1: 140235921272168
+      vertex2: 140235921272280
+    - attr: {}
+      id: 140235921270208
+      vertex1: 140235921271608
+      vertex2: 140235921269536
+    - attr: {label: Wall, length: 10.0}
+      id: 140235921271328
+      vertex1: 140235921271608
+      vertex2: 140235921272168
+    - attr: {}
+      id: 140235929717280
+      vertex1: 140235921272280
+      vertex2: 140235921271608
+    - attr: {}
+      id: 140236842829528
+      vertex1: 140236842829192
+      vertex2: 140235921272280
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842830592
+      vertex1: 140236842829192
+      vertex2: 140235921271608
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842828184
+      vertex1: 140235921270712
+      vertex2: 140236842829192
+    - attr: {}
+      id: 140236842828240
+      vertex1: 140235921269536
+      vertex2: 140236842829192
+    id: 140236842769488
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140235929760488
+    - attr: {label: FloorEnd}
+      id: 140235921270880
+    - attr: {label: FloorSide}
+      id: 140235929760208
+    - attr: {label: FloorEnd}
+      id: 140235929763680
+    - attr: {label: FloorEnd}
+      id: 140235921269536
+    - attr: {label: FloorSide}
+      id: 140235921272168
+    - attr: {label: FloorSide}
+      id: 140235921270712
+    - attr: {label: FloorEnd}
+      id: 140235921272280
+    - attr: {label: window}
+      id: 140235921271608
+    - attr: {label: window}
+      id: 140236842829192
+  Result 5:
+    edges:
+    - attr: {}
+      id: 140236842828016
+      vertex1: 140236842828352
+      vertex2: 140236842827960
+    - attr: {}
+      id: 140236842829808
+      vertex1: 140236842830032
+      vertex2: 140236842829864
+    - attr: {}
+      id: 140236842827904
+      vertex1: 140236842828072
+      vertex2: 140236842828352
+    - attr: {}
+      id: 140236842829640
+      vertex1: 140236842829864
+      vertex2: 140236842828352
+    - attr: {}
+      id: 140236842829696
+      vertex1: 140236842828072
+      vertex2: 140236842830032
+    - attr: {}
+      id: 140236842828296
+      vertex1: 140236842828800
+      vertex2: 140236842829024
+    - attr: {}
+      id: 140236842828688
+      vertex1: 140236842829024
+      vertex2: 140236842828856
+    - attr: {}
+      id: 140236842830088
+      vertex1: 140236842828800
+      vertex2: 140236842827960
+    - attr: {}
+      id: 140236842828632
+      vertex1: 140236842828856
+      vertex2: 140236842827960
+    - attr: {}
+      id: 140236842829472
+      vertex1: 140236842828464
+      vertex2: 140236842829024
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842828744
+      vertex1: 140236842828464
+      vertex2: 140236842828856
+    - attr: {}
+      id: 140236842828576
+      vertex1: 140236842827960
+      vertex2: 140236842828464
+    - attr: {}
+      id: 140236842829584
+      vertex1: 140236842829416
+      vertex2: 140236842827960
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842829248
+      vertex1: 140236842829416
+      vertex2: 140236842828464
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842828968
+      vertex1: 140236842828800
+      vertex2: 140236842829416
+    - attr: {}
+      id: 140236842829136
+      vertex1: 140236842829024
+      vertex2: 140236842829416
+    - attr: {}
+      id: 140236842828912
+      vertex1: 140236842830480
+      vertex2: 140236842828352
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842830760
+      vertex1: 140236842829864
+      vertex2: 140236842830480
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842830312
+      vertex1: 140236842830480
+      vertex2: 140236842828072
+    - attr: {}
+      id: 140236842830816
+      vertex1: 140236842830032
+      vertex2: 140236842830480
+    id: 140235929569600
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842828072
+    - attr: {label: FloorEnd}
+      id: 140236842828352
+    - attr: {label: FloorSide}
+      id: 140236842829864
+    - attr: {label: FloorEnd}
+      id: 140236842830032
+    - attr: {label: FloorEnd}
+      id: 140236842829024
+    - attr: {label: FloorSide}
+      id: 140236842828856
+    - attr: {label: FloorSide}
+      id: 140236842828800
+    - attr: {label: FloorEnd}
+      id: 140236842827960
+    - attr: {label: window}
+      id: 140236842828464
+    - attr: {label: window}
+      id: 140236842829416
+    - attr: {label: window}
+      id: 140236842830480
+  Result 6:
+    edges:
+    - attr: {}
+      id: 140236842828520
+      vertex1: 140235929762000
+      vertex2: 140236842830256
+    - attr: {}
+      id: 140236842829304
+      vertex1: 140236842770160
+      vertex2: 140235929760320
+    - attr: {}
+      id: 140235929759872
+      vertex1: 140235929717728
+      vertex2: 140235929762000
+    - attr: {}
+      id: 140235929763456
+      vertex1: 140235929760320
+      vertex2: 140235929762000
+    - attr: {}
+      id: 140236842770328
+      vertex1: 140235929717728
+      vertex2: 140236842770160
+    - attr: {}
+      id: 140236842830424
+      vertex1: 140236842830984
+      vertex2: 140236842829920
+    - attr: {}
+      id: 140236842831096
+      vertex1: 140236842829920
+      vertex2: 140236842830200
+    - attr: {}
+      id: 140236842831208
+      vertex1: 140236842830984
+      vertex2: 140236842830256
+    - attr: {}
+      id: 140236842831488
+      vertex1: 140236842830200
+      vertex2: 140236842830256
+    - attr: {}
+      id: 140236842831600
+      vertex1: 140236842831264
+      vertex2: 140236842829920
+    - attr: {}
+      id: 140236842830928
+      vertex1: 140236842830256
+      vertex2: 140236842831264
+    - attr: {}
+      id: 140236842831768
+      vertex1: 140236842831320
+      vertex2: 140236842830256
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842830704
+      vertex1: 140236842831320
+      vertex2: 140236842831264
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842831656
+      vertex1: 140236842830984
+      vertex2: 140236842831320
+    - attr: {}
+      id: 140236842831824
+      vertex1: 140236842829920
+      vertex2: 140236842831320
+    - attr: {}
+      id: 140236842828408
+      vertex1: 140236842769544
+      vertex2: 140235929762000
+    - attr: {label: Wall, length: 10.0}
+      id: 140235929761440
+      vertex1: 140235929760320
+      vertex2: 140236842769544
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842827848
+      vertex1: 140236842769544
+      vertex2: 140235929717728
+    - attr: {}
+      id: 140236842769656
+      vertex1: 140236842770160
+      vertex2: 140236842769544
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842922616
+      vertex1: 140236842831264
+      vertex2: 140236842829080
+    - attr: {}
+      id: 140236842925696
+      vertex1: 140236842829920
+      vertex2: 140236842829080
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842922224
+      vertex1: 140236842829080
+      vertex2: 140236842830200
+    - attr: {}
+      id: 140236842828128
+      vertex1: 140236842829080
+      vertex2: 140236842830256
+    id: 140235929718680
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140235929717728
+    - attr: {label: FloorEnd}
+      id: 140235929762000
+    - attr: {label: FloorSide}
+      id: 140235929760320
+    - attr: {label: FloorEnd}
+      id: 140236842770160
+    - attr: {label: FloorEnd}
+      id: 140236842829920
+    - attr: {label: FloorSide}
+      id: 140236842830200
+    - attr: {label: FloorSide}
+      id: 140236842830984
+    - attr: {label: FloorEnd}
+      id: 140236842830256
+    - attr: {label: window}
+      id: 140236842831264
+    - attr: {label: window}
+      id: 140236842831320
+    - attr: {label: window}
+      id: 140236842769544
+    - attr: {label: window}
+      id: 140236842829080
+  Result 7:
+    edges:
+    - attr: {}
+      id: 140236842922336
+      vertex1: 140236842922168
+      vertex2: 140236842922896
+    - attr: {}
+      id: 140236842923960
+      vertex1: 140236842922504
+      vertex2: 140236842922056
+    - attr: {}
+      id: 140236842922280
+      vertex1: 140236842922392
+      vertex2: 140236842922168
+    - attr: {}
+      id: 140236842922560
+      vertex1: 140236842922056
+      vertex2: 140236842922168
+    - attr: {}
+      id: 140236842923176
+      vertex1: 140236842922392
+      vertex2: 140236842922504
+    - attr: {}
+      id: 140236842923736
+      vertex1: 140236842923456
+      vertex2: 140236842923848
+    - attr: {}
+      id: 140236842922448
+      vertex1: 140236842923848
+      vertex2: 140236842922952
+    - attr: {}
+      id: 140236842924128
+      vertex1: 140236842923456
+      vertex2: 140236842922896
+    - attr: {}
+      id: 140236842924576
+      vertex1: 140236842922952
+      vertex2: 140236842922896
+    - attr: {}
+      id: 140236842924352
+      vertex1: 140236842923232
+      vertex2: 140236842923848
+    - attr: {}
+      id: 140236842923344
+      vertex1: 140236842922896
+      vertex2: 140236842923232
+    - attr: {}
+      id: 140236842923568
+      vertex1: 140236842924072
+      vertex2: 140236842922896
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842923904
+      vertex1: 140236842924072
+      vertex2: 140236842923232
+    - attr: {}
+      id: 140236842924184
+      vertex1: 140236842923848
+      vertex2: 140236842924072
+    - attr: {}
+      id: 140236842923008
+      vertex1: 140236842922672
+      vertex2: 140236842922168
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842922112
+      vertex1: 140236842922056
+      vertex2: 140236842922672
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842925192
+      vertex1: 140236842922672
+      vertex2: 140236842922392
+    - attr: {}
+      id: 140236842922840
+      vertex1: 140236842922504
+      vertex2: 140236842922672
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842923624
+      vertex1: 140236842923232
+      vertex2: 140236842923120
+    - attr: {}
+      id: 140236842923064
+      vertex1: 140236842923848
+      vertex2: 140236842923120
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842924464
+      vertex1: 140236842923120
+      vertex2: 140236842922952
+    - attr: {}
+      id: 140236842924240
+      vertex1: 140236842923120
+      vertex2: 140236842922896
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842924632
+      vertex1: 140236842924856
+      vertex2: 140236842923456
+    - attr: {}
+      id: 140236842922728
+      vertex1: 140236842923848
+      vertex2: 140236842924856
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842925416
+      vertex1: 140236842924072
+      vertex2: 140236842924856
+    - attr: {}
+      id: 140236842924968
+      vertex1: 140236842924856
+      vertex2: 140236842922896
+    id: 140235929716888
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842922392
+    - attr: {label: FloorEnd}
+      id: 140236842922168
+    - attr: {label: FloorSide}
+      id: 140236842922056
+    - attr: {label: FloorEnd}
+      id: 140236842922504
+    - attr: {label: FloorEnd}
+      id: 140236842923848
+    - attr: {label: FloorSide}
+      id: 140236842922952
+    - attr: {label: FloorSide}
+      id: 140236842923456
+    - attr: {label: FloorEnd}
+      id: 140236842922896
+    - attr: {label: window}
+      id: 140236842923232
+    - attr: {label: window}
+      id: 140236842924072
+    - attr: {label: window}
+      id: 140236842922672
+    - attr: {label: window}
+      id: 140236842923120
+    - attr: {label: window}
+      id: 140236842924856
+  Result 8:
+    edges:
+    - attr: {}
+      id: 140236842892480
+      vertex1: 140236842925976
+      vertex2: 140236842892200
+    - attr: {}
+      id: 140236842925472
+      vertex1: 140236842925864
+      vertex2: 140236842925920
+    - attr: {}
+      id: 140236842925304
+      vertex1: 140236842925080
+      vertex2: 140236842925976
+    - attr: {}
+      id: 140236842925528
+      vertex1: 140236842925920
+      vertex2: 140236842925976
+    - attr: {}
+      id: 140236842926032
+      vertex1: 140236842925080
+      vertex2: 140236842925864
+    - attr: {}
+      id: 140236842890296
+      vertex1: 140236842889736
+      vertex2: 140236842889568
+    - attr: {}
+      id: 140236842890800
+      vertex1: 140236842889568
+      vertex2: 140236842890856
+    - attr: {}
+      id: 140236842890184
+      vertex1: 140236842889736
+      vertex2: 140236842892200
+    - attr: {}
+      id: 140236842891360
+      vertex1: 140236842890856
+      vertex2: 140236842892200
+    - attr: {}
+      id: 140236842889960
+      vertex1: 140236842890408
+      vertex2: 140236842889568
+    - attr: {}
+      id: 140236842890632
+      vertex1: 140236842892200
+      vertex2: 140236842890408
+    - attr: {}
+      id: 140236842889680
+      vertex1: 140236842889848
+      vertex2: 140236842892200
+    - attr: {}
+      id: 140236842889456
+      vertex1: 140236842889568
+      vertex2: 140236842889848
+    - attr: {}
+      id: 140236842925808
+      vertex1: 140236842925752
+      vertex2: 140236842925976
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842925640
+      vertex1: 140236842925920
+      vertex2: 140236842925752
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842924912
+      vertex1: 140236842925752
+      vertex2: 140236842925080
+    - attr: {}
+      id: 140236842925024
+      vertex1: 140236842925864
+      vertex2: 140236842925752
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842890464
+      vertex1: 140236842890408
+      vertex2: 140236842889400
+    - attr: {}
+      id: 140236842889792
+      vertex1: 140236842889568
+      vertex2: 140236842889400
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842890128
+      vertex1: 140236842889400
+      vertex2: 140236842890856
+    - attr: {}
+      id: 140236842890352
+      vertex1: 140236842889400
+      vertex2: 140236842892200
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842890520
+      vertex1: 140236842889624
+      vertex2: 140236842889736
+    - attr: {}
+      id: 140236842889344
+      vertex1: 140236842889568
+      vertex2: 140236842889624
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842889288
+      vertex1: 140236842889848
+      vertex2: 140236842889624
+    - attr: {}
+      id: 140236842890072
+      vertex1: 140236842889624
+      vertex2: 140236842892200
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842891808
+      vertex1: 140236842889848
+      vertex2: 140236842889904
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842890968
+      vertex1: 140236842889904
+      vertex2: 140236842890408
+    - attr: {}
+      id: 140236842891752
+      vertex1: 140236842889568
+      vertex2: 140236842889904
+    - attr: {}
+      id: 140236842891248
+      vertex1: 140236842889904
+      vertex2: 140236842892200
+    id: 140236842831432
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842925080
+    - attr: {label: FloorEnd}
+      id: 140236842925976
+    - attr: {label: FloorSide}
+      id: 140236842925920
+    - attr: {label: FloorEnd}
+      id: 140236842925864
+    - attr: {label: FloorEnd}
+      id: 140236842889568
+    - attr: {label: FloorSide}
+      id: 140236842890856
+    - attr: {label: FloorSide}
+      id: 140236842889736
+    - attr: {label: FloorEnd}
+      id: 140236842892200
+    - attr: {label: window}
+      id: 140236842890408
+    - attr: {label: window}
+      id: 140236842889848
+    - attr: {label: window}
+      id: 140236842925752
+    - attr: {label: window}
+      id: 140236842889400
+    - attr: {label: window}
+      id: 140236842889624
+    - attr: {label: window}
+      id: 140236842889904
+  Result 9:
+    edges:
+    - attr: {}
+      id: 140236842892312
+      vertex1: 140236842891920
+      vertex2: 140236842891696
+    - attr: {}
+      id: 140236842527600
+      vertex1: 140236842527264
+      vertex2: 140236842526312
+    - attr: {}
+      id: 140236842892032
+      vertex1: 140236842890576
+      vertex2: 140236842891920
+    - attr: {}
+      id: 140236842526648
+      vertex1: 140236842526312
+      vertex2: 140236842891920
+    - attr: {}
+      id: 140236842527880
+      vertex1: 140236842890576
+      vertex2: 140236842527264
+    - attr: {}
+      id: 140236842892256
+      vertex1: 140236842892872
+      vertex2: 140236842892760
+    - attr: {}
+      id: 140236842525640
+      vertex1: 140236842892760
+      vertex2: 140236842892536
+    - attr: {}
+      id: 140236842528272
+      vertex1: 140236842892872
+      vertex2: 140236842891696
+    - attr: {}
+      id: 140236842891640
+      vertex1: 140236842892536
+      vertex2: 140236842891696
+    - attr: {}
+      id: 140236842891136
+      vertex1: 140236842893208
+      vertex2: 140236842892760
+    - attr: {}
+      id: 140236842893096
+      vertex1: 140236842891696
+      vertex2: 140236842893208
+    - attr: {}
+      id: 140236842528720
+      vertex1: 140236842891528
+      vertex2: 140236842891696
+    - attr: {}
+      id: 140236842890016
+      vertex1: 140236842892760
+      vertex2: 140236842891528
+    - attr: {}
+      id: 140236842524912
+      vertex1: 140236842526144
+      vertex2: 140236842891920
+    - attr: {label: Wall, length: 10.0}
+      id: 140236842525024
+      vertex1: 140236842526312
+      vertex2: 140236842526144
+    - attr: {}
+      id: 140236842524856
+      vertex1: 140236842527264
+      vertex2: 140236842526144
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842892984
+      vertex1: 140236842893208
+      vertex2: 140236842892144
+    - attr: {}
+      id: 140236842892704
+      vertex1: 140236842892760
+      vertex2: 140236842892144
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842892424
+      vertex1: 140236842892144
+      vertex2: 140236842892536
+    - attr: {}
+      id: 140236842524968
+      vertex1: 140236842892144
+      vertex2: 140236842891696
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842892592
+      vertex1: 140236842892816
+      vertex2: 140236842892872
+    - attr: {}
+      id: 140236842893040
+      vertex1: 140236842892760
+      vertex2: 140236842892816
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842891864
+      vertex1: 140236842891528
+      vertex2: 140236842892816
+    - attr: {}
+      id: 140236842528384
+      vertex1: 140236842892816
+      vertex2: 140236842891696
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842893264
+      vertex1: 140236842891528
+      vertex2: 140236842893152
+    - attr: {label: Wall, length: 2.5}
+      id: 140236842892928
+      vertex1: 140236842893152
+      vertex2: 140236842893208
+    - attr: {}
+      id: 140236842891024
+      vertex1: 140236842892760
+      vertex2: 140236842893152
+    - attr: {}
+      id: 140236842890744
+      vertex1: 140236842893152
+      vertex2: 140236842891696
+    - attr: {}
+      id: 140236842525696
+      vertex1: 140236842527264
+      vertex2: 140236842525528
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842525416
+      vertex1: 140236842525528
+      vertex2: 140236842890576
+    - attr: {label: Wall, length: 5.0}
+      id: 140236842526088
+      vertex1: 140236842526144
+      vertex2: 140236842525528
+    - attr: {}
+      id: 140236842525080
+      vertex1: 140236842525528
+      vertex2: 140236842891920
+    id: 140235929717672
+    vertices:
+    - attr: {label: FloorSide}
+      id: 140236842890576
+    - attr: {label: FloorEnd}
+      id: 140236842891920
+    - attr: {label: FloorSide}
+      id: 140236842526312
+    - attr: {label: FloorEnd}
+      id: 140236842527264
+    - attr: {label: FloorEnd}
+      id: 140236842892760
+    - attr: {label: FloorSide}
+      id: 140236842892536
+    - attr: {label: FloorSide}
+      id: 140236842892872
+    - attr: {label: FloorEnd}
+      id: 140236842891696
+    - attr: {label: window}
+      id: 140236842893208
+    - attr: {label: window}
+      id: 140236842891528
+    - attr: {label: window}
+      id: 140236842526144
+    - attr: {label: window}
+      id: 140236842892144
+    - attr: {label: window}
+      id: 140236842892816
+    - attr: {label: window}
+      id: 140236842893152
+    - attr: {label: window}
+      id: 140236842525528
