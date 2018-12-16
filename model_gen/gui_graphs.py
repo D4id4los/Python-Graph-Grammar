@@ -488,9 +488,9 @@ class GraphPanel(wx.Panel):
         for graph_edge in graph.edges:
 
             def get_figure_vertex_for_edge(graph_vertex: Vertex, i
-                                           ) -> FigureVertex:
+                                           ) -> Tuple[FigureVertex, int]:
                 if graph_vertex is not None:
-                    return self.graph_to_figure[graph_vertex]
+                    return self.graph_to_figure[graph_vertex], i
                 new_vertex = Vertex()
                 new_vertex.edges.add(graph_edge)
                 new_vertex.attr['.helper_node'] = True
@@ -503,10 +503,10 @@ class GraphPanel(wx.Panel):
                 self.graph_to_figure[graph_vertex] = figure_vertex
                 axes.add_artist(figure_vertex)
                 i += 1
-                return figure_vertex
+                return figure_vertex, i
 
-            figure_vertex1 = get_figure_vertex_for_edge(graph_edge.vertex1, i)
-            figure_vertex2 = get_figure_vertex_for_edge(graph_edge.vertex2, i)
+            figure_vertex1, i = get_figure_vertex_for_edge(graph_edge.vertex1, i)
+            figure_vertex2, i = get_figure_vertex_for_edge(graph_edge.vertex2, i)
             figure_edge = FigureEdge(graph_edge, vertex1=figure_vertex1,
                                      vertex2=figure_vertex2, c='k')
             self.edges.add(figure_edge)

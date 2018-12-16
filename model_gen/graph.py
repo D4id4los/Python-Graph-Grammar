@@ -3,8 +3,9 @@ import itertools
 import copy
 from functools import singledispatch
 from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List, Set
-from typing import MutableSequence, Tuple, Callable, AbstractSet
+from typing import MutableSequence, Tuple, Callable, AbstractSet, Union
 from types import SimpleNamespace
+from collections import deque
 from model_gen.exceptions import ModelGenArgumentError
 from model_gen.exceptions import ModelGenIncongruentGraphStateError
 from model_gen.utils import get_logger, Mapping
@@ -819,24 +820,30 @@ class Graph(MutableSet):
         """
 
         def __init__(self, graph: 'Graph'):
-            self._marked: MutableSequence[GraphElement] = []
-            self._unchecked_vertices = list(graph.vertices)
-            self._unchecked_edges = list(graph.edges)
-            self._unchecked_faces = list(graph.faces)
             self._graph: 'Graph' = graph
+            self._marked: Set[GraphElement] = set()
+            self._unvisited: deque[GraphElement] = deque()
+            first_element = self._get_first_element()
+            if first_element is not None:
+                self._unvisited.append(first_element)
+            self._total_length = len(graph.vertices) + len(graph.edges)
 
         def __iter__(self):
             return self
 
         def __next__(self):
-            if len(self._marked) == 0:
-                element = self._get_first_element()
+            element = None
+            if len(self._unvisited) > 0:
+                element = self._unvisited.popleft()
             else:
-                element = self._get_connecting_element()
-            self._marked.append(element)
+                element = self._get_unconnected_element()
+            self._marked.add(element)
+            for neighbour in element.neighbours():
+                if neighbour not in self._marked:
+                    self._unvisited.append(neighbour)
             return element
 
-        def _get_first_element(self):
+        def _get_first_element(self) -> Union[GraphElement, None]:
             """
             Return a graph element to be the first returned by the iteration.
 
@@ -847,7 +854,6 @@ class Graph(MutableSet):
             exception.
 
             :return: The graph element from which the iteration will begin.
-            :rtype: GraphElement
             """
             if len(self._graph.vertices) > 0:
                 return self._graph.vertices[0]
@@ -856,43 +862,16 @@ class Graph(MutableSet):
             elif len(self._graph.edges) > 0:
                 return self._graph.faces[0]
             else:
-                raise StopIteration
+                return None
 
-        def _get_connecting_element(self):
-            """
-            Return a element of the graph that has not yet been part of the
-            iteration and is connected to at least one element that has been.
-
-            If there are no more elements to return, raise a StopIteration
-            exception.
-
-            :return: A graph element connected to at least one preceding
-            element.
-            :rtype: GraphElement
-            """
-            # connecting_element = None
-            for element in reversed(self._marked):
-                if isinstance(element, Edge):
-                    if element.vertex1 not in self._marked \
-                            and element.vertex1 is not None:
-                        self._unchecked_vertices.remove(element.vertex1)
-                        return element.vertex1
-                    elif element.vertex2 not in self._marked \
-                            and element.vertex2 is not None:
-                        self._unchecked_vertices.remove(element.vertex2)
-                        return element.vertex2
-                    else:
-                        continue
-                elif isinstance(element, Vertex):
-                    for edge in element.edges:
-                        if edge not in self._marked:
-                            self._unchecked_edges.remove(edge)
-                            return edge
-                    continue
-            if len(self._unchecked_vertices) > 0:
-                return self._unchecked_vertices.pop()
-            if len(self._unchecked_edges) > 0:
-                return self._unchecked_edges.pop()
+        def _get_unconnected_element(self):
+            if len(self._marked) < self._total_length:
+                for vertex in self._graph.vertices:
+                    if vertex not in self._marked:
+                        return vertex
+                for edge in self._graph.edges:
+                    if edge not in self._marked:
+                        return edge
             raise StopIteration
 
 
