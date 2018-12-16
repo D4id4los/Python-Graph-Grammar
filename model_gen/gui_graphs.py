@@ -1107,7 +1107,8 @@ class FigureVertex(FigureElement, plt.Circle):
         plt.Circle.__init__(self, *args, **kwargs)
         self.edges: Set[FigureEdge] = set() if edges is None else edges
         """A set containing all Edges connected to this Vertex."""
-        if graph_element is None:
+        if graph_element is None or ('.helper_node' in graph_element.attr
+                                     and graph_element.attr['.helper_node']):
             self.set_color('w')
         for edge in self.edges:
             if self not in {edge.vertex1, edge.vertex2}:
