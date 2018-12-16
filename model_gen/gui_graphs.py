@@ -486,26 +486,27 @@ class GraphPanel(wx.Panel):
             self.graph_to_figure[graph_vertex] = figure_vertex
             axes.add_artist(figure_vertex)
         for graph_edge in graph.edges:
-            if graph_edge.vertex1 is not None:
-                figure_vertex1 = self.graph_to_figure[graph_edge.vertex1]
-            else:
+
+            def get_figure_vertex_for_edge(graph_vertex: Vertex, i
+                                           ) -> FigureVertex:
+                if graph_vertex is not None:
+                    return self.graph_to_figure[graph_vertex]
+                new_vertex = Vertex()
+                new_vertex.edges.add(graph_edge)
+                new_vertex.attr['.helper_node'] = True
+                graph.add(new_vertex)
                 position = free_spaces[i]
                 add_new_free_spaces(position, free_spaces)
-                figure_vertex1 = FigureVertex(None, position, 0.5,
+                figure_vertex = FigureVertex(new_vertex, position, 0.5,
                                               color='w', ec='w', zorder=10)
-                self.vertices.add(figure_vertex1)
-                axes.add_artist(figure_vertex1)
+                self.vertices.add(figure_vertex)
+                self.graph_to_figure[graph_vertex] = figure_vertex
+                axes.add_artist(figure_vertex)
                 i += 1
-            if graph_edge.vertex2 is not None:
-                figure_vertex2 = self.graph_to_figure[graph_edge.vertex2]
-            else:
-                position = free_spaces[i]
-                add_new_free_spaces(position, free_spaces)
-                figure_vertex2 = FigureVertex(None, position, 0.5,
-                                              color='w', ec='w', zorder=10)
-                self.vertices.add(figure_vertex2)
-                axes.add_artist(figure_vertex2)
-                i += 1
+                return figure_vertex
+
+            figure_vertex1 = get_figure_vertex_for_edge(graph_edge.vertex1, i)
+            figure_vertex2 = get_figure_vertex_for_edge(graph_edge.vertex2, i)
             figure_edge = FigureEdge(graph_edge, vertex1=figure_vertex1,
                                      vertex2=figure_vertex2, c='k')
             self.edges.add(figure_edge)
