@@ -665,6 +665,8 @@ class Graph(MutableSet):
         log.debug(f'Matching graph {id(self):#x} against graph '
                   f'{id(other_graph):#x}.')
         other_element = other_graph.get_any_element()
+        if other_element is None:
+            return []
         task_list: List[Tuple] = []
         results: List[Mapping] = []
         for own_element in self:

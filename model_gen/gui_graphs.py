@@ -478,6 +478,8 @@ class GraphPanel(wx.Panel):
                 position = (x, y)
             else:
                 position = free_spaces[i]
+                graph_vertex.attr['x'] = position[0]
+                graph_vertex.attr['y'] = position[1]
                 add_new_free_spaces(position, free_spaces)
                 i += 1
             figure_vertex = FigureVertex(graph_vertex, position, 0.5,

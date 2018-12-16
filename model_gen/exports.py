@@ -151,6 +151,8 @@ def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None) ->
         tikz_graph.edges.append(tikz_edge)
         element_names[edge] = edge_name
         e_nr += 1
+    if v_nr + e_nr == 0:
+        return tikz_graph
     normalize_tikz_graph(tikz_graph)
     return tikz_graph
 
@@ -212,13 +214,17 @@ def export_production_to_TIKZ(production: Production, filename: str) -> None:
                                      mother_names,
                                      daughter_names)
     preamble = '  % Define block styles\n' \
-              '  \\usetikzlibrary{shapes,arrows,fit}\n' \
-              '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
-              '  \\tikzstyle{edge} = [-, shorten <=-1, shorten >=-1, line width=0.35mm]\n' \
-              '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
-              '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
-              '\n' \
-              '  \\begin{tikzpicture}[->,>=stealth\', node distance=1.5cm, auto]\n'
+               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit}\n' \
+               '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
+               '  \\tikzstyle{edge} = [-, thin]\n' \
+               '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
+               '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
+               '\n' \
+               '  \\begin{tikzpicture}[' \
+               '        ->,>=stealth\', auto, node distance=2cm, ' \
+               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, ' \
+               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},' \
+               '  ]\n'
     postamble = '  \\end{tikzpicture}\n'
     with open(filename, 'w') as file:
         file.write(preamble)
@@ -231,13 +237,17 @@ def export_production_to_TIKZ(production: Production, filename: str) -> None:
 def export_graph_to_TIKZ(graph: Graph, filename: str) -> None:
     tikz_graph = graph_to_TIKZ(graph, 'A')
     preamble = '  % Define block styles\n' \
-              '  \\usetikzlibrary{shapes,arrows,fit}\n' \
-              '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
-              '  \\tikzstyle{edge} = [-, shorten <=-1, shorten >=-1, line width=0.35mm]\n' \
-              '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
-              '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
-              '\n' \
-              '  \\begin{tikzpicture}[->,>=stealth\', node distance=1.5cm, auto]\n'
+               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit}\n' \
+               '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
+               '  \\tikzstyle{edge} = [-, thin]\n' \
+               '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
+               '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
+               '\n' \
+               '  \\begin{tikzpicture}[' \
+               '        ->,>=stealth\', auto, node distance=2cm, ' \
+               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, ' \
+               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},' \
+               '  ]\n'
     postamble = '  \\end{tikzpicture}\n'
     with open(filename, 'w') as file:
         file.write(preamble)
