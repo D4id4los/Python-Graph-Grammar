@@ -205,10 +205,10 @@ def export_production_to_TIKZ(production: Production, filename: str) -> None:
     min, max = get_min_max_positions(tikz_mother_graph.vertices)
     pos_offset = ((max[0] - min[0]) * 1.5), 0
     daughter_names = {}
-    tikz_daughter_graph = graph_to_TIKZ(production.mappings[0].daughter_graph,
+    tikz_daughter_graph = graph_to_TIKZ(production.production_options[0].daughter_graph,
                                         'R', 'r_', daughter_names)
     tikz_daughter_graph.pos_offset = pos_offset
-    tikz_mappings = mappings_to_TIKZ(production.mappings[0].mapping,
+    tikz_mappings = mappings_to_TIKZ(production.production_options[0].mapping,
                                      mother_names,
                                      daughter_names)
     preamble = '  % Define block styles\n' \

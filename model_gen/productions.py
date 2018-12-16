@@ -1,10 +1,10 @@
 import random
-from functools import partial
-from typing import Iterable, Sized, Union, Tuple, Sequence, Dict
+from functools import partial, singledispatch
+from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
-    get_max_generation, graph_is_consistent
+    get_max_generation, graph_is_consistent, copy_without_meta_elements
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
@@ -157,14 +157,21 @@ class ProductionOption:
     """
 
     def __init__(self, mother_graph: Graph, mapping: Mapping,
-                 daughter_graph: Graph, weight: int = 1):
+                 daughter_graph: Graph, weight: int = 1,
+                 attr_requirements: Dict[GraphElement,
+                                         Dict[str, GraphElement]]=None,
+                 conditions: Dict[str, str]=None):
         self.mapping = mapping
         self.daughter_graph = daughter_graph
         self.mother_graph = mother_graph
         self.weight = weight
+        if attr_requirements is None:
+            attr_requirements = {}
         self.attr_requirements: Dict[
-            GraphElement, Dict[str, GraphElement]] = {}
-        self.conditions: Dict[str, str] = {}
+            GraphElement, Dict[str, GraphElement]] = attr_requirements
+        if conditions is None:
+            conditions = {}
+        self.conditions: Dict[str, str] = conditions
 
         mother_elements = mother_graph.element_list('vef')
         daughter_elements = daughter_graph.element_list('vef')
@@ -265,15 +272,19 @@ class Production:
     """
 
     def __init__(self, mother_graph: Graph,
-                 mappings: Sized and Iterable[ProductionOption]):
+                 production_options: List[ProductionOption],
+                 vectors: Dict[str, Union[Vertex, Tuple[Vertex, Vertex]]]=None,
+                 priority: int=0):
         self.mother_graph: Graph = mother_graph
-        self.mappings: Sized and Iterable[ProductionOption] = mappings
+        self.production_options: List[ProductionOption] = production_options
+        if vectors is None:
+            vectors = {}
         self.vectors: \
             Dict[str, Union[Vertex, Tuple[Vertex, Vertex]]] \
-            = {}
+            = vectors
+        self.priority = priority
         self.total_weight = 0
-        self.priority = 0
-        for mapping in self.mappings:
+        for mapping in self.production_options:
             self.total_weight += mapping.weight
 
     def match(self, host_graph: Graph) \
@@ -435,7 +446,7 @@ class Production:
                  graphs and the corresponding daughter graph.
         """
         rand_num = random.randint(0, self.total_weight-1)
-        for mapping in self.mappings:
+        for mapping in self.production_options:
             if rand_num < mapping.weight:
                 return mapping
             rand_num -= mapping.weight
@@ -450,7 +461,7 @@ class Production:
         """
         fields = {
             'mother_graph': self.mother_graph.to_yaml(),
-            'mappings': [x.to_yaml() for x in self.mappings],
+            'mappings': [x.to_yaml() for x in self.production_options],
             'vectors': {k: id(v) if isinstance(v, GraphElement)
                         else (id(v[0]), id(v[1]))
                         for k,v in self.vectors.items()},
@@ -625,3 +636,50 @@ def _calculate_host_barycenter(
     x /= num_elements
     y /= num_elements
     return x, y
+
+
+@copy_without_meta_elements.register(Production)
+def _(production: Production, mapping: Mapping=None) -> Production:
+    if mapping is None:
+        mapping = Mapping()
+    new_mother_graph = copy_without_meta_elements(production.mother_graph,
+                                                  mapping)
+    new_production_options = []
+    for prod_opt in production.production_options:
+        new_daughter_graph = copy_without_meta_elements(
+            prod_opt.daughter_graph, mapping
+        )
+        old_mapping = prod_opt.mapping
+        new_mapping = Mapping()
+        for old_mother_elem, old_daughter_elem in old_mapping.items():
+            new_mother_elem = mapping[old_mother_elem]
+            new_daughter_elem = mapping[old_daughter_elem]
+            new_mapping[new_mother_elem] = new_daughter_elem
+        new_attr_reqs = {mapping[m_elem]: {name: mapping[d_elem]
+                                           for name, d_elem in reqs.items()}
+                         for m_elem, reqs
+                         in prod_opt.attr_requirements.items()}
+        new_production_option = ProductionOption(
+            new_mother_graph,
+            new_mapping,
+            new_daughter_graph,
+            weight=prod_opt.weight,
+            attr_requirements=new_attr_reqs,
+            conditions=prod_opt.conditions
+        )
+        new_production_options.append(new_production_option)
+    new_vectors = {}
+    for vec_name, vec_info in production.vectors.items():
+        new_vec_info = None
+        if isinstance(vec_info, Vertex):
+            new_vec_info = mapping[vec_info]
+        else:
+            new_vec_info = (mapping[vec_info[0]], mapping[vec_info[1]])
+        new_vectors[vec_name] = new_vec_info
+    new_production = Production(
+        new_mother_graph,
+        new_production_options,
+        priority=production.priority,
+        vectors=new_vectors
+    )
+    return new_production

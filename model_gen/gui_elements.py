@@ -317,7 +317,7 @@ class ProductionList(wx.ListCtrl):
         new_index = 0
         for index, (name, production) in enumerate(data.items()):
             mother_graph = production.mother_graph
-            for sub_index, daughter_mapping in enumerate(production.mappings):
+            for sub_index, daughter_mapping in enumerate(production.production_options):
                 mapping = daughter_mapping.mapping
                 daughter_graph = daughter_mapping.daughter_graph
                 attr_requirements = daughter_mapping.attr_requirements

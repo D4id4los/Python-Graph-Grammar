@@ -1,6 +1,7 @@
 import abc
 import itertools
 import copy
+from functools import singledispatch
 from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List, Set
 from typing import MutableSequence, Tuple, Callable, AbstractSet
 from types import SimpleNamespace
@@ -1001,9 +1002,12 @@ class Generations:
 
 def get_generations(graph_elements: Iterable[GraphElement]) -> Generations:
     """
+    Return a Generations object containing a listing of all generations present
+    in the iterable of graph elements.
 
-    :param graph:
-    :return:
+    :param graph_elements: The iterable of graph elements.
+    :return: A Generations object categorizing the elements by
+        generation.
     """
     generations = {}
     for element in graph_elements:
@@ -1025,3 +1029,42 @@ def graph_is_consistent(graph: Graph) -> bool:
             if element not in neighbour.neighbours():
                 return False
     return True
+
+
+@singledispatch
+def copy_without_meta_elements(grammar_object, mapping=None):
+    """
+    Return a copy of the passed object not containing any meta graph
+    elements.
+
+    To better support the display and export of productions it is
+    necessary for graphs to contrain control or meta elements. An
+    example of such an element are placeholder nodes on the end of
+    dangling edges. Edges are allowed to dangle, but to position them
+    in 2D space one still needs the x,y-coordinates for both
+    endpoints. This function removes such meta elements.
+
+    :param grammar_object: The object whose copy is to be stripped of
+        meta elements.
+    :param mapping: A mapping which will contain the correspondence
+        between the elements of the original and the copied object.
+    :return: A copy of the object not contaning any meta elements.
+    """
+    return NotImplementedError
+
+
+@copy_without_meta_elements.register(Graph)
+def _(graph: Graph, mapping: Mapping=None) -> Graph:
+    if mapping is None:
+        mapping = Mapping()
+    result = graph.__deepcopy__(mapping=mapping)
+    to_remove = []
+    for element in result:
+        if '.helper_node' in element.attr and element.attr['.helper_node']:
+            to_remove.append(element)
+    for element in to_remove:
+        result.discard(element)
+        original_element = mapping.inverse[element]
+        mapping.pop(original_element)
+    return result
+    pass

@@ -1,8 +1,9 @@
 from typing import List, TypeVar, Tuple
 from timeit import default_timer as timer
 from model_gen.utils import *
+from model_gen.graph import get_generations, copy_without_meta_elements
 from model_gen.productions import *
-from model_gen.graph import get_generations
+
 
 log = get_logger('model_gen.' + __name__)
 
@@ -15,7 +16,10 @@ class Grammar:
     """
     def __init__(self, productions: Iterable[Production]=None,
                  subgrammars: Iterable['Grammar']=None):
-        self.productions: Iterable[Production] = productions
+        self.productions: Iterable[Production] = [
+            copy_without_meta_elements(production)
+            for production in productions
+        ]
         self.grouped_productions = {}
         for production in self.productions:
             self.grouped_productions.setdefault(
