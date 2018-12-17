@@ -275,7 +275,8 @@ class Production:
     def __init__(self, mother_graph: Graph,
                  production_options: List[ProductionOption],
                  vectors: Dict[str, Union[Vertex, Tuple[Vertex, Vertex]]]=None,
-                 priority: int=0):
+                 priority: int=0,
+                 conditions: Dict[str, str]=None):
         self.mother_graph: Graph = mother_graph
         self.production_options: List[ProductionOption] = production_options
         if vectors is None:
@@ -285,8 +286,19 @@ class Production:
             = vectors
         self.priority = priority
         self.total_weight = 0
+        if conditions is None:
+            conditions = {}
+        self.conditions = conditions
         for mapping in self.production_options:
             self.total_weight += mapping.weight
+        self.mother_elem_sorted_by_x = sorted(
+            mother_graph.vertices,
+            key=lambda vertex: float(vertex.attr['x'])
+        )
+        self.mother_elem_sorted_by_y = sorted(
+            mother_graph.vertices,
+            key=lambda vertex: float(vertex.attr['y'])
+        )
 
     def match(self, host_graph: Graph) \
             -> Iterable[Mapping]:
@@ -297,6 +309,13 @@ class Production:
                            production is matched.
         :return: All possible matching subgraphs of the target graph.
         """
+        if ('.geometric_ordering' in self.conditions
+                and eval(self.conditions['.geometric_ordering'])):
+            return host_graph.match(self.mother_graph, eval_attrs=True,
+                                    geometric_order=(
+                                        self.mother_elem_sorted_by_x,
+                                        self.mother_elem_sorted_by_y
+                                    ))
         return host_graph.match(self.mother_graph, eval_attrs=True)
 
     def apply(self, host_graph: Graph,
@@ -466,6 +485,7 @@ class Production:
             'vectors': {k: id(v) if isinstance(v, GraphElement)
                         else (id(v[0]), id(v[1]))
                         for k,v in self.vectors.items()},
+            'conditions': self.conditions,
             'priority': self.priority,
             'id': id(self)
         }
@@ -501,6 +521,8 @@ class Production:
                 else:
                     raise ValueError
             result.vectors = vectors
+        if 'conditions' in data:
+            result.conditions = data['conditions']
         if 'priority' in data:
             result.priority = int(data['priority'])
         mapping[data['id']] = result
@@ -720,6 +742,7 @@ def _(production: Production, mapping: Mapping=None) -> Production:
         new_mother_graph,
         new_production_options,
         priority=production.priority,
-        vectors=new_vectors
+        vectors=new_vectors,
+        conditions=production.conditions
     )
     return new_production

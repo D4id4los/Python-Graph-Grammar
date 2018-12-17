@@ -648,7 +648,9 @@ class Graph(MutableSet):
                     return False
         return True
 
-    def match(self, other_graph: 'Graph', eval_attrs: bool=False) -> List[Mapping]:
+    def match(self, other_graph: 'Graph', eval_attrs: bool=False,
+              geometric_order: Tuple[List[GraphElement], List[GraphElement]]=None
+              ) -> List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
 
@@ -659,6 +661,10 @@ class Graph(MutableSet):
         :param eval_attrs: If true then the attributes will be
             evaluated as boolean expression rather than testing for
             equality. Use for matching productions to host graphs.
+        :param geometric_order: If the geometric order of elements is
+            to be preserved by the match, then pass a tuple of the x
+            and the y order of vertices in the other graph to this
+            function.
         :return: A list of all possible matches, empty of there are
                  none.
         """
@@ -727,6 +733,50 @@ class Graph(MutableSet):
                     debug.log.append(f'    {own_element}\' neighbours are '
                                      f'incompatible with current mapping.')
                     continue
+                if (geometric_order is not None
+                        and isinstance(other_element, Vertex)):
+                    x_index = geometric_order[0].index(other_element)
+                    if x_index-1 >= 0:
+                        other_elem_left_x = geometric_order[0][x_index-1]
+                        if other_elem_left_x in mapping:
+                            own_elem_left_x = mapping[other_elem_left_x]
+                            if (float(own_element.attr['x']) <
+                                    float(own_elem_left_x.attr['x'])):
+                                debug.log.append(f'    {own_element} does not '
+                                                 f'fit the geometric ordering.'
+                                                 )
+                                continue
+                    if x_index+1 < len(geometric_order[0]):
+                        other_elem_right_x = geometric_order[0][x_index+1]
+                        if other_elem_right_x in mapping:
+                            own_elem_right_x = mapping[other_elem_right_x]
+                            if (float(own_element.attr['x']) >
+                                    float(own_elem_right_x.attr['x'])):
+                                debug.log.append(f'    {own_element} does not '
+                                                 f'fit the geometric ordering.'
+                                                 )
+                                continue
+                    y_index = geometric_order[1].index(other_element)
+                    if y_index-1 >=0:
+                        other_elem_left_y = geometric_order[1][y_index-1]
+                        if other_elem_left_y in mapping:
+                            own_elem_left_y = mapping[other_elem_left_y]
+                            if (float(own_element.attr['y']) <
+                                    float(own_elem_left_y.attr['y'])):
+                                debug.log.append(f'    {own_element} does not '
+                                                 f'fit the geometric ordering.'
+                                                 )
+                                continue
+                    if y_index+1 < len(geometric_order[1]):
+                        other_elem_right_y = geometric_order[1][y_index+1]
+                        if other_elem_right_y in mapping:
+                            own_elem_right_y = mapping[other_elem_right_y]
+                            if (float(own_element.attr['y']) >
+                                    float(own_elem_right_y.attr['y'])):
+                                debug.log.append(f'    {own_element} does not '
+                                                 f'fit the geometric ordering.'
+                                                 )
+                                continue
                 new_mapping = Mapping(mapping)
                 new_mapping[other_element] = own_element
                 possible_new_mappings.append(new_mapping)
