@@ -877,7 +877,7 @@ class Graph(MutableSet):
             raise StopIteration
 
 
-def get_min_max_points(graph: Graph
+def get_min_max_points(graph_elements: Iterable[GraphElement]
                        ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
     """
     Return the minimum and maximum extend of a graphs elements.
@@ -886,7 +886,7 @@ def get_min_max_points(graph: Graph
     system containing between them all graph elements, which have x and y
     coordinates attributed to them.
 
-    :param graph: The graph whose minumum and maximum extend is to be
+    :param graph_elements: The graph whose minumum and maximum extend is to be
          calculated.
     :return: A tuple containing the two points in x and y coordinates.
     """
@@ -894,7 +894,7 @@ def get_min_max_points(graph: Graph
     min_y = None
     max_x = None
     max_y = None
-    for element in graph:
+    for element in graph_elements:
         if 'x' not in element.attr or 'y' not in element.attr:
             continue
         x = float(element.attr['x'])

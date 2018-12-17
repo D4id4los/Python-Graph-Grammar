@@ -4,7 +4,8 @@ from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
-    get_max_generation, graph_is_consistent, copy_without_meta_elements
+    get_max_generation, graph_is_consistent, copy_without_meta_elements, \
+    get_min_max_points
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
@@ -520,12 +521,16 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     """
     daughter_barycenter = _calculate_daughter_barycenter(option)
     host_barycenter = _calculate_host_barycenter(option, hierarchy)
+    daughter_extent = _calculate_daughter_extent(option)
+    host_extent = _calculate_host_extent(option, hierarchy)
+    x_ratio = host_extent[0] / daughter_extent[0]
+    y_ratio = host_extent[1] / daughter_extent[1]
     x = float(new_element.attr['x'])
     y = float(new_element.attr['y'])
     dx = x - daughter_barycenter[0]
     dy = y - daughter_barycenter[1]
-    new_x = host_barycenter[0] + dx
-    new_y = host_barycenter[1] + dy
+    new_x = host_barycenter[0] + dx * x_ratio
+    new_y = host_barycenter[1] + dy * y_ratio
     log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.: '
               f'{host_barycenter}, delta: {(dx, dy)}.')
     log.debug(f'   Old position: {(x, y)} new position: {(new_x, new_y)}.')
@@ -565,10 +570,24 @@ def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
     return x, y
 
 
+def _calculate_daughter_extent(option: ProductionOption) -> (float, float):
+    """
+    Return the maximum x and y extents of the daughter graph
+
+    :param option: The production option that has been chosen.
+    :return: A tuple of floats giving the x and y extent of the
+        daughter graph.
+    """
+    min, max = get_min_max_points(option.daughter_graph)
+    x_extent = max[0] - min[0]
+    y_extent = max[1] - min[1]
+    return x_extent, y_extent
+
+
 def _calculate_host_barycenter(
         option: ProductionOption,
         hierarchy: ProductionApplicationHierarchy
-) -> (float, float):
+    ) -> (float, float):
     """
     Calculate the barycenter of elements of a host graph which have
     been mapped to daughter elements by a match.
@@ -636,6 +655,27 @@ def _calculate_host_barycenter(
     x /= num_elements
     y /= num_elements
     return x, y
+
+
+def _calculate_host_extent(
+        option: ProductionOption,
+        hierarchy: ProductionApplicationHierarchy
+    ) -> (float, float):
+    """
+    Return the maximum x and y extents of the match of the mother
+    graph in the host graph.
+
+    :param option: The production option that has been chosen.
+    :param hierarchy: The full production hierarchy
+    :return: A tuple of floats giving the x and y extent of the match
+        of the mother graph in the host graph.
+    """
+    min, max = get_min_max_points(hierarchy.map_sequence(
+        option.mother_graph.element_list(), 'M', 'H'
+    ))
+    x_extent = max[0] - min[0]
+    y_extent = max[1] - min[1]
+    return x_extent, y_extent
 
 
 @copy_without_meta_elements.register(Production)
