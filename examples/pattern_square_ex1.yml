@@ -1,289 +1,569 @@
 host_graphs:
   Axiom:
     edges: []
-    id: 140014348267928
+    id: 139959568834800
     vertices:
-    - attr: {.generation: '0', size: '2', x: '0', y: '0'}
-      id: 140014348267704
+    - attr: {.generation: '0', size: '4', x: '0', y: '0'}
+      id: 139959568834632
 productions:
   Define Directions:
-    id: 140014348268096
-    mappings:
-    - attr_requirements: {}
-      conditions: {}
-      daughter_graph:
-        edges: []
-        id: 140014348267984
-        vertices: []
-      id: 140014348268152
-      mapping:
-        dict: {}
-        id: 140014393064440
-      mother_graph: 140014348267760
-      weight: 1
-    mother_graph:
-      edges: []
-      id: 140014348267760
-      vertices: []
-    priority: 0
-    vectors: {}
-  Grow Square:
-    id: 140014348268040
+    conditions: {.geometric_ordering: 'True'}
+    id: 139959568834688
     mappings:
     - attr_requirements:
-        140014348267872: {arg0: 140014348268320}
-        140014348268208: {arg0: 140014348268320}
-        140014348268432: {arg0: 140014348268320}
-        140014348268600: {arg0: 140014348268320}
-        140014348268656: {arg0: 140014348268320}
-        140014348268824: {arg0: 140014348268320}
-        140014348269104: {arg0: 140014348268320}
-        140014348270000: {arg0: 140014348268320}
+        139959568835864: {arg0: 139959568835584}
+        139959568836200: {arg0: 139959568835192}
+        139959568836424: {arg0: 139959568835584}
+        139959568836480: {arg0: 139959568835192}
+        139959568836648: {arg0: 139959568835192}
+        139959568836760: {arg0: 139959568835584}
+        139959568836816: {arg0: 139959568835584}
+        139959568836872: {arg0: 139959568835192}
+        139959568836928: {arg0: 139959568835192}
+        139959568837040: {arg0: 139959568835584}
+        139959568837096: {arg0: 139959568835192}
+        139959568837264: {arg0: 139959568835584}
+        139959568837376: {arg0: 139959568835192}
+        139959568837488: {arg0: 139959568835584}
+        139959568837712: {arg0: 139959568835192}
+        139959568837768: {arg0: 139959568835584}
       conditions: {}
       daughter_graph:
         edges:
-        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
-          id: 140014348268824
-          vertex1: 140014348267872
-          vertex2: 140014348268432
-        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
-          id: 140014348270000
-          vertex1: 140014348268432
-          vertex2: 140014348268656
-        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
-          id: 140014348268208
-          vertex1: 140014348268656
-          vertex2: 140014348268600
-        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
-          id: 140014348269104
-          vertex1: 140014348268600
-          vertex2: 140014348267872
-        id: 140014348268488
-        vertices:
-        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
-            x: '-2.9627507163323763', y: '-2.836676217765042'}
-          id: 140014348267872
-        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
-            x: 2.8366762177650457, y: -2.773638968481375}
-          id: 140014348268600
-        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
-            x: '-3.0257879656160362', y: '3.151862464183381'}
-          id: 140014348268432
-        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
-            x: '3.025787965616047', y: '3.151862464183381'}
-          id: 140014348268656
-      id: 140014348268376
-      mapping:
-        dict: {}
-        id: 140014393063032
-      mother_graph: 140014348268264
-      weight: 1
-    mother_graph:
-      edges: []
-      id: 140014348268264
-      vertices:
-      - attr: {.generation: '0', size: 'True', x: '0', y: '0'}
-        id: 140014348268320
-    priority: 0
-    vectors: {}
-  Horizontal Pattern:
-    id: 140014348267816
-    mappings:
-    - attr_requirements: {}
-      conditions: {}
-      daughter_graph:
-        edges: []
-        id: 140014348269272
-        vertices: []
-      id: 140014348269160
-      mapping:
-        dict: {}
-        id: 140014393061624
-      mother_graph: 140014348268936
-      weight: 1
-    mother_graph:
-      edges: []
-      id: 140014348268936
-      vertices: []
-    priority: 0
-    vectors: {}
-  Subdivide Square:
-    id: 140014348269440
-    mappings:
-    - attr_requirements:
-        140014348267592: {arg0: 140014348269776}
-        140014348267648: {arg0: 140014348269048}
-        140014348270392: {arg0: 140014348269776}
-        140014348270616: {arg0: 140014348269776}
-        140014348270672: {arg0: 140014348269048}
-        140014348270896: {arg0: 140014348269048}
-        140014348270952: {arg0: 140014348269048}
-        140014348271064: {arg0: 140014348269776}
-        140014348271176: {arg0: 140014348269048}
-        140014348271232: {arg0: 140014348269048}
-        140014348271288: {arg0: 140014348269776}
-        140014348271344: {arg0: 140014348269776}
-        140014348271400: {arg0: 140014348269776}
-        140014348271456: {arg0: 140014348269048}
-        140014348271512: {arg0: 140014348269048}
-        140014348296376: {arg0: 140014348269776}
-      conditions: {}
-      daughter_graph:
-        edges:
-        - attr: {.generation: '0', length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271176
-          vertex1: 140014348268544
-          vertex2: 140014348269552
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271064
-          vertex1: 140014348269552
-          vertex2: 140014348269720
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348270672
-          vertex1: 140014348269720
-          vertex2: 140014348270168
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271344
-          vertex1: 140014348270168
-          vertex2: 140014348268544
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348270896
-          vertex1: 140014348270336
-          vertex2: 140014348270112
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271288
-          vertex1: 140014348270112
-          vertex2: 140014348269888
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271512
-          vertex1: 140014348269888
-          vertex2: 140014348270560
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348270616
-          vertex1: 140014348270560
-          vertex2: 140014348270336
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348270952
-          vertex1: 140014348270448
-          vertex2: 140014348270280
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348270392
-          vertex1: 140014348270280
-          vertex2: 140014348271568
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271456
-          vertex1: 140014348271568
-          vertex2: 140014348270728
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271400
-          vertex1: 140014348270728
-          vertex2: 140014348270448
-        - attr: {.generation: '0', length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348271232
-          vertex1: 140014348269664
-          vertex2: 140014348271008
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348267592
-          vertex1: 140014348271008
-          vertex2: 140014348270840
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348267648
-          vertex1: 140014348270840
-          vertex2: 140014348270504
-        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
-          id: 140014348296376
-          vertex1: 140014348270504
-          vertex2: 140014348269664
-        id: 140014348269944
+        - attr: {.generation: '0', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836200
+          vertex1: 139959568835808
+          vertex2: 139959568835024
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836760
+          vertex1: 139959568835024
+          vertex2: 139959568834912
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836648
+          vertex1: 139959568834912
+          vertex2: 139959568836256
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837040
+          vertex1: 139959568836256
+          vertex2: 139959568835808
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836872
+          vertex1: 139959568835472
+          vertex2: 139959568836032
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836424
+          vertex1: 139959568836032
+          vertex2: 139959568835920
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837096
+          vertex1: 139959568835920
+          vertex2: 139959568836312
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836816
+          vertex1: 139959568836312
+          vertex2: 139959568835472
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836480
+          vertex1: 139959568836144
+          vertex2: 139959568835696
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837264
+          vertex1: 139959568835696
+          vertex2: 139959568836088
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837712
+          vertex1: 139959568836088
+          vertex2: 139959568836368
+        - attr: {.generation: 0, label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568835864
+          vertex1: 139959568836368
+          vertex2: 139959568836144
+        - attr: {.generation: '0', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568836928
+          vertex1: 139959568835752
+          vertex2: 139959568836536
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837488
+          vertex1: 139959568836536
+          vertex2: 139959568836984
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837376
+          vertex1: 139959568836984
+          vertex2: 139959568835136
+        - attr: {.generation: 0, label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568837768
+          vertex1: 139959568835136
+          vertex2: 139959568835752
+        id: 139959568835640
         vertices:
         - attr: {.generation: '0', x: '-5', y: '5'}
-          id: 140014348269552
+          id: 139959568835024
         - attr: {.generation: '0', x: '-5', y: '0'}
-          id: 140014348268544
+          id: 139959568835808
         - attr: {.generation: '0', x: '0', y: '0'}
-          id: 140014348270168
+          id: 139959568836256
         - attr: {.generation: '0', x: '0', y: '5'}
-          id: 140014348269720
+          id: 139959568834912
         - attr: {.generation: '0', x: '0', y: '0'}
-          id: 140014348270336
+          id: 139959568835472
         - attr: {.generation: '0', x: '0', y: '5'}
-          id: 140014348270112
+          id: 139959568836032
         - attr: {.generation: '0', x: '5', y: '5'}
-          id: 140014348269888
+          id: 139959568835920
         - attr: {.generation: '0', x: '5', y: '0'}
-          id: 140014348270560
+          id: 139959568836312
         - attr: {.generation: '0', x: '-5', y: '-5'}
-          id: 140014348270448
+          id: 139959568836144
         - attr: {.generation: '0', x: '-5', y: '0'}
-          id: 140014348270280
+          id: 139959568835696
         - attr: {.generation: '0', x: '0', y: '-5'}
-          id: 140014348270728
+          id: 139959568836368
         - attr: {.generation: '0', x: '0', y: '0'}
-          id: 140014348271568
+          id: 139959568836088
         - attr: {.generation: '0', x: '0', y: '-5'}
-          id: 140014348269664
+          id: 139959568835752
         - attr: {.generation: '0', x: '0', y: '0'}
-          id: 140014348271008
+          id: 139959568836536
         - attr: {.generation: '0', x: '5', y: '0'}
-          id: 140014348270840
+          id: 139959568836984
         - attr: {.generation: '0', x: '5', y: '-5'}
-          id: 140014348270504
-      id: 140014348269832
+          id: 139959568835136
+      id: 139959568835360
       mapping:
-        dict: {140014348268712: 140014348270504, 140014348268992: 140014348270448,
-          140014348269384: 140014348269552, 140014348269608: 140014348269888}
-        id: 140014393061448
-      mother_graph: 140014348268768
+        dict: {139959568834744: 139959568835920, 139959568835080: 139959568836144,
+          139959568835304: 139959568835136, 139959568835528: 139959568835024}
+        id: 139959714430296
+      mother_graph: 139959568834856
       weight: 1
     mother_graph:
       edges:
-      - attr: {.generation: '0', length: float(attr)>=2}
-        id: 140014348269048
-        vertex1: 140014348268992
-        vertex2: 140014348269384
-      - attr: {.generation: '0', length: float(attr)>=2}
-        id: 140014348269776
-        vertex1: 140014348269384
-        vertex2: 140014348269608
-      - attr: {.generation: '0', length: float(attr)>=2}
-        id: 140014348269328
-        vertex1: 140014348269608
-        vertex2: 140014348268712
-      - attr: {.generation: '0', length: float(attr)>=2}
-        id: 140014348269496
-        vertex1: 140014348268712
-        vertex2: 140014348268992
-      id: 140014348268768
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139959568835192
+        vertex1: 139959568835080
+        vertex2: 139959568835528
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139959568835584
+        vertex1: 139959568835528
+        vertex2: 139959568834744
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139959568835416
+        vertex1: 139959568834744
+        vertex2: 139959568835304
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139959568834968
+        vertex1: 139959568835304
+        vertex2: 139959568835080
+      id: 139959568834856
       vertices:
       - attr: {.generation: '0', x: '-5', y: '-5'}
-        id: 140014348268992
+        id: 139959568835080
       - attr: {.generation: '0', x: '-5', y: '5'}
-        id: 140014348269384
+        id: 139959568835528
       - attr: {.generation: '0', x: '5', y: '5'}
-        id: 140014348269608
+        id: 139959568834744
       - attr: {.generation: '0', x: '5', y: '-5'}
-        id: 140014348268712
+        id: 139959568835304
     priority: 0
     vectors: {}
-  Vertical Pattern:
-    id: 140014348296600
+  Grow Square:
+    conditions: {}
+    id: 139959568837544
     mappings:
-    - attr_requirements: {}
+    - attr_requirements:
+        139959568836592: {arg0: 139959568837208}
+        139959568837656: {arg0: 139959568837208}
+        139959568837880: {arg0: 139959568837208}
+        139959568838104: {arg0: 139959568837208}
+        139959568838216: {arg0: 139959568837208}
+        139959568838328: {arg0: 139959568837208}
+        139959568838496: {arg0: 139959568837208}
+        139959568838552: {arg0: 139959568837208}
       conditions: {}
       daughter_graph:
-        edges: []
-        id: 140014348296824
-        vertices: []
-      id: 140014348296656
+        edges:
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139959568838496
+          vertex1: 139959568836592
+          vertex2: 139959568838216
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139959568838328
+          vertex1: 139959568838216
+          vertex2: 139959568838104
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139959568837880
+          vertex1: 139959568838104
+          vertex2: 139959568837656
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139959568838552
+          vertex1: 139959568837656
+          vertex2: 139959568836592
+        id: 139959568837992
+        vertices:
+        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
+            x: '-2.9627507163323763', y: '-2.836676217765042'}
+          id: 139959568836592
+        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
+            x: 2.8366762177650457, y: -2.773638968481375}
+          id: 139959568837656
+        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
+            x: '-3.0257879656160362', y: '3.151862464183381'}
+          id: 139959568838216
+        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
+            x: '3.025787965616047', y: '3.151862464183381'}
+          id: 139959568838104
+      id: 139959568838440
       mapping:
         dict: {}
-        id: 140014393061976
-      mother_graph: 140014348296544
+        id: 139959714427744
+      mother_graph: 139959568837824
       weight: 1
     mother_graph:
       edges: []
-      id: 140014348296544
-      vertices: []
+      id: 139959568837824
+      vertices:
+      - attr: {.generation: '0', size: 'True', x: '0', y: '0'}
+        id: 139959568837208
     priority: 0
+    vectors: {}
+  Horizontal Pattern:
+    conditions: {}
+    id: 139959568837936
+    mappings:
+    - attr_requirements:
+        139959568875592: {arg0: 139959568879344}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0}
+          id: 139959568876936
+          vertex1: 139959568876824
+          vertex2: 139959568875704
+        - attr: {.generation: 0}
+          id: 139959568876656
+          vertex1: 139959568876040
+          vertex2: 139959568876600
+        - attr: {.generation: 0}
+          id: 139959568876320
+          vertex1: 139959568876488
+          vertex2: 139959568876880
+        - attr: {.generation: 0}
+          id: 139959568877104
+          vertex1: 139959568876712
+          vertex2: 139959568876264
+        id: 139959568876152
+        vertices:
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '-4', y: '-4'}
+          id: 139959568875592
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '-4', y: '4'}
+          id: 139959568875928
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '4', y: '4'}
+          id: 139959568875648
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '4', y: '-4'}
+          id: 139959568876376
+        - attr: {.generation: 0, .svg_tag: none, x: -2.5, y: 4}
+          id: 139959568876824
+        - attr: {.generation: 0, .svg_tag: none, x: 2.5, y: 4}
+          id: 139959568875704
+        - attr: {.generation: 0, .svg_tag: none, x: -4.4, y: 1.5}
+          id: 139959568876040
+        - attr: {.generation: 0, .svg_tag: none, x: 4.4, y: 1.5}
+          id: 139959568876600
+        - attr: {.generation: 0, .svg_tag: none, x: -4.4, y: -1.5}
+          id: 139959568876488
+        - attr: {.generation: 0, .svg_tag: none, x: 4.4, y: -1.5}
+          id: 139959568876880
+        - attr: {.generation: 0, .svg_tag: none, x: -2.5, y: -4}
+          id: 139959568876712
+        - attr: {.generation: 0, .svg_tag: none, x: 2.5, y: -4}
+          id: 139959568876264
+      id: 139959568875984
+      mapping:
+        dict: {}
+        id: 139959714427392
+      mother_graph: 139959568838272
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139959568879344
+        vertex1: 139959568838608
+        vertex2: 139959568837320
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139959568876096
+        vertex1: 139959568837320
+        vertex2: 139959568838384
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139959568875872
+        vertex1: 139959568838384
+        vertex2: 139959568838048
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139959568875760
+        vertex1: 139959568838048
+        vertex2: 139959568838608
+      id: 139959568838272
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139959568838608
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139959568837320
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139959568838384
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139959568838048
+    priority: 1
+    vectors: {}
+  Subdivide Square:
+    conditions: {.geometric_ordering: 'True'}
+    id: 139959568877328
+    mappings:
+    - attr_requirements:
+        139959567564984: {arg0: 139959568877664}
+        139959567567784: {arg0: 139959568877384}
+        139959568877888: {arg0: 139959568877664}
+        139959568878448: {arg0: 139959568877384}
+        139959568878504: {arg0: 139959568877664}
+        139959568878616: {arg0: 139959568877384}
+        139959568878840: {arg0: 139959568877384}
+        139959568878896: {arg0: 139959568877664}
+        139959568878952: {arg0: 139959568877384}
+        139959568879120: {arg0: 139959568877664}
+        139959568879176: {arg0: 139959568877664}
+        139959568879232: {arg0: 139959568877384}
+        139959568879288: {arg0: 139959568877384}
+        139959568879400: {arg0: 139959568877384}
+        139959568879512: {arg0: 139959568877664}
+        139959568879568: {arg0: 139959568877664}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878896
+          vertex1: 139959568878056
+          vertex2: 139959568877496
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878448
+          vertex1: 139959568877496
+          vertex2: 139959568878336
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879120
+          vertex1: 139959568878336
+          vertex2: 139959568877944
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878840
+          vertex1: 139959568877944
+          vertex2: 139959568878056
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878504
+          vertex1: 139959568878168
+          vertex2: 139959568877720
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879288
+          vertex1: 139959568877720
+          vertex2: 139959568878392
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568877888
+          vertex1: 139959568878392
+          vertex2: 139959568878112
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878952
+          vertex1: 139959568878112
+          vertex2: 139959568878168
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879512
+          vertex1: 139959568877776
+          vertex2: 139959568878560
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879400
+          vertex1: 139959568878560
+          vertex2: 139959568877160
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879568
+          vertex1: 139959568877160
+          vertex2: 139959568879008
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879232
+          vertex1: 139959568879008
+          vertex2: 139959568877776
+        - attr: {.generation: '0', length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568879176
+          vertex1: 139959568878224
+          vertex2: 139959568878784
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959568878616
+          vertex1: 139959568878784
+          vertex2: 139959568878672
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959567564984
+          vertex1: 139959568878672
+          vertex2: 139959568879064
+        - attr: {.generation: 0, length: 'float(arg0.attr[''length''])/2'}
+          id: 139959567567784
+          vertex1: 139959568879064
+          vertex2: 139959568878224
+        id: 139959568878280
+        vertices:
+        - attr: {.generation: '0', x: '-5', y: '5'}
+          id: 139959568877496
+        - attr: {.generation: '0', x: '-5', y: '0'}
+          id: 139959568878056
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 139959568877944
+        - attr: {.generation: '0', x: '0', y: '5'}
+          id: 139959568878336
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 139959568878168
+        - attr: {.generation: '0', x: '0', y: '5'}
+          id: 139959568877720
+        - attr: {.generation: '0', x: '5', y: '5'}
+          id: 139959568878392
+        - attr: {.generation: '0', x: '5', y: '0'}
+          id: 139959568878112
+        - attr: {.generation: '0', x: '-5', y: '-5'}
+          id: 139959568877776
+        - attr: {.generation: '0', x: '-5', y: '0'}
+          id: 139959568878560
+        - attr: {.generation: '0', x: '0', y: '-5'}
+          id: 139959568879008
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 139959568877160
+        - attr: {.generation: '0', x: '0', y: '-5'}
+          id: 139959568878224
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 139959568878784
+        - attr: {.generation: '0', x: '5', y: '0'}
+          id: 139959568878672
+        - attr: {.generation: '0', x: '5', y: '-5'}
+          id: 139959568879064
+      id: 139959568876432
+      mapping:
+        dict: {139959568876992: 139959568879064, 139959568877216: 139959568877776,
+          139959568877440: 139959568878392, 139959568877608: 139959568877496}
+        id: 139959714427040
+      mother_graph: 139959568876768
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139959568877664
+        vertex1: 139959568877216
+        vertex2: 139959568877608
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139959568877384
+        vertex1: 139959568877608
+        vertex2: 139959568877440
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139959568877048
+        vertex1: 139959568877440
+        vertex2: 139959568876992
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139959568877832
+        vertex1: 139959568876992
+        vertex2: 139959568877216
+      id: 139959568876768
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139959568877216
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139959568877608
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139959568877440
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139959568876992
+    priority: 0
+    vectors: {}
+  Vertical Pattern:
+    conditions: {}
+    id: 139959567565488
+    mappings:
+    - attr_requirements:
+        139959567565656: {arg0: 139959567565544}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0}
+          id: 139959567566720
+          vertex1: 139959567566440
+          vertex2: 139959567566328
+        - attr: {.generation: 0}
+          id: 139959567566944
+          vertex1: 139959567566272
+          vertex2: 139959567566608
+        - attr: {.generation: 0}
+          id: 139959567564928
+          vertex1: 139959567566664
+          vertex2: 139959567566160
+        - attr: {.generation: 0}
+          id: 139959567565264
+          vertex1: 139959567566776
+          vertex2: 139959567566496
+        id: 139959567566048
+        vertices:
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '-4', y: '-4'}
+          id: 139959567565656
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '-4', y: '4'}
+          id: 139959567566216
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '4', y: '4'}
+          id: 139959567565768
+        - attr: {.generation: '0', .svg_fill: black, .svg_height: '0.1', .svg_tag: rect,
+            .svg_width: '0.1', x: '4', y: '-4'}
+          id: 139959567565824
+        - attr: {.generation: 0, .svg_tag: none, x: -4, y: -2.5}
+          id: 139959567566440
+        - attr: {.generation: 0, .svg_tag: none, x: -4, y: 2.5}
+          id: 139959567566328
+        - attr: {.generation: 0, .svg_tag: none, x: -1.5, y: -4.4}
+          id: 139959567566272
+        - attr: {.generation: 0, .svg_tag: none, x: -1.5, y: 4.4}
+          id: 139959567566608
+        - attr: {.generation: 0, .svg_tag: none, x: 1.5, y: -4.4}
+          id: 139959567566664
+        - attr: {.generation: 0, .svg_tag: none, x: 1.5, y: 4.4}
+          id: 139959567566160
+        - attr: {.generation: 0, .svg_tag: none, x: 4, y: -2.5}
+          id: 139959567566776
+        - attr: {.generation: 0, .svg_tag: none, x: 4, y: 2.5}
+          id: 139959567566496
+      id: 139959567565936
+      mapping:
+        dict: {}
+        id: 139959714427304
+      mother_graph: 139959567565040
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', label: attr=='vertical'}
+        id: 139959567565544
+        vertex1: 139959567566552
+        vertex2: 139959567564872
+      - attr: {.generation: '0', label: attr=='vertical'}
+        id: 139959567565880
+        vertex1: 139959567564872
+        vertex2: 139959567565208
+      - attr: {.generation: '0', label: attr=='vertical'}
+        id: 139959567565712
+        vertex1: 139959567565208
+        vertex2: 139959567565600
+      - attr: {.generation: '0', label: attr=='vertical'}
+        id: 139959567565376
+        vertex1: 139959567565600
+        vertex2: 139959567566552
+      id: 139959567565040
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139959567566552
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139959567564872
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139959567565208
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139959567565600
+    priority: 1
     vectors: {}
 result_graphs: {}
