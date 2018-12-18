@@ -887,7 +887,11 @@ class Graph(MutableSet):
             element = None
             if len(self._unvisited) > 0:
                 element = self._unvisited.popleft()
-            else:
+                while element in self._marked and len(self._unvisited) > 0:
+                    element = self._unvisited.popleft()
+                if element in self._marked:
+                    element = None
+            if element is None:
                 element = self._get_unconnected_element()
             self._marked.add(element)
             for neighbour in element.neighbours():
