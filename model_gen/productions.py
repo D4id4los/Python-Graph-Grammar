@@ -543,10 +543,11 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     """
     daughter_barycenter = _calculate_daughter_barycenter(option)
     host_barycenter = _calculate_host_barycenter(option, hierarchy)
+    mother_extent = _calculate_mother_extent(option)
     daughter_extent = _calculate_daughter_extent(option)
     host_extent = _calculate_host_extent(option, hierarchy)
-    x_ratio = host_extent[0] / daughter_extent[0]
-    y_ratio = host_extent[1] / daughter_extent[1]
+    x_ratio = (host_extent[0] / daughter_extent[0]) / (mother_extent[0] / daughter_extent[0])
+    y_ratio = (host_extent[1] / daughter_extent[1]) / (mother_extent[1] / daughter_extent[1])
     x = float(new_element.attr['x'])
     y = float(new_element.attr['y'])
     dx = x - daughter_barycenter[0]
@@ -555,7 +556,8 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     new_y = host_barycenter[1] + dy * y_ratio
     log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.: '
               f'{host_barycenter}, delta: {(dx, dy)}.')
-    log.debug(f'   Old position: {(x, y)} new position: {(new_x, new_y)}.')
+    log.debug(f'   Old position: {(x, y)}, ratios: {(x_ratio, y_ratio)},'
+              f' new position: {(new_x, new_y)}.')
     return new_x, new_y
 
 
@@ -606,6 +608,20 @@ def _calculate_daughter_extent(option: ProductionOption) -> (float, float):
     return x_extent, y_extent
 
 
+def _calculate_mother_extent(option: ProductionOption) -> (float, float):
+    """
+    Return the maximum x and y extents of the mother graph
+
+    :param option: The production option that has been chosen.
+    :return: A tuple of floats giving the x and y extent of the
+        mother graph.
+    """
+    min, max = get_min_max_points(option.mother_graph)
+    x_extent = max[0] - min[0]
+    y_extent = max[1] - min[1]
+    return x_extent, y_extent
+
+
 def _calculate_host_barycenter(
         option: ProductionOption,
         hierarchy: ProductionApplicationHierarchy
@@ -625,8 +641,11 @@ def _calculate_host_barycenter(
         host_element = hierarchy.map(daughter_element, 'D', 'H')
         if isinstance(host_element, Vertex):
             num_elements += 1
-            x += float(host_element.attr['x'])
-            y += float(host_element.attr['y'])
+            host_x = float(host_element.attr['x'])
+            host_y = float(host_element.attr['y'])
+            x += host_x
+            y += host_y
+            log.debug(f'      Host vertex at position {(host_x, host_y)}.')
         elif isinstance(host_element, Edge):
             mother_element = hierarchy.map(daughter_element, 'D', 'M')
             if mother_element.vertex1 is not None:
@@ -653,8 +672,11 @@ def _calculate_host_barycenter(
             host_element = hierarchy.map(mother_element, 'M', 'H')
             if isinstance(host_element, Vertex):
                 num_elements += 1
-                x += float(host_element.attr['x'])
-                y += float(host_element.attr['y'])
+                host_x = float(host_element.attr['x'])
+                host_y = float(host_element.attr['y'])
+                x += host_x
+                y += host_y
+                log.debug(f'      Host vertex at position {(host_x, host_y)}.')
             elif isinstance(host_element, Edge):
                 if host_element.vertex1 is not None:
                     host_vertex1 = host_element.vertex1
@@ -669,7 +691,7 @@ def _calculate_host_barycenter(
                     host_vertex2 = host_element.vertex2
                     host_x = float(host_vertex2.attr["x"])
                     host_y = float(host_vertex2.attr["y"])
-                    log.debug(f'      Host vertex1 position: '
+                    log.debug(f'      Host vertex2 position: '
                               f'{(host_x, host_y)} {host_vertex2}.')
                     num_elements += 1
                     x += host_x
