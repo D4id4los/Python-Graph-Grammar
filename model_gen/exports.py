@@ -15,9 +15,21 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
                                     drawing: svgwrite.Drawing) -> None:
     args = {}
     for attr, value in element.attr.items():
+        if attr.startswith('.svg_tag'):
+            continue
         if attr.startswith('.svg_'):
             args[attr[5:]] = value
-    if isinstance(element, Vertex):
+    if '.svg_tag' in element.attr:
+        if element.attr['.svg_tag'] == 'rect':
+            x = float(element.attr['x'])
+            y = -float(element.attr['y'])
+            width = float(element.attr['.svg_width'])
+            height = float(element.attr['.svg_height'])
+            x = x - width / 2
+            y = y - height / 2
+            drawing.add(drawing.rect((x*cm, y*cm), (width*cm, height*cm),
+                                     **args))
+    elif isinstance(element, Vertex):
         x = float(element.attr['x'])
         y = -float(element.attr['y'])
         args.setdefault('r', '0.4cm')
