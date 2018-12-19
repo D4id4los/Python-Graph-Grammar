@@ -1,0 +1,160 @@
+host_graphs:
+  Axiom:
+    edges: []
+    id: 140687039004856
+    vertices:
+    - attr: {.generation: '0', finished: false, label: center, num_leaves: '0', x: '0',
+        y: '0', .svg_stroke: '#154360', .svg_fill: '#154360', .svg_r: '3.1cm'}
+      id: 140687039004800
+productions:
+  Add Leaves:
+    conditions: {}
+    id: 140687039004968
+    mappings:
+    - attr_requirements:
+        140687039005416: {arg0: 140687039005640}
+        140687039005808: {arg0: 140687039005640}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', number: 'int(arg0.attr[''num_leaves''])', finished: 'False'}
+          id: 140687039005416
+          vertex1: 140687039005808
+          vertex2: 140687039005528
+        id: 140687039005248
+        vertices:
+        - attr: {.generation: '0', num_leaves: 'int(arg0.attr[''num_leaves''])+1',
+            x: '0', y: '0'}
+          id: 140687039005808
+        - attr: {.generation: '0', positioned: 'False', x: '0', y: '3'}
+          id: 140687039005528
+      id: 140687039005360
+      mapping:
+        dict: {140687039005640: 140687039005808}
+        id: 140687084627928
+      mother_graph: 140687039005136
+      weight: 1
+    mother_graph:
+      edges: []
+      id: 140687039005136
+      vertices:
+      - attr: {.generation: '0', label: attr=='center', num_leaves: 'int(attr) < int(attrs[''max_leaves''])',
+          x: '0', y: '0'}
+        id: 140687039005640
+    priority: 1
+    vectors: {}
+  Configure Curves:
+    conditions: {}
+    id: 140687039005584
+    mappings:
+    - attr_requirements: {}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', .svg_tag: '''path''', .svg_d: 'f''M {s.x*35} {s.y*35} Q {(s + rotate(v1, 2*pi*0.05, s)).x*35} {(s + rotate(v1, 2*pi*0.05, s)).y*35} {e.x*35} {e.y*35} Q {(s + rotate(v1, -2*pi*0.05, s)).x*35} {(s + rotate(v1, -2*pi*0.05, s)).y*35} {s.x*35} {s.y*35}''', finished: 'True', .svg_stroke: '''white''', .svg_fill_opacity: '''0.0''', .svg_stroke_width: '''1mm'''}
+          id: 140687037444048
+          vertex1: 140687039364736
+          vertex2: 140687040335656
+        id: 140687039005696
+        vertices:
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 140687039364736
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '3'}
+          id: 140687040335656
+      id: 140687039006144
+      mapping:
+        dict: {140687037508968: 140687037444048, 140687037848096: 140687040335656,
+          140687039495080: 140687039364736}
+        id: 140687084081488
+      mother_graph: 140687039005976
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: 0, finished: attr==False}
+        id: 140687037508968
+        vertex1: 140687039495080
+        vertex2: 140687037848096
+      id: 140687039005976
+      vertices:
+      - attr: {.generation: '0', label: attr=='center', x: '0', y: '0'}
+        id: 140687039495080
+      - attr: {.generation: '0', x: '0', y: '3'}
+        id: 140687037848096
+    priority: 3
+    vectors:
+      s: 140687039495080
+      e: 140687037848096
+      v1: [140687039495080, 140687037848096]
+  Introduce Randomness:
+    conditions: {}
+    id: 140687039005080
+    mappings:
+    - attr_requirements: {}
+      conditions: {}
+      daughter_graph:
+        edges: []
+        id: 140687039005192
+        vertices:
+        - attr: {.generation: 0, finished: 'True', max_leaves: 'random.randint(5,15)',
+            x: 0, y: 0}
+          id: 140687039005472
+      id: 140687039004912
+      mapping:
+        dict: {140687039005304: 140687039005472}
+        id: 140687084629512
+      mother_graph: 140687039005024
+      weight: 1
+    mother_graph:
+      edges: []
+      id: 140687039005024
+      vertices:
+      - attr: {.generation: 0, finished: attr==False, label: attr=='center', x: 0,
+          y: 0}
+        id: 140687039005304
+    priority: 0
+    vectors: {}
+  Position Leaves:
+    conditions: {}
+    id: 140687039006424
+    mappings:
+    - attr_requirements:
+        140687039006536: {center: 140687039006256, leave: 140687039006592}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0}
+          id: 140687039006704
+          vertex1: 140687039006648
+          vertex2: 140687039006536
+        id: 140687039006480
+        vertices:
+        - attr: {.generation: '0', x: '0', y: '0'}
+          id: 140687039006648
+        - attr: {.generation: '0', .new_pos: 'c + rotate(v1, 2 * pi * (int(leave.attr[''number''])
+              / int(center.attr[''max_leaves''])), c)', positioned: 'True', x: '0',
+            y: '3'}
+          id: 140687039006536
+      id: 140687039006088
+      mapping:
+        dict: {140687039005920: 140687039006536, 140687039006256: 140687039006648,
+          140687039006592: 140687039006704}
+        id: 140687084084832
+      mother_graph: 140687039005752
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: 0}
+        id: 140687039006592
+        vertex1: 140687039006256
+        vertex2: 140687039005920
+      id: 140687039005752
+      vertices:
+      - attr: {.generation: '0', label: attr=='center', x: '0', y: '0'}
+        id: 140687039006256
+      - attr: {.generation: '0', positioned: attr==False, x: '0', y: '3'}
+        id: 140687039005920
+    priority: 2
+    vectors:
+      c: 140687039006256
+      v1: [140687039006256, 140687039005920]
+result_graphs: {}

@@ -2,6 +2,6 @@ gui:
   attrs:
     background_color: [5, 5, 5]
     mask_color: [0, 0, 0]
-last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/pattern_square_ex1.yml
+last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/examples/pattern_circle_ex1.yml
 max_derivations: 150
 show_all_labels: false
