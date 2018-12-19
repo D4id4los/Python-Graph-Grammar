@@ -69,23 +69,35 @@ class Vec:
         return f'Vec(x1={self.x},y1={self.y})'
 
 
-def norm(vec: Vec):
+def norm(vec: Vec) -> float:
     return math.sqrt(vec.x*vec.x + vec.y*vec.y)
 
 
-def cross(vec1: Vec, vec2: Vec):
+def normalize(vec: Vec) -> Vec:
+    return vec / norm(vec)
+
+
+def cross(vec1: Vec, vec2: Vec) -> float:
     return vec1.x*vec2.y - vec1.y*vec2.x
 
 
-def perp_left(vec: Vec):
+def perp_left(vec: Vec) -> Vec:
     return Vec(x1=-vec.y, y1=vec.x)
 
 
-def perp_right(vec: Vec):
+def perp_right(vec: Vec) -> Vec:
     return Vec(x1=vec.y, y1=-vec.x)
 
 
-def angle(vec1: Vec, vec2: Vec):
+def angle(vec1: Vec, vec2: Vec) -> float:
     angle = math.acos((vec1 * vec2) / (norm(vec1) * norm(vec2)))
     return angle
 
+
+def rotate(vec: Vec, radians: float, center: Vec=Vec(x1=0, y1=0)) -> Vec:
+    temp_vec = vec - center
+    result = Vec(x1=0,y1=0)
+    result.x = temp_vec.x * math.cos(radians) - temp_vec.y * math.sin(radians)
+    result.y = temp_vec.x * math.sin(radians) + temp_vec.y * math.cos(radians)
+    result = result + center
+    return result

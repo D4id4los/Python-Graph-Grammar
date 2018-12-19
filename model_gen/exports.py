@@ -29,6 +29,8 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
             y = y - height / 2
             drawing.add(drawing.rect((x*cm, y*cm), (width*cm, height*cm),
                                      **args))
+        elif element.attr['.svg_tag'] == 'path':
+            drawing.add(drawing.path(**args))
     elif isinstance(element, Vertex):
         x = float(element.attr['x'])
         y = -float(element.attr['y'])

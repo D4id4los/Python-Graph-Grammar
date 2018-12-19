@@ -9,7 +9,7 @@ from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
-    cross
+    cross, rotate
 
 log = get_logger('model_gen.' + __name__)
 
@@ -438,19 +438,21 @@ class Production:
                     from math import pi
                     pos = attr_func(old_element, **attr_requirements,
                                     **vectors)
-                    v1 = vectors["v1"]
+                    # v1 = vectors["v1"]
                     # v2 = vectors["v2"]
                     # log.debug(f'   d={cross(v1, v2)}')
                     # log.debug(f'   angle={angle(v1, v2)}')
                     # log.debug(f'   chose {"left" if (cross(v1,v2) < 0 if angle(v1,v2) > pi/2 else cross(v1,v2) > 0) else "right"}')
                     target_element.attr['x'] = pos.x
                     target_element.attr['y'] = pos.y
-                    target_element.attr.pop('.new_pos')
+                    if '.new_pos' in target_element.attr:
+                        target_element.attr.pop('.new_pos')
                     continue
-                elif attr_name.startswith('.'):
+                elif attr_name.startswith('.') and not attr_name.startswith('.svg_'):
                     continue
                 target_element.attr[attr_name] = attr_func(old_element,
-                                                           **attr_requirements)
+                                                           **attr_requirements,
+                                                           **vectors)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         if not graph_is_consistent(result_graph):
@@ -546,8 +548,16 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     mother_extent = _calculate_mother_extent(option)
     daughter_extent = _calculate_daughter_extent(option)
     host_extent = _calculate_host_extent(option, hierarchy)
-    x_ratio = (host_extent[0] / daughter_extent[0]) / (mother_extent[0] / daughter_extent[0])
-    y_ratio = (host_extent[1] / daughter_extent[1]) / (mother_extent[1] / daughter_extent[1])
+    x_ratio = 1
+    y_ratio = 1
+    if not (daughter_extent[0] == 0 or daughter_extent[1] == 0):
+        x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
+        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
+        if x_mother_to_daughter == 0 or y_mother_to_daughter == 0:
+            x_mother_to_daughter = 1
+            y_mother_to_daughter = 1
+        x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
+        y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
     x = float(new_element.attr['x'])
     y = float(new_element.attr['y'])
     dx = x - daughter_barycenter[0]

@@ -1,6 +1,7 @@
 import abc
 import itertools
 import copy
+import random
 from functools import singledispatch
 from typing import MutableSet, Dict, Any, AnyStr, Sequence, Iterable, List, Set
 from typing import MutableSequence, Tuple, Callable, AbstractSet, Union
@@ -48,9 +49,9 @@ class GraphElement(abc.ABC):
                 if attr_key in ('x', 'y') or attr_key.startswith('.'):
                     continue
                 if eval_attr:
-                    def matching_function(attr):
+                    def matching_function(attr, attrs):
                         return eval(graph_element.attr[attr_key])
-                    if not matching_function(self.attr[attr_key]):
+                    if not matching_function(self.attr[attr_key], self.attr):
                         return False
                 else:
                     if self.attr[attr_key] != graph_element.attr[attr_key]:
