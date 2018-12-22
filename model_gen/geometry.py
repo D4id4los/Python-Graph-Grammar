@@ -11,7 +11,8 @@ class Vec:
 
     def __init__(self, v1=None, v2=None,
                  x1: float=None, y1: float=None,
-                 x2: float=None, y2: float=None):
+                 x2: float=None, y2: float=None,
+                 vec1: 'Vec'=None, vec2: 'Vec'=None):
         if v1 is not None and v2 is None:
             self.x = float(v1.attr['x'])
             self.y = float(v1.attr['y'])
@@ -26,6 +27,12 @@ class Vec:
                and (x2 is not None and y2 is not None)):
             self.x = x2 - x1
             self.y = y2 - y1
+        elif vec1 is not None and vec2 is None:
+            self.x = vec1.x
+            self.y = vec1.y
+        elif vec1 is not None and vec2 is not None:
+            self.x = vec2.x - vec1.x
+            self.y = vec2.y - vec1.y
         else:
             raise ValueError
 

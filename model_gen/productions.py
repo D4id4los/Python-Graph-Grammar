@@ -382,9 +382,10 @@ class Production:
             C_element.replace_connection(
                 partial(hierarchy.map, source_level='C', target_level='R')
             )
-            if isinstance(C_element, Vertex) and (
-                    'new_x' not in C_element.attr
-                    or 'new_y' not in C_element.attr):
+            if (isinstance(C_element, Vertex)
+                    and ( 'new_x' not in C_element.attr
+                          or 'new_y' not in C_element.attr)
+                    and '.new_pos' not in C_element.attr):
                 x, y = _calculate_new_position(C_element, option, hierarchy)
                 if 'new_x' not in C_element.attr:
                     C_element.attr['x'] = x

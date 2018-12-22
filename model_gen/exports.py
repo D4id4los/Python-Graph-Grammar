@@ -5,7 +5,7 @@ Contains export functions for graphs.
 import svgwrite
 from svgwrite import cm, mm
 from functools import singledispatch
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
     get_min_max_points
 from model_gen.productions import Production
@@ -57,7 +57,7 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
 def export_graph_to_svg(graph: Graph, filename: str) -> None:
     min_point, max_point = get_min_max_points(graph)
     size = (max_point[0] - min_point[0], max_point[1] - min_point[1])
-    view_box = f'{min_point[0]*100} {min_point[1]*100} {size[0]*100} {size[1]*100}'
+    view_box = f'{min_point[0]*100} {-max_point[1]*100} {size[0]*100} {size[1]*100}'
     size = size[0] * cm, size[1] * cm
     drawing = svgwrite.Drawing(filename=filename, debug=True,
                                profile='full', size=size, viewBox=view_box,
@@ -96,7 +96,9 @@ class TIKZGraph:
         self.name = name
         self.vertices: List[TIKZVertex] = []
         self.edges: List[TIKZEdge] = []
+        self.ids: Dict[int, Union[Vertex, Edge]] = {}
         self.pos_offset = (0,0)
+        self.right_of = None
 
 
 class TIKZMappings:
@@ -137,14 +139,22 @@ def normalize_tikz_graph(graph: TIKZGraph) -> None:
         normalizer_x = 5 / dx
     if abs(dy) > 5:
         normalizer_y = 5 / dy
+    x_offset = 0
+    y_offset = 0
+    if min[0] < 0:
+        x_offset = -min[0]
+    if min[1] < 0:
+        y_offset = -min[1]
     for vertex in graph.vertices:
-        vertex.x = vertex.x * normalizer_x
-        vertex.y = vertex.y * normalizer_y
+        vertex.x = vertex.x * normalizer_x + x_offset
+        vertex.y = vertex.y * normalizer_y + y_offset
 
 
-def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None) -> TIKZGraph:
+def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None,
+                  element_id_offset=0) -> TIKZGraph:
     tikz_graph = TIKZGraph(graph_name)
     v_nr = 0
+    current_id = element_id_offset
     if element_names is None:
         element_names = {}
     for vertex in graph.vertices:
@@ -152,17 +162,27 @@ def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None) ->
         tikz_vertex = TIKZVertex(vertex_name,
                                  float(vertex.attr['x']),
                                  float(vertex.attr['y']))
+        if('.helper_node' in vertex.attr and vertex.attr['.helper_node']):
+            tikz_vertex.style = 'meta_vertex'
+        else:
+            tikz_vertex.label = str(current_id)
         tikz_graph.vertices.append(tikz_vertex)
+        tikz_graph.ids[current_id] = vertex
+        current_id += 1
         element_names[vertex] = vertex_name
         v_nr += 1
     e_nr = 0
-    # TODO: Figure out how to deal with None vertices in edges.
     for edge in graph.edges:
         edge_name = f'{prefix}e{e_nr}'
         tikz_edge = TIKZEdge(edge_name,
                              element_names[edge.vertex1],
                              element_names[edge.vertex2])
+        if '.directed' in edge.attr and edge.attr['.directed']:
+            tikz_edge.style = 'directed_edge'
+        tikz_edge.label = str(current_id)
         tikz_graph.edges.append(tikz_edge)
+        tikz_graph.ids[current_id] = edge
+        current_id += 1
         element_names[edge] = edge_name
         e_nr += 1
     if v_nr + e_nr == 0:
@@ -187,83 +207,146 @@ def get_TIKZ_string(arg) -> str:
 
 @get_TIKZ_string.register(TIKZGraph)
 def _(tikz_graph: TIKZGraph) -> str:
-    result = ''
+    positioning = ''
+    if tikz_graph.right_of is not None:
+        positioning = f', shift={{($({tikz_graph.right_of}.east |- 0,0) + (3cm, 0)$)}}'
+    result = f'  \\begin{{scope}}[local bounding box={tikz_graph.name}{positioning}]\n'
     for vertex in tikz_graph.vertices:
         x = round(vertex.x + tikz_graph.pos_offset[0], 1)
         y = round(vertex.y + tikz_graph.pos_offset[1], 1)
-        result = f'{result}\\node [{vertex.style}] ({vertex.name}) ' \
+        result = f'{result}    \\node [{vertex.style}] ({vertex.name}) ' \
                  f'at ({x},{y}) [label={vertex.label}] {{}};\n'
     result = f'{result}\n'
     for edge in tikz_graph.edges:
-        result = f'{result}\\path [{edge.style}] ({edge.vertex1}) ' \
+        result = f'{result}    \\path [{edge.style}] ({edge.vertex1}) ' \
                  f'edge node ({edge.name}) {{ {edge.label} }}' \
                  f'({edge.vertex2});\n'
-    result = f'{result}\n\\node [box,fit='
+    result = f'{result}\n    \\node [box,fit='
     for vertex in tikz_graph.vertices:
-        result = f'{result}({vertex.name}) '
-    result = f'{result}] [label={tikz_graph.name}] {{}};\n'
+        result = f'{result} ({vertex.name}) '
+    result = f'{result}] [label={{[centered]north:{tikz_graph.name}}}] {{}};\n\n'
+    result = f'{result}  \\end{{scope}}\n'
     return result
 
 
 @get_TIKZ_string.register(TIKZMappings)
 def _(tikz_mappings: TIKZMappings) -> str:
-    result = '\\path [isomorphism] '
+    result = '    \\path [isomorphism] \n'
     for m_name, d_name in tikz_mappings.mappings:
-        result = f'{result}({m_name}) edge ({d_name})\n'
-    result = f'{result};\n\n'
+        result = f'{result}      ({m_name}) edge ({d_name})\n'
+    result = f'{result}      ;\n\n'
+    return result
+
+
+def get_latex_attr_table_string(tikz_graph: TIKZGraph) -> str:
+    result = ''
+    for id, element in tikz_graph.ids.items():
+        attrs = dict(element.attr)
+        attrs.pop('.generation', None)
+        attrs.pop('x', None)
+        attrs.pop('y', None)
+        if len(attrs) == 0:
+            continue
+        elif len(attrs) > 1:
+            result = f'{result}      \\multirow{{{len(attrs)}}}{{*}}{{\\textbf{{{str(id)}:}}}} '
+        else:
+            result = f'{result}      \\textbf{{{str(id)}:}} '
+        for attr_name, attr_value in attrs.items():
+            result = f'{result}      & \\verb|{attr_name}| & \\lstinline[]${str(attr_value)}$ \\\\ \n'
     return result
 
 
 def export_production_to_TIKZ(production: Production, filename: str) -> None:
     mother_names = {}
-    tikz_mother_graph = graph_to_TIKZ(production.mother_graph, 'L', 'l_',
-                                      mother_names)
+    tikz_mother_graph = graph_to_TIKZ(production.mother_graph,
+                                      graph_name='L',
+                                      prefix='l_',
+                                      element_names=mother_names)
     min, max = get_min_max_positions(tikz_mother_graph.vertices)
     pos_offset = ((max[0] - min[0]) * 1.5), 0
     daughter_names = {}
-    tikz_daughter_graph = graph_to_TIKZ(production.production_options[0].daughter_graph,
-                                        'R', 'r_', daughter_names)
-    tikz_daughter_graph.pos_offset = pos_offset
+    tikz_daughter_graph = graph_to_TIKZ(
+        production.production_options[0].daughter_graph,
+        graph_name='R',
+        prefix='r_',
+        element_names=daughter_names,
+        element_id_offset=len(tikz_mother_graph.ids)
+    )
+    tikz_daughter_graph.right_of = 'L'
+    # tikz_daughter_graph.pos_offset = pos_offset
     tikz_mappings = mappings_to_TIKZ(production.production_options[0].mapping,
                                      mother_names,
                                      daughter_names)
     preamble = '  % Define block styles\n' \
-               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit}\n' \
+               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit,calc}\n' \
                '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
+               '  \\tikzstyle{meta_vertex} = [circle, draw=none, minimum size=8mm]\n' \
                '  \\tikzstyle{edge} = [-, thin]\n' \
+               '  \\tikzstyle{directed_edge} = [->, thin]\n' \
                '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
-               '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
+               '  \\tikzstyle{box} = [draw, inner sep=10mm]\n' \
                '\n' \
-               '  \\begin{tikzpicture}[' \
-               '        ->,>=stealth\', auto, node distance=2cm, ' \
-               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, ' \
-               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},' \
+               '  \\begin{tikzpicture}[\n' \
+               '        ->,>=stealth\', auto, node distance=2cm, \n' \
+               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, \n' \
+               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},\n' \
                '  ]\n'
     postamble = '  \\end{tikzpicture}\n'
+    table_preamble = ('  \\begin{table}[h]\n'
+                      '    \\centering\n'
+                      '    \\begin{tabularx}{\\textwidth}{llX}\n'
+                      '      \\toprule\n'
+                      '      \\textbf{Element} & \\textbf{Attribute} & \\textbf{Value} \\\\ \n')
+    table_postamble = ('      \\bottomrule\n'
+                       '    \\end{tabularx}\n'
+                       '    \\caption{Attribute definitions of the production "".}\n'
+                       '    \\label{tab:}\n'
+                       '   \\end{table}\n')
     with open(filename, 'w') as file:
         file.write(preamble)
         file.write(get_TIKZ_string(tikz_mother_graph))
         file.write(get_TIKZ_string(tikz_daughter_graph))
         file.write(get_TIKZ_string(tikz_mappings))
         file.write(postamble)
+        file.write('\n\n\n')
+        file.write(table_preamble)
+        file.write(get_latex_attr_table_string(tikz_mother_graph))
+        file.write(get_latex_attr_table_string(tikz_daughter_graph))
+        file.write(table_postamble)
 
 
 def export_graph_to_TIKZ(graph: Graph, filename: str) -> None:
     tikz_graph = graph_to_TIKZ(graph, 'A')
     preamble = '  % Define block styles\n' \
-               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit}\n' \
+               '  \\usetikzlibrary{shapes,arrows,matrix,positioning,fit,calc}\n' \
                '  \\tikzstyle{vertex} = [circle, draw=black, minimum size=8mm]\n' \
+               '  \\tikzstyle{meta_vertex} = [circle, draw=none, minimum size=8mm]\n' \
                '  \\tikzstyle{edge} = [-, thin]\n' \
+               '  \\tikzstyle{directed_edge} = [->, thin]\n' \
                '  \\tikzstyle{isomorphism} = [->, dotted]\n' \
-               '  \\tikzstyle{box} = [draw, inner sep=5mm]\n' \
+               '  \\tikzstyle{box} = [draw, inner sep=10mm]\n' \
                '\n' \
-               '  \\begin{tikzpicture}[' \
-               '        ->,>=stealth\', auto, node distance=2cm, ' \
-               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, ' \
-               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},' \
+               '  \\begin{tikzpicture}[\n' \
+               '        ->,>=stealth\', auto, node distance=2cm, \n' \
+               '        every matrix/.style={column sep = 5mm, inner sep=5mm, row sep=1mm}, \n' \
+               '        every label/.style={label distance=0.3mm, inner sep=3pt, fill=white},\n' \
                '  ]\n'
     postamble = '  \\end{tikzpicture}\n'
+    table_preamble = ('  \\begin{table}[h]\n'
+                      '    \\centering\n'
+                      '    \\begin{tabularx}{\\textwidth}{llX}\n'
+                      '      \\toprule\n'
+                      '      \\textbf{Element} & \\textbf{Attribute} & \\textbf{Value} \\\\ \n')
+    table_postamble = ('      \\bottomrule\n'
+                       '    \\end{tabularx}\n'
+                       '    \\caption{Attribute definitions of the production "".}\n'
+                       '    \\label{tab:}\n'
+                       '   \\end{table}\n')
     with open(filename, 'w') as file:
         file.write(preamble)
         file.write(get_TIKZ_string(tikz_graph))
         file.write(postamble)
+        file.write('\n\n\n')
+        file.write(table_preamble)
+        file.write(get_latex_attr_table_string(tikz_graph))
+        file.write(table_postamble)
