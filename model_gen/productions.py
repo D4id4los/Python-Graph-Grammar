@@ -9,7 +9,7 @@ from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
-    cross, rotate
+    cross, rotate, normalize
 
 log = get_logger('model_gen.' + __name__)
 
@@ -554,11 +554,14 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     if not (daughter_extent[0] == 0 or daughter_extent[1] == 0):
         x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
         y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
-        if x_mother_to_daughter == 0 or y_mother_to_daughter == 0:
+        if x_mother_to_daughter == 0:
             x_mother_to_daughter = 1
+        if y_mother_to_daughter == 0:
             y_mother_to_daughter = 1
-        x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
-        y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
+        if host_extent[0] != 0:
+            x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
+        if host_extent[1] != 0:
+            y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
     x = float(new_element.attr['x'])
     y = float(new_element.attr['y'])
     dx = x - daughter_barycenter[0]

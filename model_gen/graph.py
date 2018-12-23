@@ -739,7 +739,8 @@ class Graph(MutableSet):
                     x_index = geometric_order[0].index(other_element)
                     if x_index-1 >= 0:
                         other_elem_left_x = geometric_order[0][x_index-1]
-                        if other_elem_left_x in mapping:
+                        if (other_elem_left_x in mapping and
+                                other_elem_left_x.attr['x'] != other_element.attr['x']):
                             own_elem_left_x = mapping[other_elem_left_x]
                             if (float(own_element.attr['x']) <
                                     float(own_elem_left_x.attr['x'])):
@@ -749,7 +750,8 @@ class Graph(MutableSet):
                                 continue
                     if x_index+1 < len(geometric_order[0]):
                         other_elem_right_x = geometric_order[0][x_index+1]
-                        if other_elem_right_x in mapping:
+                        if (other_elem_right_x in mapping and
+                                other_elem_right_x.attr['x'] != other_element.attr['x']):
                             own_elem_right_x = mapping[other_elem_right_x]
                             if (float(own_element.attr['x']) >
                                     float(own_elem_right_x.attr['x'])):
@@ -758,9 +760,10 @@ class Graph(MutableSet):
                                                  )
                                 continue
                     y_index = geometric_order[1].index(other_element)
-                    if y_index-1 >=0:
+                    if y_index-1 >= 0:
                         other_elem_left_y = geometric_order[1][y_index-1]
-                        if other_elem_left_y in mapping:
+                        if (other_elem_left_y in mapping and
+                                other_elem_left_y.attr['y'] != other_element.attr['y']):
                             own_elem_left_y = mapping[other_elem_left_y]
                             if (float(own_element.attr['y']) <
                                     float(own_elem_left_y.attr['y'])):
@@ -770,7 +773,8 @@ class Graph(MutableSet):
                                 continue
                     if y_index+1 < len(geometric_order[1]):
                         other_elem_right_y = geometric_order[1][y_index+1]
-                        if other_elem_right_y in mapping:
+                        if (other_elem_right_y in mapping and
+                                other_elem_right_y.attr['y'] != other_element.attr['y']):
                             own_elem_right_y = mapping[other_elem_right_y]
                             if (float(own_element.attr['y']) >
                                     float(own_elem_right_y.attr['y'])):

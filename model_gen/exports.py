@@ -32,6 +32,8 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
         elif element.attr['.svg_tag'] == 'path':
             drawing.add(drawing.path(**args))
     elif isinstance(element, Vertex):
+        if '.helper_node' in element.attr and element.attr['.helper_node']:
+            return
         x = float(element.attr['x'])
         y = -float(element.attr['y'])
         args.setdefault('r', '0.4cm')
@@ -96,7 +98,7 @@ class TIKZGraph:
         self.name = name
         self.vertices: List[TIKZVertex] = []
         self.edges: List[TIKZEdge] = []
-        self.ids: Dict[int, Union[Vertex, Edge]] = {}
+        self.ids: Dict[Union[Vertex, Edge], int] = {}
         self.pos_offset = (0,0)
         self.right_of = None
 
@@ -167,7 +169,7 @@ def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None,
         else:
             tikz_vertex.label = str(current_id)
         tikz_graph.vertices.append(tikz_vertex)
-        tikz_graph.ids[current_id] = vertex
+        tikz_graph.ids[vertex] = current_id
         current_id += 1
         element_names[vertex] = vertex_name
         v_nr += 1
@@ -181,7 +183,7 @@ def graph_to_TIKZ(graph: Graph, graph_name='', prefix='', element_names=None,
             tikz_edge.style = 'directed_edge'
         tikz_edge.label = str(current_id)
         tikz_graph.edges.append(tikz_edge)
-        tikz_graph.ids[current_id] = edge
+        tikz_graph.ids[edge] = current_id
         current_id += 1
         element_names[edge] = edge_name
         e_nr += 1
@@ -240,7 +242,7 @@ def _(tikz_mappings: TIKZMappings) -> str:
 
 def get_latex_attr_table_string(tikz_graph: TIKZGraph) -> str:
     result = ''
-    for id, element in tikz_graph.ids.items():
+    for element, id_ in tikz_graph.ids.items():
         attrs = dict(element.attr)
         attrs.pop('.generation', None)
         attrs.pop('x', None)
@@ -248,11 +250,26 @@ def get_latex_attr_table_string(tikz_graph: TIKZGraph) -> str:
         if len(attrs) == 0:
             continue
         elif len(attrs) > 1:
-            result = f'{result}      \\multirow{{{len(attrs)}}}{{*}}{{\\textbf{{{str(id)}:}}}} '
+            result = f'{result}      \\multirow{{{len(attrs)}}}{{*}}{{\\textbf{{{str(id_)}:}}}} '
         else:
-            result = f'{result}      \\textbf{{{str(id)}:}} '
+            result = f'{result}      \\textbf{{{str(id_)}:}} '
         for attr_name, attr_value in attrs.items():
             result = f'{result}      & \\verb|{attr_name}| & \\lstinline[]${str(attr_value)}$ \\\\ \n'
+    return result
+
+
+def get_latex_vector_table_string(production: Production,
+                                  element_names: Dict[GraphElement, str]
+                                  ) -> str:
+    result = ''
+    for vec_name, elements in production.vectors.items():
+        if isinstance(elements, Vertex):
+            result = f'{result}      \\textbf{{{vec_name}}} & ' \
+                     f'Point \\textbf{{{element_names[elements]}}} \\\\ \n'
+        else:
+            result = f'{result}      \\textbf{{{vec_name}}} & ' \
+                     f'Line from \\textbf{{{element_names[elements[0]]}}} to ' \
+                     f'\\textbf{{{element_names[elements[1]]}}} \\\\ \n'
     return result
 
 
@@ -293,13 +310,18 @@ def export_production_to_TIKZ(production: Production, filename: str) -> None:
                '  ]\n'
     postamble = '  \\end{tikzpicture}\n'
     table_preamble = ('  \\begin{table}[h]\n'
-                      '    \\centering\n'
-                      '    \\begin{tabularx}{\\textwidth}{llX}\n'
-                      '      \\toprule\n'
-                      '      \\textbf{Element} & \\textbf{Attribute} & \\textbf{Value} \\\\ \n')
-    table_postamble = ('      \\bottomrule\n'
-                       '    \\end{tabularx}\n'
-                       '    \\caption{Attribute definitions of the production "".}\n'
+                      '    \\centering\n')
+    attr_table_preamble = ('    \\begin{tabularx}{\\textwidth}{llX}\n'
+                           '      \\toprule\n'
+                           '      \\textbf{Element} & \\textbf{Attribute} & \\textbf{Value} \\\\ \n')
+    attr_table_postamble = ('      \\bottomrule\n'
+                            '    \\end{tabularx}\n')
+    vector_table_preamble = ('    \\begin{tabularx}{\\textwidth}{lX}\n'
+                             '      \\toprule\n'
+                             '      \\textbf{Vector Name} & \\textbf{Definition} \\\\ \n')
+    vector_table_postamble = ('      \\bottomrule\n'
+                              '    \\end{tabularx}\n')
+    table_postamble = ('    \\caption{Attribute definitions of the production "".}\n'
                        '    \\label{tab:}\n'
                        '   \\end{table}\n')
     with open(filename, 'w') as file:
@@ -310,8 +332,13 @@ def export_production_to_TIKZ(production: Production, filename: str) -> None:
         file.write(postamble)
         file.write('\n\n\n')
         file.write(table_preamble)
+        file.write(attr_table_preamble)
         file.write(get_latex_attr_table_string(tikz_mother_graph))
         file.write(get_latex_attr_table_string(tikz_daughter_graph))
+        file.write(attr_table_postamble)
+        file.write(vector_table_preamble)
+        file.write(get_latex_vector_table_string(production, tikz_mother_graph.ids))
+        file.write(vector_table_postamble)
         file.write(table_postamble)
 
 
