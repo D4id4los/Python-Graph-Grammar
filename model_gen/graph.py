@@ -736,52 +736,14 @@ class Graph(MutableSet):
                     continue
                 if (geometric_order is not None
                         and isinstance(other_element, Vertex)):
-                    x_index = geometric_order[0].index(other_element)
-                    if x_index-1 >= 0:
-                        other_elem_left_x = geometric_order[0][x_index-1]
-                        if (other_elem_left_x in mapping and
-                                other_elem_left_x.attr['x'] != other_element.attr['x']):
-                            own_elem_left_x = mapping[other_elem_left_x]
-                            if (float(own_element.attr['x']) <
-                                    float(own_elem_left_x.attr['x'])):
-                                debug.log.append(f'    {own_element} does not '
-                                                 f'fit the geometric ordering.'
-                                                 )
-                                continue
-                    if x_index+1 < len(geometric_order[0]):
-                        other_elem_right_x = geometric_order[0][x_index+1]
-                        if (other_elem_right_x in mapping and
-                                other_elem_right_x.attr['x'] != other_element.attr['x']):
-                            own_elem_right_x = mapping[other_elem_right_x]
-                            if (float(own_element.attr['x']) >
-                                    float(own_elem_right_x.attr['x'])):
-                                debug.log.append(f'    {own_element} does not '
-                                                 f'fit the geometric ordering.'
-                                                 )
-                                continue
-                    y_index = geometric_order[1].index(other_element)
-                    if y_index-1 >= 0:
-                        other_elem_left_y = geometric_order[1][y_index-1]
-                        if (other_elem_left_y in mapping and
-                                other_elem_left_y.attr['y'] != other_element.attr['y']):
-                            own_elem_left_y = mapping[other_elem_left_y]
-                            if (float(own_element.attr['y']) <
-                                    float(own_elem_left_y.attr['y'])):
-                                debug.log.append(f'    {own_element} does not '
-                                                 f'fit the geometric ordering.'
-                                                 )
-                                continue
-                    if y_index+1 < len(geometric_order[1]):
-                        other_elem_right_y = geometric_order[1][y_index+1]
-                        if (other_elem_right_y in mapping and
-                                other_elem_right_y.attr['y'] != other_element.attr['y']):
-                            own_elem_right_y = mapping[other_elem_right_y]
-                            if (float(own_element.attr['y']) >
-                                    float(own_elem_right_y.attr['y'])):
-                                debug.log.append(f'    {own_element} does not '
-                                                 f'fit the geometric ordering.'
-                                                 )
-                                continue
+                    if not self.is_geometrically_ordered(own_element,
+                                                         other_element,
+                                                         mapping,
+                                                         geometric_order[0],
+                                                         geometric_order[1]):
+                        debug.log.append(f'    {own_element}\' does not fit'
+                                         f' geometrically.')
+                        continue
                 new_mapping = Mapping(mapping)
                 new_mapping[other_element] = own_element
                 possible_new_mappings.append(new_mapping)
@@ -814,6 +776,65 @@ class Graph(MutableSet):
         log.debug(f'Found {len(results)} matches.')
         return results
 
+    def is_geometrically_ordered(self,
+                                 own_elem: GraphElement,
+                                 other_elem: GraphElement,
+                                 mapping: Mapping,
+                                 x_order: List[GraphElement],
+                                 y_order: List[GraphElement]):
+        """
+        Test if the two elements follow the geometric order passed as
+        a list of elements.
+
+        :param own_elem:
+        :param other_elem:
+        :param mapping:
+        :param x_order:
+        :param y_order:
+        :return: True if the elements fit the geometrical order, False
+            otherwise.
+        """
+        result = self.is_ordered_along_axis(own_elem, other_elem, mapping,
+                                            x_order, 'x')
+        result = result and self.is_ordered_along_axis(own_elem, other_elem,
+                                                       mapping, y_order, 'y')
+        return result
+
+    def is_ordered_along_axis(self,
+                              own_elem: GraphElement,
+                              other_elem: GraphElement,
+                              mapping: Mapping,
+                              order: List[GraphElement],
+                              axis: str):
+        """
+        Test if the two elements fit the ordering along one axis.
+
+        :param own_elem:
+        :param other_elem:
+        :param mapping:
+        :param order:
+        :param axis:
+        :return: True if the two elements are ordered, false otherwise.
+        """
+        index = order.index(other_elem)
+        lower_neighbour = None
+        upper_neighbour = None
+        for element in reversed(order[0:index]):
+            if element in mapping:
+                lower_neighbour = element
+                break
+        for element in order[index:]:
+            if element in mapping:
+                upper_neighbour = element
+        if (lower_neighbour is not None and
+                float(mapping[lower_neighbour].attr[axis]) > float(
+                    own_elem.attr[axis])):
+            return False
+        if (upper_neighbour is not None and
+                float(mapping[upper_neighbour].attr[axis]) < float(
+                    own_elem.attr[axis])):
+            return False
+        return True
 
     def is_isomorph(self, other_graph: 'Graph') -> bool:
         """
