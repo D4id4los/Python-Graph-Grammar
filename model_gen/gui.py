@@ -39,6 +39,7 @@ class GraphUI(wx.Frame):
         self.host_graphs: Dict[str, Graph] = {}
         self.productions: Dict[str, Production] = {}
         self.result_graphs: Dict[str, Graph] = {}
+        self.global_vars: Dict[str, str] = {}
 
         if 'last_grammar_file_path' in opts:
             self.load_graph_from_file(opts['last_grammar_file_path'])
@@ -90,11 +91,13 @@ class GraphUI(wx.Frame):
 
     def load_graphs(self, host_graphs: Dict[str, Graph],
                     productions: Dict[str, Production],
-                    result_graphs: Dict[str, Graph]) -> None:
+                    result_graphs: Dict[str, Graph],
+                    global_vars: Dict[str, str]) -> None:
         log.info('Loading new graphs and productions.')
         self.host_graphs = host_graphs
         self.productions = productions
         self.result_graphs = result_graphs
+        self.global_vars = global_vars
         self.notebook.host_graph_panel.load_data(self.host_graphs)
         self.notebook.production_panel.load_data(self.productions)
         self.notebook.result_panel.load_data(self.result_graphs)
@@ -161,9 +164,10 @@ class GraphUI(wx.Frame):
                                data['host_graphs'].items()}
                 productions = {k: Production.from_yaml(v, mapping) for k, v
                                in data['productions'].items()}
+                global_vars = data.get('global_vars', {})
                 result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
                                  data['result_graphs'].items()}
-                self.load_graphs(host_graphs, productions, result_graphs)
+                self.load_graphs(host_graphs, productions, result_graphs, global_vars)
         except IOError:
             log.error(f'Cannon open/read from file »{file_path}«.')
             wx.LogError(f'Cannot open file {file_path}.')
@@ -174,7 +178,7 @@ class GraphUI(wx.Frame):
         hostgraph and add the result to result graphs.
         """
         log.info('Running grammar.')
-        grammar = Grammar(self.productions.values())
+        grammar = Grammar(self.productions.values(), self.global_vars)
         host_graph = self.notebook.host_graph_panel.get_active()
         if host_graph is None:
             log.error(

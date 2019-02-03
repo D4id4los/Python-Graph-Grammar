@@ -1,3 +1,4 @@
+import random
 from typing import List, TypeVar, Tuple
 from timeit import default_timer as timer
 from model_gen.utils import *
@@ -15,6 +16,7 @@ class Grammar:
     A grammar is a collection of productions that can be applied on a graph.
     """
     def __init__(self, productions: Iterable[Production]=None,
+                 global_vars: Dict[str, str]=None,
                  subgrammars: Iterable['Grammar']=None):
         self.productions: Iterable[Production] = [
             copy_without_meta_elements(production)
@@ -25,6 +27,7 @@ class Grammar:
             self.grouped_productions.setdefault(
                 production.priority, []
             ).append(production)
+        self.global_vars: Dict[str, str] = global_vars
         self.subgrammars: Iterable['Grammar'] = subgrammars
 
     def apply(self, target_graph: Graph, max_steps: int = 0) \
@@ -46,9 +49,14 @@ class Grammar:
                  f'{id(target_graph)} for max {max_steps} steps.')
         step_count = 0
         result_graphs = []
+        global_var_results = {
+            name: eval(instruction) for name, instruction
+            in self.global_vars.items()
+        }
         for prod in self.productions:
             for prod_opt in prod.production_options:
-                prod_opt.vars = evaluate_per_run_vars(prod_opt)
+                prod_opt.vars = {**evaluate_per_run_vars(prod_opt),
+                                 **global_var_results}
         new_host_graph = target_graph
         while True:
             log.info(f'Runnig derivation {step_count}.')

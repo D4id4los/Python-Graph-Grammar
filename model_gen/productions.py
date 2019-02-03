@@ -221,6 +221,12 @@ class ProductionOption:
         """
         attr_requirements = {}
         for daughter_element, requirements in self.attr_requirements.items():
+            if daughter_element == 'all':
+                attr_requirements['all'] = {
+                    name: id(mother_element)
+                    for name, mother_element in requirements.items()
+                }
+                continue
             attr_requirements[id(daughter_element)] = {
                 name: id(mother_element)
                 for name, mother_element in requirements.items()
