@@ -46,6 +46,9 @@ class Grammar:
                  f'{id(target_graph)} for max {max_steps} steps.')
         step_count = 0
         result_graphs = []
+        for prod in self.productions:
+            for prod_opt in prod.production_options:
+                prod_opt.vars = evaluate_per_run_vars(prod_opt)
         new_host_graph = target_graph
         while True:
             log.info(f'Runnig derivation {step_count}.')

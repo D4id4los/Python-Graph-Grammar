@@ -1,6 +1,7 @@
 import random
+from math import pi
 from functools import partial, singledispatch
-from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List
+from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List, Any
 
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
@@ -161,7 +162,8 @@ class ProductionOption:
                  daughter_graph: Graph, weight: int = 1,
                  attr_requirements: Dict[GraphElement,
                                          Dict[str, GraphElement]]=None,
-                 conditions: Dict[str, str]=None):
+                 conditions: Dict[str, str]=None,
+                 var_calc_instructions=None):
         self.mapping = mapping
         self.daughter_graph = daughter_graph
         self.mother_graph = mother_graph
@@ -173,6 +175,9 @@ class ProductionOption:
         if conditions is None:
             conditions = {}
         self.conditions: Dict[str, str] = conditions
+        if var_calc_instructions is None:
+            var_calc_instructions = []
+        self.var_calc_instructions = var_calc_instructions
 
         mother_elements = mother_graph.element_list('vef')
         daughter_elements = daughter_graph.element_list('vef')
@@ -195,6 +200,17 @@ class ProductionOption:
                 self.to_remove.append(element)
         self.to_add = [element for element in daughter_elements if
                        element not in mapping.inverse]
+        self.var_per_run = []
+        self.var_per_application = []
+        for name, instruction, eval_strategy in self.var_calc_instructions:
+            compiled_instr = compile(instruction, '<stdin>', 'eval')
+            if eval_strategy == 'run':
+                self.var_per_run.append((name, compiled_instr))
+            elif eval_strategy == 'application':
+                self.var_per_application.append((name, compiled_instr))
+            else:
+                raise ValueError('Incorrect evaluation strategy specified.')
+        self.vars = {}
 
     def to_yaml(self) -> Iterable:
         """
@@ -210,13 +226,14 @@ class ProductionOption:
                 for name, mother_element in requirements.items()
             }
         fields = {
-            'mother_graph': id(self.mother_graph),
-            'mapping': self.mapping.to_yaml(),
-            'daughter_graph': self.daughter_graph.to_yaml(),
-            'weight': self.weight,
-            'attr_requirements': attr_requirements,
-            'conditions': self.conditions,
             'id': id(self),
+            'mother_graph': id(self.mother_graph),
+            'weight': self.weight,
+            'conditions': self.conditions,
+            'daughter_graph': self.daughter_graph.to_yaml(),
+            'mapping': self.mapping.to_yaml(),
+            'attr_requirements': attr_requirements,
+            'var_calc_instructions': self.var_calc_instructions,
         }
         return fields
 
@@ -242,13 +259,18 @@ class ProductionOption:
         mother_to_daughter_map = Mapping.from_yaml(data['mapping'], mapping) \
             if 'mapping' in data else Mapping()
         weight = data['weight'] if 'weight' in data else 1
+        var_calc_instructions = data.get('var_calc_instructions', [])
         result = ProductionOption(mother_graph, mother_to_daughter_map,
-                                  daughter_graph, weight)
+                                  daughter_graph, weight,
+                                  var_calc_instructions=var_calc_instructions)
         if 'attr_requirements' in data:
             attr_requirements = {}
-            for daughter_element, requirements in data[
-                'attr_requirements'].items():
-                attr_requirements[mapping[daughter_element]] = {
+            for daughter_element, requirements in data['attr_requirements'].items():
+                if daughter_element=='all':
+                    key = 'all'
+                else:
+                    key = mapping[daughter_element]
+                attr_requirements[key] = {
                     name: mapping[mother_element]
                     for name, mother_element in requirements.items()
                 }
@@ -257,6 +279,42 @@ class ProductionOption:
             result.conditions = data['conditions']
         mapping[data['id']] = result
         return result
+
+
+def evaluate_per_run_vars(prod_opt: ProductionOption, variables: Dict=None
+                          ) -> Dict[str, Any]:
+    """
+    Evaluates all precompiled variables which are to be calculated
+    once per run.
+
+    :param prod_opt: The production option to evaluate the variables for.
+    :param variables: Variables to set during evaluation.
+    :return: A dictionary of variable and value pairs for all variables.
+    """
+    result = {}
+    if variables is None:
+        variables = {}
+    for name, compiled_expr in prod_opt.var_per_run:
+        result[name] = eval(compiled_expr, None, variables)
+    return result
+
+
+def evaluate_per_app_vars(prod_opt: ProductionOption, variables: Dict=None
+                          ) -> Dict[str, Any]:
+    """
+    Evaluate and return a dictionary of variables defined in the production
+    option to be calculated with every application of the production.
+
+    :param prod_opt: The production option to evaluate variables for.
+    :param variables: Variables to set during evaluation.
+    :return: A dictionary of variable and value pairs.
+    """
+    result = {}
+    if variables is None:
+        variables = {}
+    for name, compiled_expr in prod_opt.var_per_application:
+        result[name] = eval(compiled_expr, None, variables)
+    return result
 
 
 class Production:
@@ -358,6 +416,19 @@ class Production:
         to_calc_attr = to_calc_attr.union({
             (x, hierarchy.map(x, 'D', 'R'), hierarchy.map(x, 'D', 'H'))
             for x in option.to_change})
+        vectors = {}
+        for vec_name, vec_info in self.vectors.items():
+            if isinstance(vec_info, Vertex):
+                vectors[vec_name] = Vec(hierarchy.map(vec_info, 'M', 'H'))
+            else:
+                vectors[vec_name] = Vec(hierarchy.map(vec_info[0], 'M', 'H'),
+                                        hierarchy.map(vec_info[1], 'M', 'H'))
+        global_attr_reqs = {name: hierarchy.map(value, 'M', 'H')
+                            for name, value
+                            in option.attr_requirements.get('all', {}).items()}
+        local_eval_vars = {**global_attr_reqs, **vectors}
+        variables = evaluate_per_app_vars(option, local_eval_vars)
+        variables.update(option.vars)
         new_generation = get_max_generation(map_mother_to_host.values()) + 1
         # For edges which get reconnected to a different vertex in the daugter
         # graph, set the old connection to None in the result graph
@@ -405,13 +476,6 @@ class Production:
             )
         # Now calculate the new attributes for all elements that where part of
         # the daughter graph.
-        vectors = {}
-        for vec_name, vec_info in self.vectors.items():
-            if isinstance(vec_info, Vertex):
-                vectors[vec_name] = Vec(hierarchy.map(vec_info, 'M', 'H'))
-            else:
-                vectors[vec_name] = Vec(hierarchy.map(vec_info[0], 'M', 'H'),
-                                        hierarchy.map(vec_info[1], 'M', 'H'))
         for D_element, target_element, old_element in to_calc_attr:
             attr_requirements = {}
             if D_element in option.attr_requirements:
@@ -431,14 +495,14 @@ class Production:
 
                 def attr_func(old, **kwargs):
                     from math import acos, sqrt, pi
-                    for name, value in kwargs.items():
-                        locals()[name] = value
-                    return eval(attr_func_text)
+                    # for name, value in kwargs.items():
+                    #     locals()[name] = value
+                    kwargs.update(global_attr_reqs)
+                    return eval(attr_func_text, None, kwargs)
 
                 if attr_name == '.new_pos':
-                    from math import pi
                     pos = attr_func(old_element, **attr_requirements,
-                                    **vectors)
+                                    **vectors, **variables)
                     # v1 = vectors["v1"]
                     # v2 = vectors["v2"]
                     # log.debug(f'   d={cross(v1, v2)}')
@@ -453,7 +517,8 @@ class Production:
                     continue
                 target_element.attr[attr_name] = attr_func(old_element,
                                                            **attr_requirements,
-                                                           **vectors)
+                                                           **vectors,
+                                                           **variables)
 
         log.debug(f'Applied {self} with result graph {id(result_graph)}.')
         if not graph_is_consistent(result_graph):
@@ -753,17 +818,22 @@ def _(production: Production, mapping: Mapping=None) -> Production:
             new_mother_elem = mapping[old_mother_elem]
             new_daughter_elem = mapping[old_daughter_elem]
             new_mapping[new_mother_elem] = new_daughter_elem
-        new_attr_reqs = {mapping[m_elem]: {name: mapping[d_elem]
-                                           for name, d_elem in reqs.items()}
-                         for m_elem, reqs
-                         in prod_opt.attr_requirements.items()}
+        new_attr_reqs = {mapping[d_elem]: {name: mapping[m_elem]
+                                           for name, m_elem in reqs.items()}
+                         for d_elem, reqs
+                         in prod_opt.attr_requirements.items()
+                         if d_elem != 'all'
+                         }
+        new_attr_reqs['all'] = {name: mapping[m_elem] for name, m_elem in
+                                prod_opt.attr_requirements.get('all', {}).items()}
         new_production_option = ProductionOption(
             new_mother_graph,
             new_mapping,
             new_daughter_graph,
             weight=prod_opt.weight,
             attr_requirements=new_attr_reqs,
-            conditions=prod_opt.conditions
+            conditions=prod_opt.conditions,
+            var_calc_instructions=prod_opt.var_calc_instructions
         )
         new_production_options.append(new_production_option)
     new_vectors = {}

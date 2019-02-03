@@ -607,7 +607,6 @@ class GraphPanel(wx.Panel):
         else:
             raise KeyError('Specified Axes could not be found.')
 
-
     def add_vertex(self, event: matplotlib.backend_bases.LocationEvent) \
             -> None:
         """
@@ -616,14 +615,14 @@ class GraphPanel(wx.Panel):
         :param event: The matplotlib event that initiated the adding.
         """
 
-        transform_func = self.subplot.transData.inverted().transform
+        transform_func = event.inaxes.transData.inverted().transform
         new_coords = transform_func((event.x, event.y))
         log.info(f'Adding Vertex @ {event.x} - {event.y}, axis: '
                  f'{new_coords}')
         graph = self._get_connected_graph(event.inaxes)
         vertex = Vertex()
-        vertex.attr['x'] = new_coords[0]
-        vertex.attr['y'] = new_coords[1]
+        vertex.attr['x'] = float(new_coords[0])
+        vertex.attr['y'] = float(new_coords[1])
         graph.add(vertex)
         self._redraw_graph()
 

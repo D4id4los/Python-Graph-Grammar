@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Union
 import wx
 import wx.lib.newevent
 from wx.lib.agw import aui as aui
+from wx.html2 import WebView
 from pydispatch import dispatcher
 import os.path
 
@@ -161,6 +162,7 @@ class ResultGraphPanel(wx.Panel):
         super().__init__(*args, **kwargs)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         self.graph_panel = GraphPanel(self)
+        # self.svg_display = WebView.New(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.list = GraphList(self, graph_panel=self.graph_panel)
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -174,6 +176,7 @@ class ResultGraphPanel(wx.Panel):
         vbox.Add(hbox2, proportion=0, flag=wx.EXPAND)
         hbox.Add(vbox, proportion=0, flag=wx.EXPAND)
         hbox.Add(self.graph_panel, proportion=1, flag=wx.EXPAND)
+        # hbox.Add(self.svg_display, proportion=1, flag=wx.EXPAND)
         self.SetSizer(hbox)
 
     def load_data(self, data: Dict[str, Graph]) -> None:
