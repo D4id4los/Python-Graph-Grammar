@@ -7,7 +7,7 @@ from svgwrite import cm, mm
 from functools import singledispatch
 from typing import List, Tuple, Union, Dict
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
-    get_min_max_points
+    get_min_max_points, get_positions
 from model_gen.productions import Production
 
 
@@ -57,7 +57,7 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
 
 
 def export_graph_to_svg(graph: Graph, filename: str) -> None:
-    min_point, max_point = get_min_max_points(graph)
+    min_point, max_point = get_min_max_points(get_positions(graph.vertices))
     size = (max_point[0] - min_point[0], max_point[1] - min_point[1])
     view_box = f'{min_point[0]*100} {-max_point[1]*100} {size[0]*100} {size[1]*100}'
     size = size[0] * cm, size[1] * cm

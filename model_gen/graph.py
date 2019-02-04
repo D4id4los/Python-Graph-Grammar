@@ -957,28 +957,49 @@ class Graph(MutableSet):
             raise StopIteration
 
 
-def get_min_max_points(graph_elements: Iterable[GraphElement]
+def get_position(element: GraphElement) -> Tuple[float, float]:
+    """
+    Return the position of a graph element as a tuple of coordinates.
+
+    :param element: The graph elements whose position is to be returned.
+    :return: A tuple containing the x- and the y-position of the element.
+    """
+    return float(element.attr['x']), float(element.attr['y'])
+
+
+def get_positions(elements: Iterable[GraphElement]) -> List[Tuple[float, float]]:
+    """
+    Return a list of all the graph elements positions.
+
+    :param elements: A list of graph elements
+    :return: A list of positions of all the graph elements.
+    """
+    result = []
+    for element in elements:
+        result.append(get_position(element))
+    return result
+
+
+def get_min_max_points(positions: Iterable[Tuple[float, float]]
                        ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
     """
-    Return the minimum and maximum extend of a graphs elements.
+    Return the minimum and maximum extend of a list of graph elements.
 
     I.e.: Return the upper left and the lower right point in a coordinate
     system containing between them all graph elements, which have x and y
     coordinates attributed to them.
 
-    :param graph_elements: The graph whose minumum and maximum extend is to be
-         calculated.
+    :param positions: A list containing all positions of graph
+        elements whose minumum and maximum extend is to be calculated.
     :return: A tuple containing the two points in x and y coordinates.
     """
     min_x = None
     min_y = None
     max_x = None
     max_y = None
-    for element in graph_elements:
-        if 'x' not in element.attr or 'y' not in element.attr:
-            continue
-        x = float(element.attr['x'])
-        y = float(element.attr['y'])
+    for position in positions:
+        x = position[0]
+        y = position[1]
         if min_x is None:
             min_x = x
             max_x = x

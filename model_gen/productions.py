@@ -8,7 +8,7 @@ from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List, Any
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
     get_max_generation, graph_is_consistent, copy_without_meta_elements, \
-    get_min_max_points
+    get_min_max_points, get_positions, get_position
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
@@ -621,36 +621,11 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     :return:
     """
     daughter_barycenter = _calculate_daughter_barycenter(option)
+    mother_positions = get_positions(option.mother_graph.vertices)
+    mother_barycenter = _calculate_barycenter(mother_positions)
     host_barycenter = _calculate_host_barycenter(option, hierarchy)
-    mother_extent = _calculate_mother_extent(option)
-    daughter_extent = _calculate_daughter_extent(option)
-    host_extent = _calculate_host_extent(option, hierarchy)
-    x_ratio = 0
-    y_ratio = 0
-    if not daughter_extent[0] == 0:
-        x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
-        if x_mother_to_daughter == 0:
-            x_mother_to_daughter = 1
-        if host_extent[0] != 0:
-            x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
-    if not daughter_extent[1] == 0:
-        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
-        if y_mother_to_daughter == 0:
-            y_mother_to_daughter = 1
-        if host_extent[1] != 0:
-            y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
-    x = float(new_element.attr['x'])
-    y = float(new_element.attr['y'])
-    dx = x - daughter_barycenter[0]
-    dy = y - daughter_barycenter[1]
-    new_x = host_barycenter[0] + dx * x_ratio
-    new_y = host_barycenter[1] + dy * y_ratio
-    log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.: '
-              f'{host_barycenter}, delta: {(dx, dy)}.')
-    log.debug(f'   Old position: {(x, y)}, ratios: {(x_ratio, y_ratio)},'
-              f' new position: {(new_x, new_y)}.')
     daughter_vertices = option.daughter_graph.vertices
-    daughter_positions = _get_positions(daughter_vertices)
+    daughter_positions = get_positions(daughter_vertices)
     daughter_deviations = numpy.std(daughter_positions, 0)
     if daughter_deviations[0] == 0:
         daughter_angle = pi/2
@@ -669,7 +644,7 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
             daughter_angle = asin(daughter_slope)
     host_vertices = hierarchy.map_sequence(option.mother_graph.vertices,
                                            'M', 'H')
-    host_positions = _get_positions(host_vertices)
+    host_positions = get_positions(host_vertices)
     host_deviations = numpy.std(host_positions, 0)
     if host_deviations[0] == 0:
         host_angle = pi/2
@@ -686,14 +661,60 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
             host_angle = pi/2
         else:
             host_angle = asin(host_slope)
-    if daughter_angle == host_angle:
-        return new_x, new_y
     delta_angle = host_angle - daughter_angle
-    new_pos = rotate(Vec(x1=new_x, y1=new_y), delta_angle,
-                     Vec(x1=host_barycenter[0], y1=host_barycenter[1]))
+    x,y = get_position(new_element)
+    if delta_angle != 0:
+        new_pos = rotate(Vec(x1=x, y1=y), delta_angle,
+                         Vec(x1=daughter_barycenter[0], y1=daughter_barycenter[1]))
+        daughter_rot_vecs = [
+            rotate(Vec(x1=x, y1=y),
+                   delta_angle,
+                   Vec(x1=daughter_barycenter[0], y1=daughter_barycenter[1]))
+            for x,y in daughter_positions
+        ]
+        daughter_rot_positions = [(vec.x,vec.y) for vec in daughter_rot_vecs]
+        mother_rot_vecs = [
+            rotate(Vec(x1=x, y1=y),
+                   delta_angle,
+                   Vec(x1=mother_barycenter[0], y1=mother_barycenter[1]))
+            for x, y in mother_positions
+        ]
+        mother_rot_positions = [(vec.x, vec.y) for vec in mother_rot_vecs]
+    else:
+        daughter_rot_positions = daughter_positions
+        mother_rot_positions = mother_positions
+        new_pos = Vec(x1=x, y1=y)
     log.debug(f'   D.a.: {daughter_angle}, H.a.: {host_angle}, delta angle: '
               f'{delta_angle}. new position: {new_pos}.')
-    return new_pos.x, new_pos.y
+
+    mother_extent = _calculate_extent(mother_rot_positions)
+    daughter_extent = _calculate_extent(daughter_rot_positions)
+    host_extent = _calculate_extent(host_positions)
+    x_ratio = 0
+    y_ratio = 0
+    if not daughter_extent[0] == 0:
+        x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
+        if x_mother_to_daughter == 0:
+            x_mother_to_daughter = 1
+        if host_extent[0] != 0:
+            x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
+    if not daughter_extent[1] == 0:
+        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
+        if y_mother_to_daughter == 0:
+            y_mother_to_daughter = 1
+        if host_extent[1] != 0:
+            y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
+    dx = new_pos.x - daughter_barycenter[0]
+    dy = new_pos.y - daughter_barycenter[1]
+    new_x = host_barycenter[0] + dx * x_ratio
+    new_y = host_barycenter[1] + dy * y_ratio
+    log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.:'
+              f' {host_barycenter}, D.E.: {daughter_extent},'
+              f' H.E.: {host_extent}.')
+    log.debug(f'   Old position: {(x, y)}, delta: {(dx, dy)},'
+              f' ratios: {(x_ratio, y_ratio)},'
+              f' new position: {(new_x, new_y)}.')
+    return new_x, new_y
 
 
 def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
@@ -729,29 +750,38 @@ def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
     return x, y
 
 
-def _calculate_daughter_extent(option: ProductionOption) -> (float, float):
+def _calculate_barycenter(positions: Iterable[Tuple[float, float]]
+                          ) -> Tuple[float, float]:
     """
-    Return the maximum x and y extents of the daughter graph
+    Calculate the barycenter of the positions passed to the function.
 
-    :param option: The production option that has been chosen.
-    :return: A tuple of floats giving the x and y extent of the
-        daughter graph.
+    :param positions: A list of positions to calculate the barycenter
+        of.
+    :return: A tuple containing the x- and y-coordinates of the
+        barycenter.
     """
-    min, max = get_min_max_points(option.daughter_graph)
-    x_extent = max[0] - min[0]
-    y_extent = max[1] - min[1]
-    return x_extent, y_extent
+    x = 0
+    y = 0
+    num = 0
+    for position in positions:
+        x += position[0]
+        y += position[1]
+        num += 1
+    if num != 0:
+        x /= num
+        y /= num
+    return x, y
 
 
-def _calculate_mother_extent(option: ProductionOption) -> (float, float):
+def _calculate_extent(positions: Iterable[Tuple[float, float]]) -> Tuple[float, float]:
     """
-    Return the maximum x and y extents of the mother graph
+    Return the length between the most extreme points on the x- and
+    y-axis of all elements in the list.
 
-    :param option: The production option that has been chosen.
-    :return: A tuple of floats giving the x and y extent of the
-        mother graph.
+    :param positions: List of graph elements.
+    :return: A tuple with the maximum extent along the x- and y-axis.
     """
-    min, max = get_min_max_points(option.mother_graph)
+    min, max = get_min_max_points(positions)
     x_extent = max[0] - min[0]
     y_extent = max[1] - min[1]
     return x_extent, y_extent
@@ -836,27 +866,6 @@ def _calculate_host_barycenter(
     return x, y
 
 
-def _calculate_host_extent(
-        option: ProductionOption,
-        hierarchy: ProductionApplicationHierarchy
-    ) -> (float, float):
-    """
-    Return the maximum x and y extents of the match of the mother
-    graph in the host graph.
-
-    :param option: The production option that has been chosen.
-    :param hierarchy: The full production hierarchy
-    :return: A tuple of floats giving the x and y extent of the match
-        of the mother graph in the host graph.
-    """
-    min, max = get_min_max_points(hierarchy.map_sequence(
-        option.mother_graph.element_list(), 'M', 'H'
-    ))
-    x_extent = max[0] - min[0]
-    y_extent = max[1] - min[1]
-    return x_extent, y_extent
-
-
 def _get_gradient(positions: Iterable[Tuple[float, float]]) -> Tuple[float, float]:
     """
     Return slope and intercept of the gradient of a list of graph elements.
@@ -869,17 +878,7 @@ def _get_gradient(positions: Iterable[Tuple[float, float]]) -> Tuple[float, floa
     return slope, intercept
 
 
-def _get_positions(elements: Iterable[GraphElement]) -> List[Tuple[float, float]]:
-    """
-    Return a list of all the graph elements positions.
 
-    :param graph: A list of graph elements
-    :return: A list of positions of all the graph elements.
-    """
-    result = []
-    for element in elements:
-        result.append((float(element.attr['x']), float(element.attr['y'])))
-    return result
 
 
 @copy_without_meta_elements.register(Production)
