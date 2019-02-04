@@ -1,5 +1,7 @@
 import random
-from math import pi
+import scipy.stats
+import numpy
+from math import pi, asin, isnan, isinf
 from functools import partial, singledispatch
 from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List, Any
 
@@ -460,9 +462,10 @@ class Production:
                 partial(hierarchy.map, source_level='C', target_level='R')
             )
             if (isinstance(C_element, Vertex)
-                    and ( 'new_x' not in C_element.attr
-                          or 'new_y' not in C_element.attr)
-                    and '.new_pos' not in C_element.attr):
+                    # and ( 'new_x' not in C_element.attr
+                    #       or 'new_y' not in C_element.attr)
+                    # and '.new_pos' not in C_element.attr
+            ):
                 x, y = _calculate_new_position(C_element, option, hierarchy)
                 if 'new_x' not in C_element.attr:
                     C_element.attr['x'] = x
@@ -507,7 +510,8 @@ class Production:
                     return eval(attr_func_text, None, kwargs)
 
                 if attr_name == '.new_pos':
-                    pos = attr_func(old_element, **attr_requirements,
+                    pos = attr_func(old_element, self_=target_element,
+                                    **attr_requirements,
                                     **vectors, **variables)
                     # v1 = vectors["v1"]
                     # v2 = vectors["v2"]
@@ -522,6 +526,7 @@ class Production:
                 elif attr_name.startswith('.') and not attr_name.startswith('.svg_'):
                     continue
                 target_element.attr[attr_name] = attr_func(old_element,
+                                                           self_=target_element,
                                                            **attr_requirements,
                                                            **vectors,
                                                            **variables)
@@ -608,7 +613,7 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     Calculate the position of a newly added element dependend on the
     barycenter of all mapped daughter elements.
 
-    :param new_element: The element hose new position is to be
+    :param new_element: The element whose new position is to be
         calculated.
     :param option: The matched production option.
     :param hierarchy: The production application hierarchy of this
@@ -620,17 +625,18 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     mother_extent = _calculate_mother_extent(option)
     daughter_extent = _calculate_daughter_extent(option)
     host_extent = _calculate_host_extent(option, hierarchy)
-    x_ratio = 1
-    y_ratio = 1
-    if not (daughter_extent[0] == 0 or daughter_extent[1] == 0):
+    x_ratio = 0
+    y_ratio = 0
+    if not daughter_extent[0] == 0:
         x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
-        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
         if x_mother_to_daughter == 0:
             x_mother_to_daughter = 1
-        if y_mother_to_daughter == 0:
-            y_mother_to_daughter = 1
         if host_extent[0] != 0:
             x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
+    if not daughter_extent[1] == 0:
+        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
+        if y_mother_to_daughter == 0:
+            y_mother_to_daughter = 1
         if host_extent[1] != 0:
             y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
     x = float(new_element.attr['x'])
@@ -643,7 +649,51 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
               f'{host_barycenter}, delta: {(dx, dy)}.')
     log.debug(f'   Old position: {(x, y)}, ratios: {(x_ratio, y_ratio)},'
               f' new position: {(new_x, new_y)}.')
-    return new_x, new_y
+    daughter_vertices = option.daughter_graph.vertices
+    daughter_positions = _get_positions(daughter_vertices)
+    daughter_deviations = numpy.std(daughter_positions, 0)
+    if daughter_deviations[0] == 0:
+        daughter_angle = pi/2
+    else:
+        daughter_verticality = daughter_deviations[1] / daughter_deviations[0]
+        if daughter_verticality > 2:
+            daughter_slope, _ = _get_gradient(
+                [(y, x) for x,y in daughter_positions]
+            )
+            daughter_slope = 1 / daughter_slope
+        else:
+            daughter_slope, _ = _get_gradient(daughter_positions)
+        if isinf(daughter_slope):
+            daughter_angle = pi/2
+        else:
+            daughter_angle = asin(daughter_slope)
+    host_vertices = hierarchy.map_sequence(option.mother_graph.vertices,
+                                           'M', 'H')
+    host_positions = _get_positions(host_vertices)
+    host_deviations = numpy.std(host_positions, 0)
+    if host_deviations[0] == 0:
+        host_angle = pi/2
+    else:
+        host_verticality = host_deviations[1] / host_deviations[0]
+        if host_verticality > 2:
+            host_slope, _ = _get_gradient(
+                [(y, x) for x, y in host_positions]
+            )
+            host_slope = 1 / host_slope
+        else:
+            host_slope, _ = _get_gradient(host_positions)
+        if isinf(host_slope):
+            host_angle = pi/2
+        else:
+            host_angle = asin(host_slope)
+    if daughter_angle == host_angle:
+        return new_x, new_y
+    delta_angle = host_angle - daughter_angle
+    new_pos = rotate(Vec(x1=new_x, y1=new_y), delta_angle,
+                     Vec(x1=host_barycenter[0], y1=host_barycenter[1]))
+    log.debug(f'   D.a.: {daughter_angle}, H.a.: {host_angle}, delta angle: '
+              f'{delta_angle}. new position: {new_pos}.')
+    return new_pos.x, new_pos.y
 
 
 def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
@@ -805,6 +855,31 @@ def _calculate_host_extent(
     x_extent = max[0] - min[0]
     y_extent = max[1] - min[1]
     return x_extent, y_extent
+
+
+def _get_gradient(positions: Iterable[Tuple[float, float]]) -> Tuple[float, float]:
+    """
+    Return slope and intercept of the gradient of a list of graph elements.
+
+    :param elements: A list of graph elements.
+    :return: A tuple containing slope and intercept of the gradient of the
+        elements.
+    """
+    slope, intercept, _, _, _ = scipy.stats.linregress(positions)
+    return slope, intercept
+
+
+def _get_positions(elements: Iterable[GraphElement]) -> List[Tuple[float, float]]:
+    """
+    Return a list of all the graph elements positions.
+
+    :param graph: A list of graph elements
+    :return: A list of positions of all the graph elements.
+    """
+    result = []
+    for element in elements:
+        result.append((float(element.attr['x']), float(element.attr['y'])))
+    return result
 
 
 @copy_without_meta_elements.register(Production)

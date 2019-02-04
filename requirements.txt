@@ -6,3 +6,4 @@ mock
 pytest-mock
 PyDispatcher
 svgwrite
+scipy
