@@ -124,6 +124,7 @@ class GraphUI(wx.Frame):
                                 host_graphs.items()},
                 'productions': {k: v.to_yaml() for k, v in
                                 productions.items()},
+                'global_vars': self.global_vars,
                 'result_graphs': {k: v.to_yaml() for k, v in
                                   result_graphs.items()}
             }
