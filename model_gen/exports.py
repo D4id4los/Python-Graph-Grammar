@@ -31,6 +31,14 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
                                      **args))
         elif element.attr['.svg_tag'] == 'path':
             drawing.add(drawing.path(**args))
+        elif element.attr['.svg_tag'] == 'circle':
+            x = float(element.attr['x'])
+            y = -float(element.attr['y'])
+            args.setdefault('r', '1cm')
+            args.setdefault('stroke_width', '0.1mm')
+            args.setdefault('stroke', 'black')
+            args.setdefault('fill', 'none')
+            drawing.add(drawing.circle(center=(x * cm, y * cm), **args))
     elif isinstance(element, Vertex):
         if '.helper_node' in element.attr and element.attr['.helper_node']:
             return

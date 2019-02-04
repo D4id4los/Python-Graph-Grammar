@@ -635,7 +635,11 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
             daughter_slope, _ = _get_gradient(
                 [(y, x) for x,y in daughter_positions]
             )
-            daughter_slope = 1 / daughter_slope
+            if daughter_slope == 0:
+                daughter_slope = float('inf')
+            else:
+                daughter_slope = 1 / daughter_slope
+                daughter_slope = normalize(Vec(x1=1, y1=daughter_slope)).y
         else:
             daughter_slope, _ = _get_gradient(daughter_positions)
         if isinf(daughter_slope):
@@ -654,13 +658,17 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
             host_slope, _ = _get_gradient(
                 [(y, x) for x, y in host_positions]
             )
-            host_slope = 1 / host_slope
+            if host_slope == 0:
+                host_slope = float('inf')
+            else:
+                host_slope = 1 / host_slope
+                host_slope = normalize(Vec(x1=1,y1=host_slope)).y
         else:
             host_slope, _ = _get_gradient(host_positions)
         if isinf(host_slope):
             host_angle = pi/2
         else:
-            host_angle = asin(host_slope)
+            host_angle = numpy.arcsin(host_slope)
     delta_angle = host_angle - daughter_angle
     x,y = get_position(new_element)
     if delta_angle != 0:
@@ -729,6 +737,11 @@ def _calculate_daughter_barycenter(option: ProductionOption) -> (float, float):
     num_elements = 0
     x = 0
     y = 0
+    mapped_daughter_elems = option.mapping.values()
+    if len(mapped_daughter_elems) == 0:
+        return _calculate_barycenter(
+            get_positions(option.daughter_graph.vertices)
+        )
     for daughter_element in option.mapping.values():
         if isinstance(daughter_element, Vertex):
             num_elements += 1
