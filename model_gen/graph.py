@@ -714,13 +714,24 @@ class Graph(MutableSet):
                 raise ValueError('Finished mapping, but unmapped_elements is '
                                  'not empty')
             elif len(unmapped_elements) == 0:
-                raise ValueError('Did not finish mapping, but '
-                                 'unmapped_elements is empty')
+                for other_element in other_graph.element_list('vef'):
+                    if other_element not in mapping:
+                        unmapped_elements[other_element] = None
+                        break
+                if len(unmapped_elements) == 0:
+                    raise ValueError('Did not finish mapping, but '
+                                     'unmapped_elements is empty')
             other_element, other_element_parent = unmapped_elements.popitem()
-            own_element_parent = mapping[other_element_parent]
+            own_element_parent = None
+            if other_element_parent is not None:
+                own_element_parent = mapping[other_element_parent]
             debug.log.append(f'Searching for mapping for {other_element}.')
             possible_new_mappings = []
-            for own_element in own_element_parent.neighbours():
+            if own_element_parent is not None:
+                potential_matches = own_element_parent.neighbours()
+            else:
+                potential_matches = self.element_list('vef')
+            for own_element in potential_matches:
                 if (isinstance(other_element, Edge)
                         and '.directed' in other_element.attr
                         and other_element.attr['.directed']):
