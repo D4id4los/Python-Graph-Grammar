@@ -23,8 +23,8 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
         if element.attr['.svg_tag'] == 'rect':
             x = float(element.attr['x'])
             y = -float(element.attr['y'])
-            width = float(element.attr['.svg_width'])
-            height = float(element.attr['.svg_height'])
+            width = float(element.attr.get('.svg_width', 0.1))
+            height = float(element.attr.get('.svg_height', 0.1))
             x = x - width / 2
             y = y - height / 2
             drawing.add(drawing.rect((x*cm, y*cm), (width*cm, height*cm),

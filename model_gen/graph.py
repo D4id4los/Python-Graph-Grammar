@@ -26,7 +26,8 @@ class GraphElement(abc.ABC):
         self.attr: Dict[AnyStr, Any] = {}
 
     @abc.abstractmethod
-    def matches(self, graph_element, eval_attr=False) -> bool:
+    def matches(self, graph_element, eval_attr=False,
+                eval_vars: Dict[str, Any]=None) -> bool:
         """
         Test if the two graph elements match based on their attributes.
 
@@ -40,17 +41,21 @@ class GraphElement(abc.ABC):
         :param eval_attr: If true then the function will evaluate the
             attribute of the graph_element as a boolean expression
             rather than compare equality.
+        :param eval_vars: Variables to be set during evaluation.
         :return: True if the attributes of the two elements are matching.
         """
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError()
         try:
+            if eval_vars is None:
+                eval_vars = {}
             for attr_key in graph_element.attr.keys():
                 if attr_key in ('x', 'y') or attr_key.startswith('.'):
                     continue
                 if eval_attr:
                     def matching_function(attr, attrs):
-                        return eval(graph_element.attr[attr_key])
+                        return eval(graph_element.attr[attr_key],
+                                    {**eval_vars, 'attr': attr, 'attrs': attrs})
                     if not matching_function(self.attr[attr_key], self.attr):
                         return False
                 else:
@@ -190,12 +195,14 @@ class Vertex(GraphElement):
                 setattr(result, key, copy.deepcopy(value))
         return result
 
-    def matches(self, graph_element, eval_attr=False):
+    def matches(self, graph_element, eval_attr=False, eval_vars=None):
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError()
         if not isinstance(graph_element, Vertex):
             return False
-        return super().matches(graph_element, eval_attr)
+        if eval_vars is None:
+            eval_vars = {}
+        return super().matches(graph_element, eval_attr, eval_vars)
 
     def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.vertices.append(self)
@@ -313,12 +320,14 @@ class Edge(GraphElement):
                 setattr(result, key, copy.deepcopy(value))
         return result
 
-    def matches(self, graph_element, eval_attr=False):
+    def matches(self, graph_element, eval_attr=False, eval_vars=None):
         if not isinstance(graph_element, GraphElement):
             raise ModelGenArgumentError
         if not isinstance(graph_element, Edge):
             return False
-        return super().matches(graph_element, eval_attr)
+        if eval_vars is None:
+            eval_vars = {}
+        return super().matches(graph_element, eval_attr, eval_vars)
 
     def add_to(self, graph: 'Graph', ignore_errors: AbstractSet=None):
         graph.edges.append(self)
@@ -650,8 +659,8 @@ class Graph(MutableSet):
         return True
 
     def match(self, other_graph: 'Graph', eval_attrs: bool=False,
-              geometric_order: Tuple[List[GraphElement], List[GraphElement]]=None
-              ) -> List[Mapping]:
+              geometric_order: Tuple[List[GraphElement], List[GraphElement]]=None,
+              eval_vars: Dict[str, Any]=None) -> List[Mapping]:
         """
         Find all possible matches of the other graph in this graph.
 
@@ -666,6 +675,8 @@ class Graph(MutableSet):
             to be preserved by the match, then pass a tuple of the x
             and the y order of vertices in the other graph to this
             function.
+        :param eval_vars: Variables to set during evaluation of
+            attributes.
         :return: A list of all possible matches, empty of there are
                  none.
         """
@@ -725,7 +736,7 @@ class Graph(MutableSet):
                 if own_element in mapping.values():
                     debug.log.append(f'    {own_element} already in mapping.')
                     continue
-                elif not own_element.matches(other_element, eval_attrs):
+                elif not own_element.matches(other_element, eval_attrs, eval_vars):
                     debug.log.append(f'    {own_element} does not match.')
                     continue
                 elif not self.matched_neighbours_compatible(mapping,

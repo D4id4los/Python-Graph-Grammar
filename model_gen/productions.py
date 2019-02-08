@@ -365,6 +365,7 @@ class Production:
             mother_graph.vertices,
             key=lambda vertex: float(vertex.attr['y'])
         )
+        self.global_vars: Dict[str, Any] = {}
 
     def match(self, host_graph: Graph) \
             -> Iterable[Mapping]:
@@ -382,7 +383,8 @@ class Production:
                                         self.mother_elem_sorted_by_x,
                                         self.mother_elem_sorted_by_y
                                     ))
-        return host_graph.match(self.mother_graph, eval_attrs=True)
+        return host_graph.match(self.mother_graph, eval_attrs=True,
+                                eval_vars=self.global_vars)
 
     def apply(self, host_graph: Graph,
               map_mother_to_host: Mapping) -> Graph:
@@ -506,8 +508,8 @@ class Production:
                     from math import acos, sqrt, pi
                     # for name, value in kwargs.items():
                     #     locals()[name] = value
-                    kwargs.update(global_attr_reqs)
-                    return eval(attr_func_text, None, kwargs)
+                    eval_vars = {**kwargs, **global_attr_reqs, 'old': old}
+                    return eval(attr_func_text, None, eval_vars)
 
                 if attr_name == '.new_pos':
                     pos = attr_func(old_element, self_=target_element,
@@ -623,10 +625,31 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
     daughter_barycenter = _calculate_daughter_barycenter(option)
     mother_positions = get_positions(option.mother_graph.vertices)
     mother_barycenter = _calculate_barycenter(mother_positions)
+    mother_deviations = numpy.std(mother_positions, 0)
     host_barycenter = _calculate_host_barycenter(option, hierarchy)
     daughter_vertices = option.daughter_graph.vertices
     daughter_positions = get_positions(daughter_vertices)
     daughter_deviations = numpy.std(daughter_positions, 0)
+    if mother_deviations[0] == 0:
+        mother_angle = pi/2
+    else:
+        mother_verticality = mother_deviations[1] / mother_deviations[0]
+        if mother_verticality > 2:
+            mother_slope, _ = _get_gradient(
+                [(y, x) for x, y in mother_positions]
+            )
+            if mother_slope == 0:
+                mother_slope = float('inf')
+            else:
+                mother_slope = 1 / mother_slope
+                mother_slope = normalize(Vec(x1=1, y1=mother_slope)).y
+        else:
+            mother_slope, _ = _get_gradient(mother_positions)
+            mother_slope = normalize(Vec(x1=1, y1=mother_slope)).y
+        if isinf(mother_slope):
+            mother_angle = pi / 2
+        else:
+            mother_angle = numpy.arcsin(mother_slope)
     if daughter_deviations[0] == 0:
         daughter_angle = pi/2
     else:
@@ -642,10 +665,11 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
                 daughter_slope = normalize(Vec(x1=1, y1=daughter_slope)).y
         else:
             daughter_slope, _ = _get_gradient(daughter_positions)
+            daughter_slope = normalize(Vec(x1=1, y1=daughter_slope)).y
         if isinf(daughter_slope):
             daughter_angle = pi/2
         else:
-            daughter_angle = asin(daughter_slope)
+            daughter_angle = numpy.arcsin(daughter_slope)
     host_vertices = hierarchy.map_sequence(option.mother_graph.vertices,
                                            'M', 'H')
     host_positions = get_positions(host_vertices)
@@ -662,14 +686,15 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
                 host_slope = float('inf')
             else:
                 host_slope = 1 / host_slope
-                host_slope = normalize(Vec(x1=1,y1=host_slope)).y
+                host_slope = normalize(Vec(x1=1, y1=host_slope)).y
         else:
             host_slope, _ = _get_gradient(host_positions)
+            host_slope = normalize(Vec(x1=1, y1=host_slope)).y
         if isinf(host_slope):
             host_angle = pi/2
         else:
             host_angle = numpy.arcsin(host_slope)
-    delta_angle = host_angle - daughter_angle
+    delta_angle = host_angle - mother_angle
     x,y = get_position(new_element)
     if delta_angle != 0:
         new_pos = rotate(Vec(x1=x, y1=y), delta_angle,
@@ -692,33 +717,35 @@ def _calculate_new_position(new_element, option, hierarchy) -> (float, float):
         daughter_rot_positions = daughter_positions
         mother_rot_positions = mother_positions
         new_pos = Vec(x1=x, y1=y)
-    log.debug(f'   D.a.: {daughter_angle}, H.a.: {host_angle}, delta angle: '
+    log.debug(f'   Angles (in x*pi): H.a.: {host_angle / pi}, M.a.: {mother_angle / pi}, D.a.: {daughter_angle / pi}, delta angle: '
               f'{delta_angle}. new position: {new_pos}.')
 
-    mother_extent = _calculate_extent(mother_rot_positions)
-    daughter_extent = _calculate_extent(daughter_rot_positions)
+    mother_extent = _calculate_extent(mother_positions)
+    daughter_extent = _calculate_extent(daughter_positions)
+    mother_rot_extent = _calculate_extent(mother_rot_positions)
+    daughter_rot_extent = _calculate_extent(daughter_rot_positions)
     host_extent = _calculate_extent(host_positions)
-    x_ratio = 0
-    y_ratio = 0
-    if not daughter_extent[0] == 0:
-        x_mother_to_daughter = (mother_extent[0] / daughter_extent[0])
+    x_ratio = 1
+    y_ratio = 1
+    if not daughter_rot_extent[0] == 0:
+        x_mother_to_daughter = (mother_rot_extent[0] / daughter_rot_extent[0])
         if x_mother_to_daughter == 0:
             x_mother_to_daughter = 1
         if host_extent[0] != 0:
-            x_ratio = (host_extent[0] / daughter_extent[0]) / x_mother_to_daughter
-    if not daughter_extent[1] == 0:
-        y_mother_to_daughter = (mother_extent[1] / daughter_extent[1])
+            x_ratio = (host_extent[0] / daughter_rot_extent[0]) / x_mother_to_daughter
+    if not daughter_rot_extent[1] == 0:
+        y_mother_to_daughter = (mother_rot_extent[1] / daughter_rot_extent[1])
         if y_mother_to_daughter == 0:
             y_mother_to_daughter = 1
         if host_extent[1] != 0:
-            y_ratio = (host_extent[1] / daughter_extent[1]) / y_mother_to_daughter
+            y_ratio = (host_extent[1] / daughter_rot_extent[1]) / y_mother_to_daughter
     dx = new_pos.x - daughter_barycenter[0]
     dy = new_pos.y - daughter_barycenter[1]
     new_x = host_barycenter[0] + dx * x_ratio
     new_y = host_barycenter[1] + dy * y_ratio
-    log.debug(f'   Position Calculation: D.B.: {daughter_barycenter}, H.B.:'
-              f' {host_barycenter}, D.E.: {daughter_extent},'
-              f' H.E.: {host_extent}.')
+    log.debug(f'   Position Calculation: H.B.: {host_barycenter}, M.B.: {mother_barycenter}, D.B.: {daughter_barycenter}.')
+    log.debug(f'   Extents: H.E.: {host_extent}, M.E.: {mother_extent}, D.E.: {daughter_extent}.')
+    log.debug(f'   Rotated Extents: H.E.: {host_extent}, M.E.: {mother_rot_extent}, D.E.: {daughter_rot_extent}.')
     log.debug(f'   Old position: {(x, y)}, delta: {(dx, dy)},'
               f' ratios: {(x_ratio, y_ratio)},'
               f' new position: {(new_x, new_y)}.')

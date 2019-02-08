@@ -53,9 +53,11 @@ class Grammar:
             name: eval(instruction) for name, instruction
             in self.global_vars.items()
         }
+        log.info(f'Global variables are: {global_var_results}.')
         for prod in self.productions:
+            prod.global_vars = global_var_results
             for prod_opt in prod.production_options:
-                prod_opt.vars = {**evaluate_per_run_vars(prod_opt),
+                prod_opt.vars = {**evaluate_per_run_vars(prod_opt, global_var_results),
                                  **global_var_results}
         new_host_graph = target_graph
         while True:
