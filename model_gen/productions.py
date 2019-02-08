@@ -906,7 +906,7 @@ def _calculate_host_barycenter(
     return x, y
 
 
-def _get_gradient(positions: Iterable[Tuple[float, float]]) -> Tuple[float, float]:
+def _get_gradient(positions: List[Tuple[float, float]]) -> Tuple[float, float]:
     """
     Return slope and intercept of the gradient of a list of graph elements.
 
@@ -914,7 +914,11 @@ def _get_gradient(positions: Iterable[Tuple[float, float]]) -> Tuple[float, floa
     :return: A tuple containing slope and intercept of the gradient of the
         elements.
     """
-    slope, intercept, _, _, _ = scipy.stats.linregress(positions)
+    if len(positions) < 3:
+        arguments = ([x[0] for x in positions], [x[1] for x in positions])
+    else:
+        arguments = (positions,)
+    slope, intercept, _, _, _ = scipy.stats.linregress(*arguments)
     return slope, intercept
 
 
