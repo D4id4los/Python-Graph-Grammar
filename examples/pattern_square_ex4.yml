@@ -1,0 +1,697 @@
+global_vars: {num_dots: 'random.randint(0,3)'}
+host_graphs:
+  Axiom:
+    edges: []
+    id: 139736779874600
+    vertices:
+    - attr: {.generation: '0', size: '4', x: '0', y: '0'}
+      id: 139736779874376
+productions:
+  01 Grow Square:
+    conditions: {.geometric_ordering: 'True'}
+    id: 139736779874768
+    mappings:
+    - attr_requirements:
+        139736779874488: {arg0: 139736779874824}
+        139736779874712: {arg0: 139736779874824}
+        139736779874936: {arg0: 139736779874824}
+        139736779875216: {arg0: 139736779874824}
+        139736779875272: {arg0: 139736779874824}
+        139736779875384: {arg0: 139736779874824}
+        139736779875608: {arg0: 139736779874824}
+        139736779875664: {arg0: 139736779874824}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139736779874936
+          vertex1: 139736779874488
+          vertex2: 139736779875608
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139736779875384
+          vertex1: 139736779875608
+          vertex2: 139736779874712
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139736779875272
+          vertex1: 139736779874712
+          vertex2: 139736779875216
+        - attr: {.generation: '0', length: 'arg0.attr[''size'']'}
+          id: 139736779875664
+          vertex1: 139736779875216
+          vertex2: 139736779874488
+        id: 139736779875048
+        vertices:
+        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
+            x: '-2.9627507163323763', y: '-2.836676217765042'}
+          id: 139736779874488
+        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: '-float(arg0.attr[''size''])/2',
+            x: 2.8366762177650457, y: -2.773638968481375}
+          id: 139736779875216
+        - attr: {.generation: '0', new_x: '-float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
+            x: '-3.0257879656160362', y: '3.151862464183381'}
+          id: 139736779875608
+        - attr: {.generation: '0', new_x: 'float(arg0.attr[''size''])/2', new_y: 'float(arg0.attr[''size''])/2',
+            x: '3.025787965616047', y: '3.151862464183381'}
+          id: 139736779874712
+      id: 139736779874880
+      mapping:
+        dict: {}
+        id: 139736925161344
+      mother_graph: 139736779874432
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges: []
+      id: 139736779874432
+      vertices:
+      - attr: {.generation: '0', size: 'True', x: '0', y: '0'}
+        id: 139736779874824
+    priority: 0
+    vectors: {}
+  02 Subdivide Square:
+    conditions: {.geometric_ordering: 'True'}
+    id: 139736779875104
+    mappings:
+    - attr_requirements:
+        139736779875944: {arg0: 139736779874992}
+        139736779876560: {arg0: 139736779876336}
+        139736779876672: {arg0: 139736779876336}
+        139736779877008: {arg0: 139736779876336}
+        139736779877232: {arg0: 139736779874992}
+        139736779877288: {arg0: 139736779876336}
+        139736779877344: {arg0: 139736779874992}
+        139736779877456: {arg0: 139736779876336}
+        139736779877568: {arg0: 139736779874992}
+        139736779877624: {arg0: 139736779874992}
+        139736779877680: {arg0: 139736779876336}
+        139736779877736: {arg0: 139736779874992}
+        139736779877792: {arg0: 139736779876336}
+        139736779877848: {arg0: 139736779874992}
+        139736779877904: {arg0: 139736779876336}
+        139736779878072: {arg0: 139736779874992}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779876560
+          vertex1: 139736779875776
+          vertex2: 139736779876224
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877344
+          vertex1: 139736779876224
+          vertex2: 139736779876168
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877792
+          vertex1: 139736779876168
+          vertex2: 139736779876448
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779875944
+          vertex1: 139736779876448
+          vertex2: 139736779875776
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877008
+          vertex1: 139736779875832
+          vertex2: 139736779876616
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877568
+          vertex1: 139736779876616
+          vertex2: 139736779877064
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877456
+          vertex1: 139736779877064
+          vertex2: 139736779874656
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877848
+          vertex1: 139736779874656
+          vertex2: 139736779875832
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877680
+          vertex1: 139736779876280
+          vertex2: 139736779876840
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877232
+          vertex1: 139736779876840
+          vertex2: 139736779877120
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877904
+          vertex1: 139736779877120
+          vertex2: 139736779876728
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877624
+          vertex1: 139736779876728
+          vertex2: 139736779876280
+        - attr: {.generation: '0', .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877288
+          vertex1: 139736779876952
+          vertex2: 139736779876504
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779878072
+          vertex1: 139736779876504
+          vertex2: 139736779877176
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779876672
+          vertex1: 139736779877176
+          vertex2: 139736779876896
+        - attr: {.generation: 0, .svg_tag: '''none''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779877736
+          vertex1: 139736779876896
+          vertex2: 139736779876952
+        id: 139736779876000
+        vertices:
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '5'}
+          id: 139736779876224
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '0'}
+          id: 139736779875776
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779876448
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '5'}
+          id: 139736779876168
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779875832
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '5'}
+          id: 139736779876616
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '5'}
+          id: 139736779877064
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '0'}
+          id: 139736779874656
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '-5'}
+          id: 139736779876280
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '0'}
+          id: 139736779876840
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '-5'}
+          id: 139736779876728
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779877120
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '-5'}
+          id: 139736779876952
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779876504
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '0'}
+          id: 139736779877176
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '-5'}
+          id: 139736779876896
+      id: 139736779876392
+      mapping:
+        dict: {139736779875160: 139736779877064, 139736779875440: 139736779876224,
+          139736779875720: 139736779876280, 139736779875888: 139736779876896}
+        id: 139736925740552
+      mother_graph: 139736779875496
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139736779876336
+        vertex1: 139736779875720
+        vertex2: 139736779875440
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139736779874992
+        vertex1: 139736779875440
+        vertex2: 139736779875160
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139736779875552
+        vertex1: 139736779875160
+        vertex2: 139736779875888
+      - attr: {.generation: '0', length: float(attr)>=4}
+        id: 139736779876112
+        vertex1: 139736779875888
+        vertex2: 139736779875720
+      id: 139736779875496
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139736779875720
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139736779875440
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139736779875160
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139736779875888
+    priority: 0
+    vectors: {}
+  03 Define Directions:
+    conditions: {.geometric_ordering: 'True'}
+    id: 139736779878128
+    mappings:
+    - attr_requirements:
+        139736779908712: {arg0: 139736779907144}
+        139736779908880: {arg0: 139736779907200}
+        139736779909216: {arg0: 139736779907144}
+        139736779909272: {arg0: 139736779907200}
+        139736779909384: {arg0: 139736779907200}
+        139736779909440: {arg0: 139736779907144}
+        139736779909552: {arg0: 139736779907144}
+        139736779909608: {arg0: 139736779907200}
+        139736779909664: {arg0: 139736779907144}
+        139736779909720: {arg0: 139736779907200}
+        139736779909776: {arg0: 139736779907200}
+        139736779909944: {arg0: 139736779907144}
+        139736779910000: {arg0: 139736779907144}
+        139736779910112: {arg0: 139736779907200}
+        139736779910224: {arg0: 139736779907200}
+        139736779910280: {arg0: 139736779907144}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909384
+          vertex1: 139736779907592
+          vertex2: 139736779907816
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909216
+          vertex1: 139736779907816
+          vertex2: 139736779907704
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779908880
+          vertex1: 139736779907704
+          vertex2: 139736779907424
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909552
+          vertex1: 139736779907424
+          vertex2: 139736779907592
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779910224
+          vertex1: 139736779907872
+          vertex2: 139736779908152
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779908712
+          vertex1: 139736779908152
+          vertex2: 139736779907984
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909272
+          vertex1: 139736779907984
+          vertex2: 139736779908376
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909664
+          vertex1: 139736779908376
+          vertex2: 139736779907872
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909608
+          vertex1: 139736779908264
+          vertex2: 139736779908040
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909944
+          vertex1: 139736779908040
+          vertex2: 139736779908208
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909776
+          vertex1: 139736779908208
+          vertex2: 139736779908544
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''horizontal''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909440
+          vertex1: 139736779908544
+          vertex2: 139736779908264
+        - attr: {.generation: '0', .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779910112
+          vertex1: 139736779908096
+          vertex2: 139736779908768
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779910000
+          vertex1: 139736779908768
+          vertex2: 139736779908656
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779909720
+          vertex1: 139736779908656
+          vertex2: 139736779908432
+        - attr: {.generation: 0, .svg_tag: '''none''', label: '''vertical''', length: 'float(arg0.attr[''length''])/2'}
+          id: 139736779910280
+          vertex1: 139736779908432
+          vertex2: 139736779908096
+        - attr: {.generation: 0, .svg_tag: '''none'''}
+          id: 139736779910056
+          vertex1: 139736779907816
+          vertex2: 139736779908936
+        - attr: {.generation: 0, .svg_tag: '''none'''}
+          id: 139736779909888
+          vertex1: 139736779908152
+          vertex2: 139736779908600
+        - attr: {.generation: 0, .svg_tag: '''none'''}
+          id: 139736779910448
+          vertex1: 139736779908040
+          vertex2: 139736779908488
+        - attr: {.generation: 0, .svg_tag: '''none'''}
+          id: 139736779910168
+          vertex1: 139736779908768
+          vertex2: 139736779909048
+        id: 139736779907536
+        vertices:
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '5'}
+          id: 139736779907816
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '0'}
+          id: 139736779907592
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779907424
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '5'}
+          id: 139736779907704
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779907872
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '5'}
+          id: 139736779908152
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '5'}
+          id: 139736779907984
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '0'}
+          id: 139736779908376
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '-5'}
+          id: 139736779908264
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '-5', y: '0'}
+          id: 139736779908040
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '-5'}
+          id: 139736779908544
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779908208
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '-5'}
+          id: 139736779908096
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '0', y: '0'}
+          id: 139736779908768
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '0'}
+          id: 139736779908656
+        - attr: {.generation: '0', .svg_tag: '''none''', x: '5', y: '-5'}
+          id: 139736779908432
+        - attr: {.generation: '0', .svg_tag: '''none''', direction: '''vertical''',
+            x: '-2.5', y: '2.5'}
+          id: 139736779908936
+        - attr: {.generation: '0', .svg_tag: '''none''', direction: '''horizontal''',
+            x: '2.5', y: '2.5'}
+          id: 139736779908600
+        - attr: {.generation: '0', .svg_tag: '''none''', direction: '''horizontal''',
+            x: '-2.5', y: '-2.5'}
+          id: 139736779908488
+        - attr: {.generation: '0', .svg_tag: '''none''', direction: '''vertical''',
+            x: '2.5', y: '-2.5'}
+          id: 139736779909048
+      id: 139736779907256
+      mapping:
+        dict: {139736779874544: 139736779907816, 139736779877400: 139736779908264,
+          139736779907760: 139736779908432, 139736779908992: 139736779907984}
+        id: 139736925324568
+      mother_graph: 139736779877960
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139736779907200
+        vertex1: 139736779877400
+        vertex2: 139736779874544
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139736779907144
+        vertex1: 139736779874544
+        vertex2: 139736779908992
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139736779907480
+        vertex1: 139736779908992
+        vertex2: 139736779907760
+      - attr: {.generation: '0', length: float(attr)>=2 and float(attr)<4}
+        id: 139736779907648
+        vertex1: 139736779907760
+        vertex2: 139736779877400
+      id: 139736779877960
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139736779877400
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139736779874544
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139736779908992
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139736779907760
+    priority: 0
+    vectors: {}
+  04 Horizontal Pattern:
+    conditions: {}
+    id: 139736779909328
+    mappings:
+    - attr_requirements:
+        139736779909104: {arg0: 139736779910672}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0}
+          id: 139736779919992
+          vertex1: 139736779919768
+          vertex2: 139736779922176
+        - attr: {.generation: 0}
+          id: 139736779920384
+          vertex1: 139736779920104
+          vertex2: 139736779919936
+        - attr: {.generation: 0}
+          id: 139736779920328
+          vertex1: 139736779919600
+          vertex2: 139736779920272
+        - attr: {.generation: 0}
+          id: 139736779920664
+          vertex1: 139736779920944
+          vertex2: 139736779919432
+        id: 139736779910896
+        vertices:
+        - attr: {.generation: '0', .svg_fill: '''black''', .svg_height: '0.1', .svg_tag: '''rect''',
+            .svg_width: '0.1', x: '-4', y: '-4'}
+          id: 139736779909104
+        - attr: {.generation: '0', .svg_fill: '''black''', .svg_height: '0.1', .svg_tag: '''rect''',
+            .svg_width: '0.1', x: '-4', y: '4'}
+          id: 139736779919712
+        - attr: {.generation: '0', .svg_fill: '''black''', .svg_height: '0.1', .svg_tag: '''rect''',
+            .svg_width: '0.1', x: '4', y: '4'}
+          id: 139736779919656
+        - attr: {.generation: '0', .svg_fill: '''black''', .svg_height: '0.1', .svg_tag: '''rect''',
+            .svg_width: '0.1', x: '4', y: '-4'}
+          id: 139736779919488
+        - attr: {.generation: 0, .svg_tag: '''none''', x: -2.5, y: 4}
+          id: 139736779919768
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 2.5, y: 4}
+          id: 139736779922176
+        - attr: {.generation: 0, .svg_tag: '''none''', x: -4.4, y: 1.5}
+          id: 139736779920104
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 4.4, y: 1.5}
+          id: 139736779919936
+        - attr: {.generation: 0, .svg_tag: '''none''', x: -4.4, y: -1.5}
+          id: 139736779919600
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 4.4, y: -1.5}
+          id: 139736779920272
+        - attr: {.generation: 0, .svg_tag: '''none''', x: -2.5, y: -4}
+          id: 139736779920944
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 2.5, y: -4}
+          id: 139736779919432
+      id: 139736779910952
+      mapping:
+        dict: {}
+        id: 139736925324128
+      mother_graph: 139736779908824
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', label: attr=='disable'}
+        id: 139736779910672
+        vertex1: 139736779910840
+        vertex2: 139736779910728
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139736779910560
+        vertex1: 139736779910728
+        vertex2: 139736779910504
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139736779911064
+        vertex1: 139736779910504
+        vertex2: 139736779911008
+      - attr: {.generation: '0', label: attr=='horizontal'}
+        id: 139736779911120
+        vertex1: 139736779911008
+        vertex2: 139736779910840
+      id: 139736779908824
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139736779910840
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139736779910728
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139736779910504
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139736779911008
+    priority: 1
+    vectors: {}
+  04 Pattern:
+    conditions: {.geometric_ordering: 'True'}
+    id: 139736779920720
+    mappings:
+    - attr_requirements:
+        all: {center: 139736779921168}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736779922568
+          vertex1: 139736779921392
+          vertex2: 139736779921280
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736779922400
+          vertex1: 139736779921952
+          vertex2: 139736779921840
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736779922736
+          vertex1: 139736779921784
+          vertex2: 139736779921672
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm''', label: '''border'''}
+          id: 139736779923352
+          vertex1: 139736779921672
+          vertex2: 139736779922232
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736779921896
+          vertex1: 139736779922232
+          vertex2: 139736779919824
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736779922456
+          vertex1: 139736779919824
+          vertex2: 139736779921784
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736778222560
+          vertex1: 139736783333136
+          vertex2: 139736778791848
+        - attr: {.generation: '0', .svg_stroke_width: '''0.1mm''', label: '''border'''}
+          id: 139736783250656
+          vertex1: 139736778791848
+          vertex2: 139736780392656
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736778083688
+          vertex1: 139736780392656
+          vertex2: 139736778337920
+        - attr: {.generation: 0, .svg_stroke_width: '''0.1mm'''}
+          id: 139736778705720
+          vertex1: 139736778337920
+          vertex2: 139736783333136
+        id: 139736779921560
+        vertices:
+        - attr: {.generation: 0, .new_pos: 'rotate(A + v_h / 4 * 1.5 + v_v / 5 * 4.5,
+              rot_deg, C)', .svg_tag: '''none''', x: -1.5, y: -4.4}
+          id: 139736779921392
+        - attr: {.generation: 0, .new_pos: 'rotate(A + v_h / 4 * 1.5 + v_v / 5 * 0.5,
+              rot_deg, C)', .svg_tag: '''none''', x: -1.5, y: 4.4}
+          id: 139736779921280
+        - attr: {.generation: 0, .new_pos: 'rotate(A + v_h / 4 * 2.5 + v_v / 5 * 4.5,
+              rot_deg, C)', .svg_tag: '''none''', x: 1.5, y: -4.4}
+          id: 139736779921952
+        - attr: {.generation: 0, .new_pos: 'rotate(A + v_h / 4 * 2.5 + v_v / 5 * 0.5,
+              rot_deg, C)', .svg_tag: '''none''', x: 1.5, y: 4.4}
+          id: 139736779921840
+        - attr: {.generation: 0, .svg_tag: '''none''', .new_pos: 'rotate(Vec(self_), rot_deg, C)', x: -4.5,
+            y: -4.5}
+          id: 139736779921784
+        - attr: {.generation: 0, .svg_tag: '''none''', .new_pos: 'rotate(Vec(self_), rot_deg, C)', x: -4.5,
+            y: 4.5}
+          id: 139736779921672
+        - attr: {.generation: 0, .svg_tag: '''none''', .new_pos: 'rotate(Vec(self_), rot_deg, C)', x: -3,
+            y: 4.5}
+          id: 139736779922232
+        - attr: {.generation: 0, .svg_tag: '''none''', .new_pos: 'rotate(Vec(self_), rot_deg, C)', x: -3,
+            y: -4.5}
+          id: 139736779919824
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 3, y: -4.5, .new_pos: 'rotate(Vec(self_), rot_deg, C)'}
+          id: 139736783333136
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 3, y: 4.5, .new_pos: 'rotate(Vec(self_), rot_deg, C)'}
+          id: 139736778791848
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 4.5, y: 4.5, .new_pos: 'rotate(Vec(self_), rot_deg, C)'}
+          id: 139736780392656
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 4.5, y: -4.5, .new_pos: 'rotate(Vec(self_), rot_deg, C)'}
+          id: 139736778337920
+      id: 139736779921448
+      mapping:
+        dict: {}
+        id: 139736925324216
+      mother_graph: 139736779920832
+      var_calc_instructions:
+      - [rot_deg, '0 if center.attr[''direction''] == ''horizontal'' else pi/2', application]
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0'}
+        id: 139736779920888
+        vertex1: 139736779920440
+        vertex2: 139736779921000
+      - attr: {.generation: '0'}
+        id: 139736779921056
+        vertex1: 139736779921000
+        vertex2: 139736779920776
+      - attr: {.generation: '0'}
+        id: 139736779921336
+        vertex1: 139736779920776
+        vertex2: 139736779920608
+      - attr: {.generation: '0'}
+        id: 139736779919544
+        vertex1: 139736779920608
+        vertex2: 139736779920440
+      - attr: {.generation: 0}
+        id: 139736779920048
+        vertex1: 139736779921168
+        vertex2: 139736779921000
+      id: 139736779920832
+      vertices:
+      - attr: {.generation: '0', x: '-5', y: '-5'}
+        id: 139736779920440
+      - attr: {.generation: '0', x: '-5', y: '5'}
+        id: 139736779921000
+      - attr: {.generation: '0', x: '5', y: '5'}
+        id: 139736779920776
+      - attr: {.generation: '0', x: '5', y: '-5'}
+        id: 139736779920608
+      - attr: {.generation: '0', x: '0', y: '0'}
+        id: 139736779921168
+    priority: 1
+    vectors:
+      A: 139736779921000
+      C: 139736779921168
+      v_h: [139736779921000, 139736779920776]
+      v_v: [139736779921000, 139736779920440]
+  05 Border to Parts:
+    conditions: {}
+    id: 139736779922792
+    mappings:
+    - attr_requirements: {}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: 0}
+          id: 139736779922288
+          vertex1: 139736779923016
+          vertex2: 139736779922512
+        id: 139736779923072
+        vertices:
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 2, y: -5}
+          id: 139736779923016
+        - attr: {.generation: 0, .svg_tag: '''none''', x: 2, y: 5}
+          id: 139736779922512
+      id: 139736779922008
+      mapping:
+        dict: {}
+        id: 139736925324304
+      mother_graph: 139736779922848
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.directed: true, .generation: 0}
+        id: 139736779923184
+        vertex1: 139736779923128
+        vertex2: 139736779922960
+      - attr: {.directed: true, .generation: 0, label: attr=='border'}
+        id: 139736779922904
+        vertex1: 139736779922960
+        vertex2: 139736779922624
+      - attr: {.directed: true, .generation: 0}
+        id: 139736779923408
+        vertex1: 139736779922624
+        vertex2: 139736779923296
+      - attr: {.directed: true, .generation: 0}
+        id: 139736779923240
+        vertex1: 139736779923296
+        vertex2: 139736779923128
+      id: 139736779922848
+      vertices:
+      - attr: {.generation: 0, x: 0, y: -5}
+        id: 139736779923128
+      - attr: {.generation: 0, x: 0, y: 5}
+        id: 139736779922960
+      - attr: {.generation: 0, x: 4, y: 5}
+        id: 139736779922624
+      - attr: {.generation: 0, x: 4, y: -5}
+        id: 139736779923296
+    priority: 2
+    vectors: {}
+result_graphs: {}
