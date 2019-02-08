@@ -2,823 +2,972 @@ global_vars: {}
 host_graphs:
   Axiom:
     edges: []
-    id: 139729452564664
+    id: 140473842761968
     vertices:
     - attr: {.generation: '0', height: '25', label: House, width: '40', x: '0', y: '0'}
-      id: 139729452564776
+      id: 140473842761800
 productions:
   01 Grow House:
     conditions: {}
-    id: 139729452565112
+    id: 140473842761856
     mappings:
     - attr_requirements:
-        139729452565392: {house: 139729452564608}
-        139729452565504: {house: 139729452564608}
+        140473842762024: {house: 140473842762192}
+        140473842762472: {house: 140473842762192}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', .svg_tag: None, floors: '0', height: 'house.attr[''height'']',
             label: '''House''', width: 'house.attr[''width'']'}
-          id: 139729452565392
-          vertex1: 139729452564832
-          vertex2: 139729452565504
-        id: 139729452565336
+          id: 140473842762024
+          vertex1: 140473842762640
+          vertex2: 140473842762472
+        id: 140473842762360
         vertices:
         - attr: {.generation: '0', .new_pos: A, .svg_tag: None, x: '0', y: '0'}
-          id: 139729452564832
+          id: 140473842762640
         - attr: {.generation: '0', .new_pos: 'A + Vec(x1=0, y1=float(house.attr[''height'']))',
             .svg_tag: None, x: '0', y: '2'}
-          id: 139729452565504
-      id: 139729452565168
+          id: 140473842762472
+      id: 140473842762080
       mapping:
         dict: {}
-        id: 139729498218344
-      mother_graph: 139729452564944
+        id: 140473989083072
+      mother_graph: 140473842761912
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges: []
-      id: 139729452564944
+      id: 140473842761912
       vertices:
       - attr: {.generation: '0', label: attr=='House', x: '0', y: '0'}
-        id: 139729452564608
+        id: 140473842762192
     priority: 0
-    vectors: {A: 139729452564608}
+    vectors: {A: 140473842762192}
   02 Split House to Floors:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452565672
+    id: 140473842762304
     mappings:
     - attr_requirements:
-        all: {house: 139729452565840}
+        all: {house: 140473842762528}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', .svg_tag: None, expanded: 'False', floor: 'house.attr[''floors'']',
             grown: 'False', label: '''V-Floor''', width: 'house.attr[''width'']'}
-          id: 139729452566176
-          vertex1: 139729452566008
-          vertex2: 139729452565560
+          id: 140473842763312
+          vertex1: 140473842762752
+          vertex2: 140473842763368
         - attr: {.generation: '0', floors: 'int(old.attr[''floors''])+1', height: 'float(old.attr[''height''])
               - (10 + (float(old.attr[''height'']) % 10) / (float(old.attr[''height''])
               // 10))'}
-          id: 139729452565784
-          vertex1: 139729452565560
-          vertex2: 139729452565728
-        id: 139729452565000
+          id: 140473842763536
+          vertex1: 140473842763368
+          vertex2: 140473842762920
+        id: 140473842763200
         vertices:
         - attr: {.generation: '0', .new_pos: A, floor: 'int(house.attr[''floors''])',
             has_door: 'False', label: '''floor_end''', x: '0', y: '-4.3495702005730665'}
-          id: 139729452566008
+          id: 140473842762752
         - attr: {.generation: '0', .new_pos: 'A + normalize(v1) * (10 + (float(house.attr[''height''])
               % 10) / (float(house.attr[''height'']) // 10))', .svg_tag: None, x: '0',
             y: '-1.2607449856733535'}
-          id: 139729452565560
+          id: 140473842763368
         - attr: {.generation: 0, .new_pos: B, x: 0, y: 5.2951289398280785}
-          id: 139729452565728
-      id: 139729452565280
+          id: 140473842762920
+      id: 140473842763088
       mapping:
-        dict: {139729452565224: 139729452566008, 139729452565616: 139729452565728,
-          139729452565840: 139729452565784}
-        id: 139729497298904
-      mother_graph: 139729452565056
+        dict: {140473842762528: 140473842763536, 140473842762864: 140473842762920,
+          140473842763032: 140473842762752}
+        id: 140473988167816
+      mother_graph: 140473842762808
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: '0', height: float(attr) >= 10, label: attr=='House'}
-        id: 139729452565840
-        vertex1: 139729452565224
-        vertex2: 139729452565616
-      id: 139729452565056
+        id: 140473842762528
+        vertex1: 140473842763032
+        vertex2: 140473842762864
+      id: 140473842762808
       vertices:
       - attr: {.generation: '0', x: '0', y: '-3'}
-        id: 139729452565224
+        id: 140473842763032
       - attr: {.generation: 0, x: 0, y: 3}
-        id: 139729452565616
+        id: 140473842762864
     priority: 0
     vectors:
-      A: 139729452565224
-      B: 139729452565616
-      v1: [139729452565224, 139729452565616]
+      A: 140473842763032
+      B: 140473842762864
+      v1: [140473842763032, 140473842762864]
   03 Grow Floor:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452566400
+    id: 140473842763704
     mappings:
     - attr_requirements:
-        139729452567072: {v_floor: 139729452566792}
-        139729452567184: {v_floor: 139729452566792}
-        139729452567240: {v_floor: 139729452566792}
+        140473842764096: {v_floor: 140473842763872}
+        140473842764264: {v_floor: 140473842763872}
+        140473842764936: {v_floor: 140473842763872}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: 0, grown: 'True'}
-          id: 139729452567408
-          vertex1: 139729452566904
-          vertex2: 139729452566624
+          id: 140473842764432
+          vertex1: 140473842763816
+          vertex2: 140473842763984
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452567296
-          vertex1: 139729452566904
-          vertex2: 139729452567240
+          id: 140473842764488
+          vertex1: 140473842763816
+          vertex2: 140473842764264
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452567016
-          vertex1: 139729452567240
-          vertex2: 139729452566624
+          id: 140473842764152
+          vertex1: 140473842764264
+          vertex2: 140473842763984
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452567576
-          vertex1: 139729452566904
-          vertex2: 139729452567072
+          id: 140473842764656
+          vertex1: 140473842763816
+          vertex2: 140473842764096
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452567352
-          vertex1: 139729452567072
-          vertex2: 139729452566624
+          id: 140473842764600
+          vertex1: 140473842764096
+          vertex2: 140473842763984
         - attr: {.generation: '0', .svg_tag: None, floor: 'v_floor.attr[''floor'']',
             label: '''H-Floor''', width: 'v_floor.attr[''width'']'}
-          id: 139729452567184
-          vertex1: 139729452567240
-          vertex2: 139729452567072
-        id: 139729452566456
+          id: 140473842764936
+          vertex1: 140473842764264
+          vertex2: 140473842764096
+        id: 140473842763480
         vertices:
         - attr: {.generation: '0', x: '0', y: '0'}
-          id: 139729452566904
+          id: 140473842763816
         - attr: {.generation: '0', .svg_tag: None, new_x: '-float(v_floor.attr[''width''])
               / 2', x: '-3.4670487106017163', y: 2.5}
-          id: 139729452567240
+          id: 140473842764264
         - attr: {.generation: '0', .svg_tag: None, new_x: 'float(v_floor.attr[''width''])
               / 2', x: '3.5931232091690575', y: 2.5}
-          id: 139729452567072
+          id: 140473842764096
         - attr: {.generation: '0', x: '0', y: '5'}
-          id: 139729452566624
-      id: 139729452566960
+          id: 140473842763984
+      id: 140473842763648
       mapping:
-        dict: {139729452566288: 139729452566904, 139729452566736: 139729452566624,
-          139729452566792: 139729452567408}
-        id: 139729497297936
-      mother_graph: 139729452565952
+        dict: {140473842763256: 140473842763816, 140473842763424: 140473842763984,
+          140473842763872: 140473842764432}
+        id: 140473988166760
+      mother_graph: 140473842762696
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: '0', grown: not attr, label: attr=='V-Floor'}
-        id: 139729452566792
-        vertex1: 139729452566288
-        vertex2: 139729452566736
-      id: 139729452565952
+        id: 140473842763872
+        vertex1: 140473842763256
+        vertex2: 140473842763424
+      id: 140473842762696
       vertices:
       - attr: {.generation: '0', x: '0', y: '0'}
-        id: 139729452566288
+        id: 140473842763256
       - attr: {.generation: '0', x: '0', y: '5'}
-        id: 139729452566736
+        id: 140473842763424
     priority: 0
     vectors: {}
   04 Add Features:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452567744
+    id: 140473842764320
     mappings:
     - attr_requirements:
-        139729452568416: {h_floor: 139729452567800}
-        139729452568472: {h_floor: 139729452567800}
-        all: {h_floor: 139729452567800}
+        140473842765216: {h_floor: 140473842764712}
+        140473842765440: {h_floor: 140473842764712}
+        all: {h_floor: 140473842764712}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452567968
-          vertex1: 139729452568192
-          vertex2: 139729452568136
+          id: 140473842765720
+          vertex1: 140473842764880
+          vertex2: 140473842765552
         - attr: {.generation: '0', .svg_tag: None, floor: 'int(h_floor.attr[''floor''])',
             label: '''Feature'''}
-          id: 139729452568528
-          vertex1: 139729452568136
-          vertex2: 139729452568472
+          id: 140473842765496
+          vertex1: 140473842765552
+          vertex2: 140473842765440
         - attr: {.generation: 0, width: 'float(h_floor.attr[''width'']) - (5 + float(h_floor.attr[''width''])
               % 5)'}
-          id: 139729452568416
-          vertex1: 139729452568472
-          vertex2: 139729452568248
-        id: 139729452567520
+          id: 140473842765216
+          vertex1: 140473842765440
+          vertex2: 140473842765384
+        id: 140473842765272
         vertices:
         - attr: {.generation: '0', .new_pos: A, x: '-7.375358166189109', y: '-0.06303724928366705'}
-          id: 139729452568192
+          id: 140473842764880
         - attr: {.generation: '0', .new_pos: A, .svg_tag: None, x: '-3.9083094555873927',
             y: '-0.06303724928366883'}
-          id: 139729452568136
+          id: 140473842765552
         - attr: {.generation: '0', .new_pos: 'A + normalize(v1) * (5 + float(h_floor.attr[''width''])
               % 5)', .svg_tag: None, x: '-1.008595988538687', y: '-0.1260744985673341'}
-          id: 139729452568472
+          id: 140473842765440
         - attr: {.generation: 0, x: 4.034383954154727, y: -0.06303724928366883}
-          id: 139729452568248
-      id: 139729452568304
+          id: 140473842765384
+      id: 140473842765048
       mapping:
-        dict: {139729452567688: 139729452568192, 139729452567800: 139729452568416,
-          139729452568024: 139729452568248}
-        id: 139729497298024
-      mother_graph: 139729452567856
+        dict: {140473842764712: 140473842765216, 140473842764992: 140473842765384,
+          140473842765104: 140473842764880}
+        id: 140473988166848
+      mother_graph: 140473842764768
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: '0', label: attr=='H-Floor', width: float(attr) >= 5}
-        id: 139729452567800
-        vertex1: 139729452567688
-        vertex2: 139729452568024
-      id: 139729452567856
+        id: 140473842764712
+        vertex1: 140473842765104
+        vertex2: 140473842764992
+      id: 140473842764768
       vertices:
       - attr: {.generation: '0', x: -2.936962750716333, y: -0.5042979942693417}
-        id: 139729452567688
+        id: 140473842765104
       - attr: {.generation: '0', x: 4.2607449856733535, y: -0.5673352435530106}
-        id: 139729452568024
+        id: 140473842764992
     priority: 0
     vectors:
-      A: 139729452567688
-      v1: [139729452567688, 139729452568024]
+      A: 140473842765104
+      v1: [140473842765104, 140473842764992]
   05 Add Door:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452566848
+    id: 140473842765664
     mappings:
     - attr_requirements: {}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452597712
-          vertex1: 139729452597488
-          vertex2: 139729452597936
+          id: 140473842794680
+          vertex1: 140473842762584
+          vertex2: 140473842763928
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452597600
-          vertex1: 139729452597936
-          vertex2: 139729452597320
-        id: 139729452564888
+          id: 140473842794568
+          vertex1: 140473842763928
+          vertex2: 140473842795240
+        id: 140473842763592
         vertices:
         - attr: {.generation: '0', x: '-3', y: '0'}
-          id: 139729452597488
-        - attr: {.generation: '0', .svg_tag: None, label: '''Door''', x: '0', y: '0', .new_pos: 'A + 0.5 * v1'}
-          id: 139729452597936
+          id: 140473842762584
+        - attr: {.generation: '0', .new_pos: A + 0.5 * v1, .svg_tag: None, label: '''Door''',
+            x: '0', y: '0'}
+          id: 140473842763928
         - attr: {.generation: '0', x: '3', y: '0'}
-          id: 139729452597320
+          id: 140473842795240
         - attr: {.generation: '0', has_door: 'True', x: '-0.08595988538682064', y: '-2.805157593123207'}
-          id: 139729451248272
-      id: 139729452566232
+          id: 140473842794904
+      id: 140473842763760
       mapping:
-        dict: {139729452565896: 139729452597320, 139729452566512: 139729452597488,
-          139729453123120: 139729451248272}
-        id: 139729497298112
-      mother_graph: 139729452568360
+        dict: {140473842764208: 140473842794904, 140473842764544: 140473842795240,
+          140473842765608: 140473842762584}
+        id: 140473988166936
+      mother_graph: 140473842765776
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: 0, floor: attr==0, label: attr=='Feature'}
-        id: 139729452566064
-        vertex1: 139729452566512
-        vertex2: 139729452565896
-      id: 139729452568360
+        id: 140473842762136
+        vertex1: 140473842765608
+        vertex2: 140473842764544
+      id: 140473842765776
       vertices:
       - attr: {.generation: '0', x: '-3', y: '0'}
-        id: 139729452566512
+        id: 140473842765608
       - attr: {.generation: '0', x: '3', y: '0'}
-        id: 139729452565896
+        id: 140473842764544
       - attr: {.generation: '0', floor: attr==0, has_door: not attr, label: attr=='floor_end',
           x: '-0.04011461318051346', y: '-2.8051575931232087'}
-        id: 139729453123120
+        id: 140473842764208
     priority: 1
-    vectors: {A: 139729452566512, v1: [139729452566512, 139729452565896]}
+    vectors:
+      A: 140473842765608
+      v1: [140473842765608, 140473842764544]
   05 Add Windows:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452597824
+    id: 140473842794792
     mappings:
     - attr_requirements: {}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452598384
-          vertex1: 139729452597768
-          vertex2: 139729452598328
+          id: 140473842795072
+          vertex1: 140473842795296
+          vertex2: 140473842795688
         - attr: {.generation: '0', .svg_tag: None}
-          id: 139729452598552
-          vertex1: 139729452598328
-          vertex2: 139729452597544
-        id: 139729452598216
+          id: 140473842795744
+          vertex1: 140473842795688
+          vertex2: 140473842795520
+        id: 140473842794848
         vertices:
         - attr: {.generation: '0', x: '-3', y: '0'}
-          id: 139729452597768
+          id: 140473842795296
         - attr: {.generation: '0', .svg_tag: None, label: '''Window''', x: '0', y: '0'}
-          id: 139729452598328
+          id: 140473842795688
         - attr: {.generation: '0', x: '3', y: '0'}
-          id: 139729452597544
-      id: 139729452598160
+          id: 140473842795520
+      id: 140473842795408
       mapping:
-        dict: {139729452597376: 139729452597768, 139729452598048: 139729452597544}
-        id: 139729497298200
-      mother_graph: 139729452597992
+        dict: {140473842794736: 140473842795296, 140473842795184: 140473842795520}
+        id: 140473988167024
+      mother_graph: 140473842794960
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: 0, label: attr=='Feature'}
-        id: 139729452597880
-        vertex1: 139729452597376
-        vertex2: 139729452598048
-      id: 139729452597992
+        id: 140473842795632
+        vertex1: 140473842794736
+        vertex2: 140473842795184
+      id: 140473842794960
       vertices:
       - attr: {.generation: '0', x: '-3', y: '0'}
-        id: 139729452597376
+        id: 140473842794736
       - attr: {.generation: '0', x: '3', y: '0'}
-        id: 139729452598048
+        id: 140473842795184
     priority: 1
     vectors: {}
   06 Expand Door:
     conditions: {}
-    id: 139729452598832
+    id: 140473842795912
     mappings:
     - attr_requirements: {}
       conditions: {.expand_windows: 'True'}
       daughter_graph:
         edges:
         - attr: {.generation: '0'}
-          id: 139729452600008
-          vertex1: 139729452599056
-          vertex2: 139729452599504
+          id: 140473842796416
+          vertex1: 140473842796528
+          vertex2: 140473842796360
         - attr: {.generation: '0', is_colored: 'False', label: '''Door'''}
-          id: 139729452599840
-          vertex1: 139729452599504
-          vertex2: 139729452599560
+          id: 140473842796640
+          vertex1: 140473842796360
+          vertex2: 140473842795800
         - attr: {.generation: '0'}
-          id: 139729452599392
-          vertex1: 139729452599560
-          vertex2: 139729452599224
+          id: 140473842797032
+          vertex1: 140473842795800
+          vertex2: 140473842796696
         - attr: {.generation: '0'}
-          id: 139729452600120
-          vertex1: 139729452599224
-          vertex2: 139729452599056
-        id: 139729452599336
+          id: 140473842796864
+          vertex1: 140473842796696
+          vertex2: 140473842796528
+        id: 140473842796248
         vertices:
         - attr: {.generation: '0', .svg_tag: None, x: '-2', y: '-6'}
-          id: 139729452599056
+          id: 140473842796528
         - attr: {.generation: '0', .svg_tag: None, x: '-2', y: '2'}
-          id: 139729452599504
+          id: 140473842796360
         - attr: {.generation: '0', .svg_tag: None, x: '2', y: '2'}
-          id: 139729452599560
+          id: 140473842795800
         - attr: {.generation: '0', .svg_tag: None, x: '2', y: '-6'}
-          id: 139729452599224
+          id: 140473842796696
         - attr: {.generation: '0', .svg_tag: None, x: '0', y: '0'}
-          id: 139729452599728
-      id: 139729452599168
+          id: 140473842796192
+      id: 140473842795128
       mapping:
-        dict: {139729452598104: 139729452599728}
-        id: 139729497298288
-      mother_graph: 139729452597432
+        dict: {140473842795464: 140473842796192}
+        id: 140473988167112
+      mother_graph: 140473842795576
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: 0}
-        id: 139729452598720
-        vertex1: 139729452598664
-        vertex2: 139729452598104
+        id: 140473842795016
+        vertex1: 140473842795856
+        vertex2: 140473842795464
       - attr: {.generation: 0}
-        id: 139729452598944
-        vertex1: 139729452598104
-        vertex2: 139729452599000
-      id: 139729452597432
+        id: 140473842796080
+        vertex1: 140473842795464
+        vertex2: 140473842796024
+      id: 140473842795576
       vertices:
       - attr: {.generation: '0', x: '-3', y: '0.0'}
-        id: 139729452598664
+        id: 140473842795856
       - attr: {.generation: '0', label: attr=='Door', x: '0', y: '0'}
-        id: 139729452598104
+        id: 140473842795464
       - attr: {.generation: '0', x: '3', y: '0'}
-        id: 139729452599000
+        id: 140473842796024
     priority: 2
     vectors: {}
   06 Expand Windows:
     conditions: {}
-    id: 139729452600064
+    id: 140473842797200
     mappings:
     - attr_requirements: {}
       conditions: {.expand_windows: 'True'}
       daughter_graph:
         edges:
-        - attr: {.generation: '0', label: '''Window'''}
-          id: 139729452600904
-          vertex1: 139729452600960
-          vertex2: 139729452600848
+        - attr: {.generation: '0'}
+          id: 140473842797760
+          vertex1: 140473842797816
+          vertex2: 140473842797144
         - attr: {.generation: '0', blind_portion: random.random(), has_blind: 'False',
             is_colored: 'False', label: '''Window'''}
-          id: 139729452600680
-          vertex1: 139729452600848
-          vertex2: 139729452600792
-        - attr: {.generation: '0', label: '''Window'''}
-          id: 139729452601016
-          vertex1: 139729452600792
-          vertex2: 139729452601128
-        - attr: {.generation: '0', label: '''Window'''}
-          id: 139729452601240
-          vertex1: 139729452601128
-          vertex2: 139729452600960
-        id: 139729452600176
+          id: 140473842797648
+          vertex1: 140473842797144
+          vertex2: 140473842797480
+        - attr: {.generation: '0'}
+          id: 140473842798264
+          vertex1: 140473842797480
+          vertex2: 140473842797984
+        - attr: {.generation: '0', has_windowsill: 'False', label: '''Window_Bottom'''}
+          id: 140473842798152
+          vertex1: 140473842797984
+          vertex2: 140473842797816
+        id: 140473842797536
         vertices:
         - attr: {.generation: '0', .svg_tag: None, x: '-2', y: '-2'}
-          id: 139729452600960
+          id: 140473842797816
         - attr: {.generation: '0', .svg_tag: None, x: '-2', y: '2'}
-          id: 139729452600848
+          id: 140473842797144
         - attr: {.generation: '0', .svg_tag: None, x: '2', y: '2'}
-          id: 139729452600792
+          id: 140473842797480
         - attr: {.generation: '0', .svg_tag: None, x: '2', y: '-2'}
-          id: 139729452601128
-      id: 139729452600232
+          id: 140473842797984
+      id: 140473842797088
       mapping:
         dict: {}
-        id: 139729497298376
-      mother_graph: 139729452600288
+        id: 140473988167200
+      mother_graph: 140473842796752
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: 0}
-        id: 139729452600400
-        vertex1: 139729452599952
-        vertex2: 139729452600568
+        id: 140473842797368
+        vertex1: 140473842797256
+        vertex2: 140473842796920
       - attr: {.generation: 0}
-        id: 139729452600736
-        vertex1: 139729452600568
-        vertex2: 139729452600456
-      id: 139729452600288
+        id: 140473842797704
+        vertex1: 140473842796920
+        vertex2: 140473842797424
+      id: 140473842796752
       vertices:
       - attr: {.generation: '0', x: '-3', y: '0.0'}
-        id: 139729452599952
+        id: 140473842797256
       - attr: {.generation: '0', label: attr=='Window', x: '0', y: '0'}
-        id: 139729452600568
+        id: 140473842796920
       - attr: {.generation: '0', x: '3', y: '0'}
-        id: 139729452600456
+        id: 140473842797424
     priority: 2
     vectors: {}
   07 Expand Floors:
     conditions: {}
-    id: 139729452601072
+    id: 140473842798432
     mappings:
     - attr_requirements: {}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0', expanded: 'True'}
-          id: 139729452610560
-          vertex1: 139729452609608
-          vertex2: 139729452609720
+          id: 140473842827616
+          vertex1: 140473842795968
+          vertex2: 140473842828512
         - attr: {.generation: 0}
-          id: 139729452610392
-          vertex1: 139729452609608
-          vertex2: 139729452609944
+          id: 140473842827448
+          vertex1: 140473842795968
+          vertex2: 140473842828960
         - attr: {.generation: 0}
-          id: 139729452610784
-          vertex1: 139729452609944
-          vertex2: 139729452609720
+          id: 140473842828064
+          vertex1: 140473842828960
+          vertex2: 140473842828512
         - attr: {.generation: 0}
-          id: 139729452610672
-          vertex1: 139729452609720
-          vertex2: 139729452610224
+          id: 140473842827896
+          vertex1: 140473842828512
+          vertex2: 140473842827504
         - attr: {.generation: 0}
-          id: 139729452610448
-          vertex1: 139729452610224
-          vertex2: 139729452609608
+          id: 140473842827952
+          vertex1: 140473842827504
+          vertex2: 140473842795968
         - attr: {.generation: 0}
-          id: 139729452610952
-          vertex1: 139729452610000
-          vertex2: 139729452609664
+          id: 140473842828232
+          vertex1: 140473842827672
+          vertex2: 140473842827336
         - attr: {.generation: 0}
-          id: 139729452610616
-          vertex1: 139729452609664
-          vertex2: 139729452610112
+          id: 140473842827728
+          vertex1: 140473842827336
+          vertex2: 140473842827560
         - attr: {.generation: 0}
-          id: 139729452610504
-          vertex1: 139729452610112
-          vertex2: 139729452610280
+          id: 140473842827784
+          vertex1: 140473842827560
+          vertex2: 140473842827840
         - attr: {.generation: 0}
-          id: 139729452611176
-          vertex1: 139729452610280
-          vertex2: 139729452610000
-        id: 139729452610168
+          id: 140473842828400
+          vertex1: 140473842827840
+          vertex2: 140473842827672
+        id: 140473842796472
         vertices:
         - attr: {.generation: '0', x: '0', y: '-3'}
-          id: 139729452609608
+          id: 140473842795968
         - attr: {.generation: '0', x: '-3', y: '0'}
-          id: 139729452609944
+          id: 140473842828960
         - attr: {.generation: '0', x: '0', y: '3'}
-          id: 139729452609720
+          id: 140473842828512
         - attr: {.generation: '0', x: '3', y: '0'}
-          id: 139729452610224
+          id: 140473842827504
         - attr: {.generation: '0', .svg_tag: None, x: '-3', y: '-3'}
-          id: 139729452610000
+          id: 140473842827672
         - attr: {.generation: '0', .svg_tag: None, x: '-3', y: '3'}
-          id: 139729452609664
+          id: 140473842827336
         - attr: {.generation: '0', .svg_tag: None, x: '3', y: '3'}
-          id: 139729452610112
+          id: 140473842827560
         - attr: {.generation: '0', .svg_tag: None, x: '3', y: '-3'}
-          id: 139729452610280
-      id: 139729452609776
+          id: 140473842827840
+      id: 140473842796136
       mapping:
-        dict: {139729452598272: 139729452610784, 139729452598440: 139729452610392,
-          139729452598776: 139729452610560, 139729452598888: 139729452609720, 139729452599280: 139729452610224,
-          139729452599616: 139729452609944, 139729452601296: 139729452609608, 139729452611232: 139729452610448,
-          139729452611400: 139729452610672}
-        id: 139729497298464
-      mother_graph: 139729452600624
+        dict: {140473842796584: 140473842827896, 140473842796976: 140473842827952,
+          140473842797312: 140473842828064, 140473842797872: 140473842795968, 140473842797928: 140473842828960,
+          140473842798320: 140473842827504, 140473842798376: 140473842827448, 140473842798488: 140473842827616,
+          140473842798544: 140473842828512}
+        id: 140473988167288
+      mother_graph: 140473842798096
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: '0', expanded: not attr, label: attr=='V-Floor'}
-        id: 139729452598776
-        vertex1: 139729452601296
-        vertex2: 139729452598888
+        id: 140473842798488
+        vertex1: 140473842797872
+        vertex2: 140473842798544
       - attr: {.generation: 0}
-        id: 139729452598440
-        vertex1: 139729452601296
-        vertex2: 139729452599616
+        id: 140473842798376
+        vertex1: 140473842797872
+        vertex2: 140473842797928
       - attr: {.generation: 0}
-        id: 139729452598272
-        vertex1: 139729452599616
-        vertex2: 139729452598888
+        id: 140473842797312
+        vertex1: 140473842797928
+        vertex2: 140473842798544
       - attr: {.generation: 0}
-        id: 139729452611232
-        vertex1: 139729452601296
-        vertex2: 139729452599280
+        id: 140473842796976
+        vertex1: 140473842797872
+        vertex2: 140473842798320
       - attr: {.generation: 0}
-        id: 139729452611400
-        vertex1: 139729452599280
-        vertex2: 139729452598888
-      id: 139729452600624
+        id: 140473842796584
+        vertex1: 140473842798320
+        vertex2: 140473842798544
+      id: 140473842798096
       vertices:
       - attr: {.generation: '0', x: '0', y: '-3'}
-        id: 139729452601296
+        id: 140473842797872
       - attr: {.generation: '0', x: '-3', y: '0'}
-        id: 139729452599616
+        id: 140473842797928
       - attr: {.generation: '0', x: '3', y: '0'}
-        id: 139729452599280
+        id: 140473842798320
       - attr: {.generation: '0', x: '0', y: '3'}
-        id: 139729452598888
+        id: 140473842798544
+    priority: 2
+    vectors: {}
+  08 Add Window Sill:
+    conditions: {}
+    id: 140473842828120
+    mappings:
+    - attr_requirements: {}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0', has_windowsill: 'True'}
+          id: 140473842828680
+          vertex1: 140473842829016
+          vertex2: 140473842829352
+        - attr: {.generation: 0}
+          id: 140473842829240
+          vertex1: 140473842829184
+          vertex2: 140473842828848
+        - attr: {.generation: 0}
+          id: 140473842829632
+          vertex1: 140473842828848
+          vertex2: 140473842829016
+        - attr: {.generation: 0}
+          id: 140473842829576
+          vertex1: 140473842829352
+          vertex2: 140473842829520
+        - attr: {.generation: 0}
+          id: 140473842829912
+          vertex1: 140473842829520
+          vertex2: 140473842831200
+        - attr: {.generation: 0}
+          id: 140473842829744
+          vertex1: 140473842831200
+          vertex2: 140473842829184
+        id: 140473842828904
+        vertices:
+        - attr: {.generation: 0, .svg_tag: None, x: -2, y: -1}
+          id: 140473842829016
+        - attr: {.generation: 0, .svg_tag: None, x: 4, y: -1}
+          id: 140473842829352
+        - attr: {.generation: 0, .svg_tag: None, x: -2.5, y: -1.2}
+          id: 140473842829184
+        - attr: {.generation: 0, .svg_tag: None, x: -2.5, y: -1}
+          id: 140473842828848
+        - attr: {.generation: 0, .svg_tag: None, x: 4.5, y: -1}
+          id: 140473842829520
+        - attr: {.generation: 0, .svg_tag: None, x: 4.5, y: -1.2}
+          id: 140473842831200
+      id: 140473842828736
+      mapping:
+        dict: {140473842828176: 140473842829016, 140473842828344: 140473842828680,
+          140473842828456: 140473842829352}
+        id: 140473988167376
+      mother_graph: 140473842828568
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0', has_windowsill: attr==False, label: attr=='Window_Bottom'}
+        id: 140473842828344
+        vertex1: 140473842828176
+        vertex2: 140473842828456
+      id: 140473842828568
+      vertices:
+      - attr: {.generation: 0, x: -2, y: -1}
+        id: 140473842828176
+      - attr: {.generation: 0, x: 4, y: -1}
+        id: 140473842828456
     priority: 2
     vectors: {}
   08 Color Window:
     conditions: {}
-    id: 139729452611008
+    id: 140473842830024
     mappings:
     - attr_requirements: {}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0'}
-          id: 139729452612632
-          vertex1: 139729452611960
-          vertex2: 139729452612408
+          id: 140473842830416
+          vertex1: 140473842830136
+          vertex2: 140473842830752
         - attr: {.generation: '0', is_colored: 'True'}
-          id: 139729452612296
-          vertex1: 139729452612408
-          vertex2: 139729452612240
+          id: 140473842830472
+          vertex1: 140473842830752
+          vertex2: 140473842830584
         - attr: {.generation: '0'}
-          id: 139729452612800
-          vertex1: 139729452612240
-          vertex2: 139729452612128
+          id: 140473842831088
+          vertex1: 140473842830584
+          vertex2: 140473842830640
         - attr: {.generation: '0'}
-          id: 139729452612744
-          vertex1: 139729452612128
-          vertex2: 139729452611960
-        id: 139729452611288
+          id: 140473842830696
+          vertex1: 140473842830640
+          vertex2: 140473842830136
+        id: 140473842830528
         vertices:
         - attr: {.generation: '0', x: '-3', y: '-3'}
-          id: 139729452611960
+          id: 140473842830136
         - attr: {.generation: '0', x: '-3', y: '3'}
-          id: 139729452612408
+          id: 140473842830752
         - attr: {.generation: '0', x: '3', y: '3'}
-          id: 139729452612240
+          id: 140473842830584
         - attr: {.generation: '0', x: '3', y: '-3'}
-          id: 139729452612128
-        - attr: {.generation: '0', .svg_fill: '''#bbe5ff ''', .svg_height: norm(v1),
+          id: 140473842830640
+        - attr: {.generation: '0', .svg_fill: '''#154360''', .svg_height: norm(v1),
             .svg_tag: '''rect''', .svg_width: norm(v2), x: '0', y: '0'}
-          id: 139729452612576
-      id: 139729452611792
+          id: 140473842830920
+      id: 140473842829968
       mapping:
-        dict: {139729452610896: 139729452611960, 139729452611456: 139729452612240,
-          139729452611568: 139729452612408, 139729452611624: 139729452612296, 139729452611680: 139729452612800,
-          139729452611736: 139729452612128, 139729452611848: 139729452612632, 139729452612016: 139729452612744}
-        id: 139729497298552
-      mother_graph: 139729452611344
+        dict: {140473842829464: 140473842830136, 140473842829688: 140473842830752,
+          140473842829800: 140473842830696, 140473842829856: 140473842830416, 140473842830192: 140473842830584,
+          140473842830248: 140473842830640, 140473842830304: 140473842831088, 140473842830360: 140473842830472}
+        id: 140473988167464
+      mother_graph: 140473842829408
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452611848
-        vertex1: 139729452610896
-        vertex2: 139729452611568
+      - attr: {.generation: '0'}
+        id: 140473842829856
+        vertex1: 140473842829464
+        vertex2: 140473842829688
       - attr: {.generation: '0', is_colored: not attr, label: attr=='Window'}
-        id: 139729452611624
-        vertex1: 139729452611568
-        vertex2: 139729452611456
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452611680
-        vertex1: 139729452611456
-        vertex2: 139729452611736
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452612016
-        vertex1: 139729452611736
-        vertex2: 139729452610896
-      id: 139729452611344
+        id: 140473842830360
+        vertex1: 140473842829688
+        vertex2: 140473842830192
+      - attr: {.generation: '0'}
+        id: 140473842830304
+        vertex1: 140473842830192
+        vertex2: 140473842830248
+      - attr: {.generation: '0'}
+        id: 140473842829800
+        vertex1: 140473842830248
+        vertex2: 140473842829464
+      id: 140473842829408
       vertices:
       - attr: {.generation: '0', x: '-3', y: '-3'}
-        id: 139729452610896
+        id: 140473842829464
       - attr: {.generation: '0', x: '-3', y: '3'}
-        id: 139729452611568
+        id: 140473842829688
       - attr: {.generation: '0', x: '3', y: '3'}
-        id: 139729452611456
+        id: 140473842830192
       - attr: {.generation: '0', x: '3', y: '-3'}
-        id: 139729452611736
+        id: 140473842830248
     priority: 2
     vectors:
-      v1: [139729452611568, 139729452610896]
-      v2: [139729452611568, 139729452611456]
+      v1: [140473842829688, 140473842829464]
+      v2: [140473842829688, 140473842830192]
   09 Add Blinds:
     conditions: {.geometric_ordering: 'True'}
-    id: 139729452613192
+    id: 140473842830864
     mappings:
     - attr_requirements:
-        139729452611120: {top_edge: 139729452613528}
-        139729452627168: {top_edge: 139729452613528}
+        140473842807248: {top_edge: 140473842808928}
+        140473842807640: {top_edge: 140473842808928}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0'}
-          id: 139729452626720
-          vertex1: 139729452613304
-          vertex2: 139729452612688
+          id: 140473842806968
+          vertex1: 140473842807304
+          vertex2: 140473842807192
         - attr: {.generation: '0', has_blind: 'True'}
-          id: 139729452626272
-          vertex1: 139729452612688
-          vertex2: 139729452612352
+          id: 140473842807920
+          vertex1: 140473842807192
+          vertex2: 140473842806912
         - attr: {.generation: '0'}
-          id: 139729452626104
-          vertex1: 139729452612352
-          vertex2: 139729452611904
+          id: 140473842807696
+          vertex1: 140473842806912
+          vertex2: 140473842807472
         - attr: {.generation: '0'}
-          id: 139729452626160
-          vertex1: 139729452611904
-          vertex2: 139729452613304
+          id: 140473842807416
+          vertex1: 140473842807472
+          vertex2: 140473842807304
         - attr: {.generation: '0', label: '''Blind'''}
-          id: 139729452626440
-          vertex1: 139729452611120
-          vertex2: 139729452612072
+          id: 140473842807808
+          vertex1: 140473842807248
+          vertex2: 140473842807024
         - attr: {.generation: '0', is_colored: 'False', label: '''Blind'''}
-          id: 139729452625992
-          vertex1: 139729452612072
-          vertex2: 139729452629688
+          id: 140473842807976
+          vertex1: 140473842807024
+          vertex2: 140473842807752
         - attr: {.generation: '0', label: '''Blind'''}
-          id: 139729452626048
-          vertex1: 139729452629688
-          vertex2: 139729452627168
+          id: 140473842808256
+          vertex1: 140473842807752
+          vertex2: 140473842807640
         - attr: {.generation: '0', label: '''Blind'''}
-          id: 139729452626608
-          vertex1: 139729452627168
-          vertex2: 139729452611120
-        id: 139729452613584
+          id: 140473842808088
+          vertex1: 140473842807640
+          vertex2: 140473842807248
+        id: 140473842807080
         vertices:
         - attr: {.generation: '0', x: '-3', y: '-3'}
-          id: 139729452613304
+          id: 140473842807304
         - attr: {.generation: '0', x: '-3', y: '3'}
-          id: 139729452612688
+          id: 140473842807192
         - attr: {.generation: '0', x: '3', y: '3'}
-          id: 139729452612352
+          id: 140473842806912
         - attr: {.generation: '0', x: '3', y: '-3'}
-          id: 139729452611904
+          id: 140473842807472
         - attr: {.generation: '0', .new_pos: 'A + Vec(x1=0.2, y1=0) + v1 * float(top_edge.attr[''blind_portion''])',
             .svg_tag: None, x: '-2.75', y: '0.0'}
-          id: 139729452611120
+          id: 140473842807248
         - attr: {.generation: '0', .new_pos: 'A + Vec(x1=0.2, y1=-0.05)', .svg_tag: None,
             x: '-2.75', y: '2.75'}
-          id: 139729452612072
+          id: 140473842807024
         - attr: {.generation: '0', .new_pos: 'B + Vec(x1=-0.2, y1=-0.05)', .svg_tag: None,
             x: '2.75', y: '2.75'}
-          id: 139729452629688
+          id: 140473842807752
         - attr: {.generation: '0', .new_pos: 'B + Vec(x1=-0.2, y1=0) + v2 * float(top_edge.attr[''blind_portion''])',
             .svg_tag: None, x: '2.75', y: '0.0'}
-          id: 139729452627168
-      id: 139729452613472
+          id: 140473842807640
+      id: 140473842806856
       mapping:
-        dict: {139729452612520: 139729452613304, 139729452612856: 139729452612688,
-          139729452612968: 139729452611904, 139729452613024: 139729452626720, 139729452613136: 139729452626104,
-          139729452613360: 139729452612352, 139729452613416: 139729452626160, 139729452613528: 139729452626272}
-        id: 139729497298640
-      mother_graph: 139729452612464
+        dict: {140473842807864: 140473842807416, 140473842808928: 140473842807920,
+          140473842809096: 140473842807696, 140473842828792: 140473842807304, 140473842829072: 140473842806968,
+          140473842829296: 140473842807472, 140473842831032: 140473842806912, 140473842831144: 140473842807192}
+        id: 140473988167552
+      mother_graph: 140473842830808
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452613024
-        vertex1: 139729452612520
-        vertex2: 139729452612856
+      - attr: {.generation: '0'}
+        id: 140473842829072
+        vertex1: 140473842828792
+        vertex2: 140473842831144
       - attr: {.generation: '0', has_blind: not attr, label: attr=='Window'}
-        id: 139729452613528
-        vertex1: 139729452612856
-        vertex2: 139729452613360
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452613136
-        vertex1: 139729452613360
-        vertex2: 139729452612968
-      - attr: {.generation: '0', label: attr=='Window'}
-        id: 139729452613416
-        vertex1: 139729452612968
-        vertex2: 139729452612520
-      id: 139729452612464
+        id: 140473842808928
+        vertex1: 140473842831144
+        vertex2: 140473842831032
+      - attr: {.generation: '0'}
+        id: 140473842809096
+        vertex1: 140473842831032
+        vertex2: 140473842829296
+      - attr: {.generation: '0'}
+        id: 140473842807864
+        vertex1: 140473842829296
+        vertex2: 140473842828792
+      id: 140473842830808
       vertices:
       - attr: {.generation: '0', x: '-3', y: '-3'}
-        id: 139729452612520
+        id: 140473842828792
       - attr: {.generation: '0', x: '-3', y: '3'}
-        id: 139729452612856
+        id: 140473842831144
       - attr: {.generation: '0', x: '3', y: '3'}
-        id: 139729452613360
+        id: 140473842831032
       - attr: {.generation: '0', x: '3', y: '-3'}
-        id: 139729452612968
+        id: 140473842829296
     priority: 3
     vectors:
-      A: 139729452612856
-      B: 139729452613360
-      v1: [139729452612856, 139729452612520]
-      v2: [139729452613360, 139729452612968]
+      A: 140473842831144
+      B: 140473842831032
+      v1: [140473842831144, 140473842828792]
+      v2: [140473842831032, 140473842829296]
   10 Color Blinds:
     conditions: {}
-    id: 139729452626328
+    id: 140473842808648
     mappings:
     - attr_requirements: {}
       conditions: {}
       daughter_graph:
         edges:
         - attr: {.generation: '0'}
-          id: 139729452627784
-          vertex1: 139729452627728
-          vertex2: 139729452629408
+          id: 140473842808984
+          vertex1: 140473842809432
+          vertex2: 140473842809544
         - attr: {.generation: '0', is_colored: 'True'}
-          id: 139729452628120
-          vertex1: 139729452629408
-          vertex2: 139729452626888
+          id: 140473842809488
+          vertex1: 140473842809544
+          vertex2: 140473842809320
         - attr: {.generation: '0'}
-          id: 139729452627952
-          vertex1: 139729452626888
-          vertex2: 139729452627448
+          id: 140473842809656
+          vertex1: 140473842809320
+          vertex2: 140473842809376
         - attr: {.generation: '0'}
-          id: 139729452627616
-          vertex1: 139729452627448
-          vertex2: 139729452627728
-        id: 139729452627392
+          id: 140473842810104
+          vertex1: 140473842809376
+          vertex2: 140473842809432
+        id: 140473842809264
         vertices:
         - attr: {.generation: '0', x: '-3', y: '-3'}
-          id: 139729452627728
+          id: 140473842809432
         - attr: {.generation: '0', x: '-3', y: '3'}
-          id: 139729452629408
+          id: 140473842809544
         - attr: {.generation: '0', x: '3', y: '3'}
-          id: 139729452626888
+          id: 140473842809320
         - attr: {.generation: '0', x: '3', y: '-3'}
-          id: 139729452627448
-        - attr: {.generation: '0', .svg_fill: '''#f6feba ''', .svg_height: norm(v1),
+          id: 140473842809376
+        - attr: {.generation: '0', .svg_fill: '''#e88e43''', .svg_height: norm(v1),
             .svg_tag: '''rect''', .svg_width: norm(v2), x: '0', y: '0'}
-          id: 139729452627840
-      id: 139729452627056
+          id: 140473842809712
+      id: 140473842809152
       mapping:
-        dict: {139729452626384: 139729452627728, 139729452626552: 139729452626888,
-          139729452626664: 139729452629408, 139729452626944: 139729452627784, 139729452627112: 139729452627448,
-          139729452627224: 139729452628120, 139729452627560: 139729452627616, 139729452629856: 139729452627952}
-        id: 139729497298728
-      mother_graph: 139729452626776
+        dict: {140473842808200: 140473842809544, 140473842808312: 140473842809432,
+          140473842808536: 140473842808984, 140473842808592: 140473842810104, 140473842808704: 140473842809656,
+          140473842808760: 140473842809376, 140473842808872: 140473842809320, 140473842809040: 140473842809488}
+        id: 140473988167640
+      mother_graph: 140473842808144
       var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.generation: '0', label: attr=='Blind'}
-        id: 139729452626944
-        vertex1: 139729452626384
-        vertex2: 139729452626664
+        id: 140473842808536
+        vertex1: 140473842808312
+        vertex2: 140473842808200
       - attr: {.generation: '0', is_colored: not attr, label: attr=='Blind'}
-        id: 139729452627224
-        vertex1: 139729452626664
-        vertex2: 139729452626552
+        id: 140473842809040
+        vertex1: 140473842808200
+        vertex2: 140473842808872
       - attr: {.generation: '0', label: attr=='Blind'}
-        id: 139729452629856
-        vertex1: 139729452626552
-        vertex2: 139729452627112
+        id: 140473842808704
+        vertex1: 140473842808872
+        vertex2: 140473842808760
       - attr: {.generation: '0', label: attr=='Blind'}
-        id: 139729452627560
-        vertex1: 139729452627112
-        vertex2: 139729452626384
-      id: 139729452626776
+        id: 140473842808592
+        vertex1: 140473842808760
+        vertex2: 140473842808312
+      id: 140473842808144
       vertices:
       - attr: {.generation: '0', x: '-3', y: '-3'}
-        id: 139729452626384
+        id: 140473842808312
       - attr: {.generation: '0', x: '-3', y: '3'}
-        id: 139729452626664
+        id: 140473842808200
       - attr: {.generation: '0', x: '3', y: '3'}
-        id: 139729452626552
+        id: 140473842808872
       - attr: {.generation: '0', x: '3', y: '-3'}
-        id: 139729452627112
+        id: 140473842808760
     priority: 2
     vectors:
-      v1: [139729452626664, 139729452626384]
-      v2: [139729452626664, 139729452626552]
+      v1: [140473842808200, 140473842808312]
+      v2: [140473842808200, 140473842808872]
+  08 Color Door:
+    conditions: {}
+    id: 140435786499352
+    mappings:
+    - attr_requirements: {}
+      conditions: {}
+      daughter_graph:
+        edges:
+        - attr: {.generation: '0'}
+          id: 140435786500640
+          vertex1: 140435786499800
+          vertex2: 140435786500304
+        - attr: {.generation: '0', is_colored: 'True'}
+          id: 140435786501088
+          vertex1: 140435786500304
+          vertex2: 140435786500472
+        - attr: {.generation: '0'}
+          id: 140435786501144
+          vertex1: 140435786500472
+          vertex2: 140435786500920
+        - attr: {.generation: '0'}
+          id: 140435786500808
+          vertex1: 140435786500920
+          vertex2: 140435786499800
+        id: 140435786500192
+        vertices:
+        - attr: {.generation: '0', x: '-3', y: '-3'}
+          id: 140435786499800
+        - attr: {.generation: '0', x: '-3', y: '3'}
+          id: 140435786500304
+        - attr: {.generation: '0', x: '3', y: '3'}
+          id: 140435786500472
+        - attr: {.generation: '0', x: '3', y: '-3'}
+          id: 140435786500920
+        - attr: {.generation: '0', .svg_fill: '''#a95e1f''', .svg_height: norm(v1),
+            .svg_tag: '''rect''', .svg_width: norm(v2), x: '0', y: '0'}
+          id: 140435786500752
+      id: 140435786500528
+      mapping:
+        dict: {140435786499408: 140435786500472, 140435786499520: 140435786500304,
+          140435786499856: 140435786499800, 140435786499968: 140435786500640, 140435786500080: 140435786500920,
+          140435786500136: 140435786500808, 140435786500248: 140435786501088, 140435786500360: 140435786501144}
+        id: 140435931850360
+      mother_graph: 140435786499576
+      var_calc_instructions: []
+      weight: 1
+    mother_graph:
+      edges:
+      - attr: {.generation: '0'}
+        id: 140435786499968
+        vertex1: 140435786499856
+        vertex2: 140435786499520
+      - attr: {.generation: '0', is_colored: not attr, label: attr=='Door'}
+        id: 140435786500248
+        vertex1: 140435786499520
+        vertex2: 140435786499408
+      - attr: {.generation: '0'}
+        id: 140435786500360
+        vertex1: 140435786499408
+        vertex2: 140435786500080
+      - attr: {.generation: '0'}
+        id: 140435786500136
+        vertex1: 140435786500080
+        vertex2: 140435786499856
+      id: 140435786499576
+      vertices:
+      - attr: {.generation: '0', x: '-3', y: '-3'}
+        id: 140435786499856
+      - attr: {.generation: '0', x: '-3', y: '3'}
+        id: 140435786499520
+      - attr: {.generation: '0', x: '3', y: '3'}
+        id: 140435786499408
+      - attr: {.generation: '0', x: '3', y: '-3'}
+        id: 140435786500080
+    priority: 2
+    vectors:
+      v1: [140435786499520, 140435786499856]
+      v2: [140435786499520, 140435786499408]
 result_graphs: {}
