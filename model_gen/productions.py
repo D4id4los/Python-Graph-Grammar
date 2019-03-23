@@ -8,7 +8,7 @@ from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List, Any
 from model_gen.utils import Mapping, get_logger
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
     get_max_generation, graph_is_consistent, copy_without_meta_elements, \
-    get_min_max_points, get_positions, get_position
+    get_min_max_points, get_positions, get_position, non_recursive_copy
 from model_gen.exceptions import ModelGenArgumentError, \
     ModelGenIncongruentGraphStateError
 from model_gen.geometry import Vec, angle, norm, perp_right, perp_left, \
@@ -43,17 +43,17 @@ class ProductionApplicationHierarchy:
                  mother_to_host: Mapping,
                  production_option: 'ProductionOption',
                  ) -> None:
-        self.host_to_result = Mapping()
-        self.result_graph = host_graph.__deepcopy__(
-            mapping=self.host_to_result)
-        self.host_graph = host_graph
-        self.mother_to_host = mother_to_host
-        self.mother_graph = production_option.mother_graph
-        self.mother_to_daughter = production_option.mapping
-        self.daughter_graph = production_option.daughter_graph
-        self.daughter_to_copy = Mapping()
-        self.copy_graph = self.daughter_graph.__deepcopy__(
-            mapping=self.daughter_to_copy)
+        self.host_to_result: Mapping = Mapping()
+        self.result_graph: Graph = non_recursive_copy(host_graph,
+                                                      self.host_to_result)
+        self.host_graph: Graph = host_graph
+        self.mother_to_host: Mapping = mother_to_host
+        self.mother_graph: Graph = production_option.mother_graph
+        self.mother_to_daughter: Mapping = production_option.mapping
+        self.daughter_graph: Graph = production_option.daughter_graph
+        self.daughter_to_copy: Mapping = Mapping()
+        self.copy_graph: Graph = non_recursive_copy(self.daughter_graph,
+                                                    self.daughter_to_copy)
         self.hierarchy_alias = {
             'R': 0,
             'H': 1,

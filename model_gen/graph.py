@@ -478,27 +478,27 @@ class Graph(MutableSet):
                     or faces is not None \
                     or elements is not None:
                 raise TypeError()
-            self.vertices = list(graph.vertices)
-            self.edges = list(graph.edges)
+            self.vertices: List[Vertex] = list(graph.vertices)
+            self.edges: List[Edge] = list(graph.edges)
             self.faces = list(graph.faces)
         elif vertices is not None and edges is not None and faces is not None:
             if elements is not None:
                 raise TypeError()
-            self.vertices = list(vertices)
-            self.edges = list(edges)
+            self.vertices: List[Vertex] = list(vertices)
+            self.edges: List[Edge] = list(edges)
             self.faces = list(faces)
         elif vertices is not None or edges is not None or faces is not None:
             raise TypeError()
         elif elements is not None:
-            self.vertices: MutableSequence[Vertex] = []
-            self.edges: MutableSequence[Edge] = []
-            self.faces: MutableSequence[Face] = []
+            self.vertices: List[Vertex] = []
+            self.edges: List[Edge] = []
+            self.faces: List[Face] = []
             for element in elements:
                 self.add(element)
         else:
-            self.vertices: MutableSequence[Vertex] = []
-            self.edges: MutableSequence[Edge] = []
-            self.faces: MutableSequence[Face] = []
+            self.vertices: List[Vertex] = []
+            self.edges: List[Edge] = []
+            self.faces: List[Face] = []
 
     def __iter__(self):
         return self.AllElemIter(self)
@@ -1134,6 +1134,65 @@ def graph_is_consistent(graph: Graph) -> bool:
                 return False
     return True
 
+@singledispatch
+def non_recursive_copy(object, mapping: Mapping=None):
+    """
+    Return a deepcopy of the passed object.
+
+    This function specifically does not use recursion, so it is save
+    from maximum recursion errors.
+
+    :param object: The object to be copied.
+    :param mapping: A mapping which will be used to skip already
+        copied elements. At the end of the copying it will contain a
+        mapping between all original elements and their copies.
+    :return: A deepcopy of the object.
+    """
+    return NotImplementedError
+
+
+@non_recursive_copy.register(Vertex)
+def _(vertex: Vertex, mapping: Mapping=None) -> Vertex:
+    if mapping is None:
+        mapping = Mapping()
+    if vertex in mapping:
+        return mapping[vertex]
+    result = Vertex()
+    mapping[vertex] = result
+    result.attr = copy.deepcopy(vertex.attr)
+    result.edges = set(vertex.edges)
+    return result
+
+
+@non_recursive_copy.register(Edge)
+def _(edge: Edge, mapping: Mapping=None) -> Edge:
+    if mapping is None:
+        mapping = Mapping()
+    if edge in mapping:
+        return mapping[edge]
+    result = Edge()
+    mapping[edge] = result
+    result.attr = copy.deepcopy(edge.attr)
+    result.vertex1 = edge.vertex1
+    result.vertex2 = edge.vertex2
+    return result
+
+
+@non_recursive_copy.register(Graph)
+def _(graph: Graph, mapping: Mapping=None) -> Graph:
+    if mapping is None:
+        mapping = Mapping()
+    result = Graph()
+    result.vertices: List[Vertex] = [non_recursive_copy(x, mapping)
+                                     for x in graph.vertices]
+    result.edges: List[Edge] = [non_recursive_copy(x, mapping)
+                                for x in graph.edges]
+    for vertex in result.vertices:
+        vertex.replace_connection(lambda e: mapping.get(e, None))
+    for edge in result.edges:
+        edge.replace_connection(lambda v: mapping.get(v, None))
+    return result
+
 
 @singledispatch
 def copy_without_meta_elements(grammar_object, mapping=None):
@@ -1161,7 +1220,7 @@ def copy_without_meta_elements(grammar_object, mapping=None):
 def _(graph: Graph, mapping: Mapping=None) -> Graph:
     if mapping is None:
         mapping = Mapping()
-    result = graph.__deepcopy__(mapping=mapping)
+    result: Graph = non_recursive_copy(graph, mapping)
     to_remove = []
     for element in result:
         if '.helper_node' in element.attr and element.attr['.helper_node']:
