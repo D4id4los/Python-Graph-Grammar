@@ -1,131 +1,142 @@
+global_vars: {}
 host_graphs:
   Axiom:
     edges:
-    - attr: {.directed: 'True', .generation: '0', .svg_stroke_width: 10, label: Trunk, section_height: 1}
-      id: 139796554326088
-      vertex1: 139796554326648
-      vertex2: 139796554326312
-    id: 139796554327768
+    - attr: {.directed: 'True', .generation: '0', .svg_stroke_width: 10, label: Trunk,
+        section_height: 1}
+      id: 140677094440072
+      vertex1: 140677094436992
+      vertex2: 140677094438112
+    id: 140677094439008
     vertices:
-    - attr: {.generation: '0', .svg_tag: None, x: '0.26385224274406127', y: '-2.269129287598944'}
-      id: 139796554326648
-    - attr: {.generation: '0', .svg_tag: None, x: '0.21108179419525186', y: '1.0554089709762522'}
-      id: 139796554326312
+    - attr: {.generation: '0', .svg_tag: None, x: '0', y: '-2.269129287598944'}
+      id: 140677094436992
+    - attr: {.generation: '0', .svg_tag: None, x: '0', y: '1.0554089709762522'}
+      id: 140677094438112
 productions:
   Grow Branch:
     conditions: {}
-    id: 140080723841768
+    id: 140677094437272
     mappings:
     - attr_requirements:
-        140080527704752: {trunk: 140080724542856}
-        140080513470816: {trunk: 140080724542856}
-        140080512063304: {trunk: 140080724542856}
+        140677094437496: {trunk: 140677094437160}
+        140677094437720: {trunk: 140677094437160}
+        140677094438168: {trunk: 140677094437160}
       conditions: {generation: oldest}
       daughter_graph:
         edges:
-        - attr: {.generation: 0, .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']'}
-          id: 140080527704752
-          vertex1: 140080724376096
-          vertex2: 140080724376152
-        - attr: {.generation: '0', label: '''Branch''', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width'']) * 0.7'}
-          id: 140080513470816
-          vertex1: 140080724376152
-          vertex2: 140080725105856
-        - attr: {.generation: '0', label: '''Branch''', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width'']) * 0.7'}
-          id: 140080512063304
-          vertex1: 140080724376152
-          vertex2: 140080724666968
-        id: 140080723841152
+        - attr: {.generation: '0', .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']'}
+          id: 140677094437720
+          vertex1: 140677094440240
+          vertex2: 140677094436936
+        - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
+              * 0.7', label: '''Branch'''}
+          id: 140677094437496
+          vertex1: 140677094436936
+          vertex2: 140677094437608
+        - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
+              * 0.7', label: '''Branch'''}
+          id: 140677094438168
+          vertex1: 140677094436936
+          vertex2: 140677094437048
+        id: 140677094437440
         vertices:
-        - attr: {.generation: 0, x: -1.197707736389681, y: -3.5931232091690557, .new_pos: A}
-          id: 140080724376096
-        - attr: {.generation: 0, x: -1.2607449856733552, y: 0.8194842406876806, .new_pos: B}
-          id: 140080724376152
-        - attr: {.generation: '0', .svg_tag: None, x: '-1.3237822349570152', y: '4.916905444126076',
-                 .new_pos: 'B + v1 * 0.9'}
-          id: 140080725105856
-        - attr: {.generation: '0', .svg_tag: None, x: '2.206303724928368', y: '3.340974212034382',
-                 .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, pi/2 * random.choice((-1,1)) * (random.random() / 3 + 0.3), A)) * 0.6'}
-          id: 140080724666968
-      id: 140080723841376
+        - attr: {.generation: '0', .new_pos: A, x: '-1', y: '-3.5931232091690557'}
+          id: 140677094440240
+        - attr: {.generation: '0', .new_pos: B, x: '-1', y: '0.8194842406876806'}
+          id: 140677094436936
+        - attr: {.generation: '0', .new_pos: B + v1 * 0.9, .svg_tag: None, x: '-1',
+            y: '4.916905444126076'}
+          id: 140677094437608
+        - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, pi/2
+              * random.choice((-1,1)) * (random.random() / 3 + 0.3), A)) * 0.6', .svg_tag: None,
+            x: '2.206303724928368', y: '3.340974212034382'}
+          id: 140677094437048
+      id: 140677094437104
       mapping:
-        dict: {140080724296872: 140080724376152, 140080725311784: 140080724376096}
-        id: 140080869521808
-      mother_graph: 140080723844064
+        dict: {140677094437216: 140677094440240, 140677094437384: 140677094436936}
+        id: 140677140409424
+      mother_graph: 140677094438392
+      var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
       - attr: {.directed: 'True', .generation: '0', label: attr=='Branch'}
-        id: 140080724542856
-        vertex1: 140080725311784
-        vertex2: 140080724296872
-      id: 140080723844064
+        id: 140677094437160
+        vertex1: 140677094437216
+        vertex2: 140677094437384
+      id: 140677094438392
       vertices:
-      - attr: {.generation: 0, x: -1.7763568394002505e-15, y: -2.899713467048711}
-        id: 140080725311784
-      - attr: {.generation: 0, x: 0.0, y: 1.4498567335243546}
-        id: 140080724296872
+      - attr: {.generation: '0', x: '0', y: '-2.899713467048711'}
+        id: 140677094437216
+      - attr: {.generation: '0', x: '0.0', y: '1.4498567335243546'}
+        id: 140677094437384
     priority: 0
-    vectors: {A: 140080725311784, B: 140080724296872, v1: [140080725311784, 140080724296872]}
+    vectors:
+      A: 140677094437216
+      B: 140677094437384
+      v1: [140677094437216, 140677094437384]
   Grow Trunk:
     conditions: {}
-    id: 139796554326480
+    id: 140677094437944
     mappings:
     - attr_requirements:
-        139796554327040: {trunk: 139796554326592}
-        139796554327152: {trunk: 139796554326592}
-        139796554327488: {trunk: 139796554326592}
+        140677094438784: {trunk: 140677094437552}
+        140677094439064: {trunk: 140677094437552}
+        140677094439344: {trunk: 140677094437552}
       conditions: {generation: oldest}
       daughter_graph:
         edges:
         - attr: {.generation: 0, .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']'}
-          id: 139796554327488
-          vertex1: 139796554326928
-          vertex2: 139796554327320
+          id: 140677094439064
+          vertex1: 140677094438056
+          vertex2: 140677094439120
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
               * 0.7', label: '''Trunk''', section_height: 'int(trunk.attr[''section_height''])+1'}
-          id: 139796554327152
-          vertex1: 139796554327320
-          vertex2: 139796554327208
+          id: 140677094438784
+          vertex1: 140677094439120
+          vertex2: 140677094438560
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
               * 0.7', label: '''Branch'''}
-          id: 139796554327040
-          vertex1: 139796554327320
-          vertex2: 139796554326984
-        id: 139796554326760
+          id: 140677094439344
+          vertex1: 140677094439120
+          vertex2: 140677094438504
+        id: 140677094438672
         vertices:
-        - attr: {.generation: 0, .new_pos: A, x: -1.197707736389681, y: -3.5931232091690557}
-          id: 139796554326928
-        - attr: {.generation: 0, .new_pos: B, x: -1.2607449856733552, y: 0.8194842406876806}
-          id: 139796554327320
-        - attr: {.generation: '0', .new_pos: B + v1 * 0.9, .svg_tag: None, x: '-1.3237822349570152',
+        - attr: {.generation: '0', .new_pos: A, x: '-1', y: '-3.5931232091690557'}
+          id: 140677094438056
+        - attr: {.generation: '0', .new_pos: B, x: '-1', y: '0.8194842406876806'}
+          id: 140677094439120
+        - attr: {.generation: '0', .new_pos: B + v1 * 0.9, .svg_tag: None, x: '-1',
             y: '4.916905444126076'}
-          id: 139796554327208
+          id: 140677094438560
         - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, pi/2
               * random.choice((-1,1)) * (random.random() / 3 + 0.3), A)) * 0.6', .svg_tag: None,
             x: '2.206303724928368', y: '3.340974212034382'}
-          id: 139796554326984
-      id: 139796554327096
+          id: 140677094438504
+      id: 140677094438224
       mapping:
-        dict: {139796554326200: 139796554327320, 139796554326256: 139796554326928}
-        id: 139796700255864
-      mother_graph: 139796554326704
+        dict: {140677094439960: 140677094438056, 140677094440408: 140677094439120}
+        id: 140677140408984
+      mother_graph: 140677094437888
+      var_calc_instructions: []
       weight: 1
     mother_graph:
       edges:
-      - attr: {.directed: 'True', .generation: '0', label: attr=='Trunk', section_height: int(attr) < 11}
-        id: 139796554326592
-        vertex1: 139796554326256
-        vertex2: 139796554326200
-      id: 139796554326704
+      - attr: {.directed: 'True', .generation: '0', label: attr=='Trunk', section_height: int(attr)
+            < 11}
+        id: 140677094437552
+        vertex1: 140677094439960
+        vertex2: 140677094440408
+      id: 140677094437888
       vertices:
-      - attr: {.generation: 0, x: -1.7763568394002505e-15, y: -2.899713467048711}
-        id: 139796554326256
-      - attr: {.generation: 0, x: 0.0, y: 1.4498567335243546}
-        id: 139796554326200
+      - attr: {.generation: '0', x: '0', y: '-2.899713467048711'}
+        id: 140677094439960
+      - attr: {.generation: '0', x: '0.0', y: '1.4498567335243546'}
+        id: 140677094440408
     priority: 0
     vectors:
-      A: 139796554326256
-      B: 139796554326200
-      v1: [139796554326256, 139796554326200]
+      A: 140677094439960
+      B: 140677094440408
+      v1: [140677094439960, 140677094440408]
 result_graphs: {}

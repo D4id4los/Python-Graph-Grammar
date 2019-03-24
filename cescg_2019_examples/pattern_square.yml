@@ -1,4 +1,4 @@
-global_vars: {max_num_dots: 'random.randint(1,1)', max_num_lines: 'random.randint(2,2)'}
+global_vars: {max_num_dots: 'random.randint(0,2)', max_num_lines: 'random.randint(1,4)'}
 host_graphs:
   Axiom:
     edges: []
