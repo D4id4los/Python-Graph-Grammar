@@ -11,12 +11,13 @@ from model_gen.graph import Graph
 from model_gen.gui_graphs import GraphPanel, ProductionGraphsPanel
 from model_gen.productions import Production
 from model_gen.utils import Mapping, get_logger
-from model_gen.exports import export_graph_to_svg, export_production_to_TIKZ, \
+from model_gen.exports import export_production_to_TIKZ, \
     export_graph_to_TIKZ
 
 log = get_logger('model_gen.' + __name__)
 
 RunGrammarEvent, EVT_RUN_GRAMMAR = wx.lib.newevent.NewCommandEvent()
+ExportSVGEvent, EVT_EXPORT_SVG = wx.lib.newevent.NewCommandEvent()
 
 class MainNotebook(aui.AuiNotebook):
     """
@@ -207,7 +208,8 @@ class ResultGraphPanel(wx.Panel):
             path = file_dialog.GetPath()
             log.info(f'Exporting graph to file {path}')
             graph = self.list.get_active()
-            export_graph_to_svg(graph, path)
+            event = ExportSVGEvent(wx.ID_ANY, graph=graph, path=path)
+            wx.PostEvent(self, event)
 
 
 class GraphList(wx.ListCtrl):

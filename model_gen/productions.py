@@ -1,7 +1,7 @@
 import random
 import scipy.stats
 import numpy
-from math import pi, asin, isnan, isinf
+from math import pi, asin, atan, isnan, isinf
 from functools import partial, singledispatch
 from typing import Iterable, Sized, Union, Tuple, Sequence, Dict, List, Any
 
@@ -525,7 +525,9 @@ class Production:
                     if '.new_pos' in target_element.attr:
                         target_element.attr.pop('.new_pos')
                     continue
-                elif attr_name.startswith('.') and not attr_name.startswith('.svg_'):
+                elif (attr_name.startswith('.')
+                      and not attr_name.startswith('.svg_')
+                      and not attr_name.startswith('.svgx_')):
                     continue
                 target_element.attr[attr_name] = attr_func(old_element,
                                                            self_=target_element,

@@ -6,13 +6,14 @@ import wx
 import wx.lib.newevent
 import yaml
 
-from gui_elements import MainNotebook, EVT_RUN_GRAMMAR
+from gui_elements import MainNotebook, EVT_RUN_GRAMMAR, EVT_EXPORT_SVG
 from model_gen.grammar import Grammar, GrammarInfo
 from model_gen.productions import Production
 from model_gen.utils import get_logger
 from model_gen.graph import Graph
 from model_gen.opts import Opts
 from model_gen.serialisation import from_yaml, to_yaml
+from model_gen.exports import export_graph_to_svg
 
 T = TypeVar('T')
 
@@ -85,6 +86,7 @@ class GraphUI(wx.Frame):
                   self.view_show_all_labels)
 
         self.Bind(EVT_RUN_GRAMMAR, self.run_grammar)
+        self.Bind(EVT_EXPORT_SVG, self.export_svg)
 
     def load_graphs(self, host_graphs: Dict[str, Graph],
                     productions: Dict[str, Production],
@@ -128,6 +130,14 @@ class GraphUI(wx.Frame):
             except IOError:
                 log.error(f'Could not open/write-to file {path}.')
                 wx.LogError(f'Cannot save export to file {path}.')
+
+    def export_svg(self, evt: wx.CommandEvent) -> None:
+        """
+        Handle the event of exporting a graph to svg.
+
+        :param evt: The wx event.
+        """
+        export_graph_to_svg(evt.graph, evt.path, self.grammar_info.svg_preamble)
 
     def import_graphs(self, _) -> None:
         """
@@ -178,7 +188,9 @@ class GraphUI(wx.Frame):
                 f'loaded/defined.')
             wx.LogError('Error: No host graphs loaded/defined.')
             return
-        results = grammar.apply(host_graph, opts['max_derivations'])
+        max_derivations = self.grammar_info.options['max_derivations']
+        max_derivations.setdefault('all', opts['max_derivations'])
+        results = grammar.apply(host_graph, max_derivations)
         offset = len(self.grammar_info.result_graphs)
         log.debug(
             f'There where {len(results)} derivations calculated.')

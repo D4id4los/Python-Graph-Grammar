@@ -59,6 +59,7 @@ class AttributeEditingFrame(wx.Frame):
         super().__init__(*args, **kwargs, style=style)
         self.SetTransparent(240)
         self.SetPosition(position)
+        self.SetSize(400, 600)
         self._set_frame_shape()
         self.attr_buttons: Dict[int, wx.Button] = {}
         self.attr_labels: Dict[int, wx.TextCtrl] = {}

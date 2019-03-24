@@ -3,6 +3,6 @@ gui:
     background_color: [5, 5, 5]
     mask_color: [0, 0, 0]
 last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/cescg_2019_examples/tree_painting.yml
-max_derivations: 200
+max_derivations: 500
 show_all_labels: false
 yaml: {file_version: '1.1'}

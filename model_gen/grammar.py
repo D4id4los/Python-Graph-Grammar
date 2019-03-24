@@ -30,7 +30,7 @@ class Grammar:
         self.global_vars: Dict[str, str] = global_vars
         self.subgrammars: Iterable['Grammar'] = subgrammars
 
-    def apply(self, target_graph: Graph, max_steps: int = 0) \
+    def apply(self, target_graph: Graph, max_steps: Dict = None) \
             -> List[Graph]:
         """
         Apply the productions of the grammar to a target graph and
@@ -44,6 +44,8 @@ class Grammar:
         :return: The sequence of graphs that results from applying
                  the grammar to the target graph.
         """
+        if max_steps is None:
+            max_steps = {all: 0}
         start_time = timer()
         log.info(f'Applying the grammar {self} to the target '
                  f'{id(target_graph)} for max {max_steps} steps.')
@@ -60,10 +62,13 @@ class Grammar:
                 prod_opt.vars = {**evaluate_per_run_vars(prod_opt, global_var_results),
                                  **global_var_results}
         new_host_graph = target_graph
+        step_counts = {priority: 0 for priority
+                       in self.grouped_productions.keys()}
+        step_counts['all'] = 0
         while True:
             log.info(f'Runnig derivation {step_count}.')
             production, matches = self._find_matching_production(
-                new_host_graph
+                new_host_graph, step_counts, max_steps
             )
             if production is None:
                 break
@@ -72,16 +77,18 @@ class Grammar:
             new_host_graph = production.apply(new_host_graph, matching_mapping)
             result_graphs.append(new_host_graph)
             log.info(f'Resulted in a graph with {len(new_host_graph)} elements.')
-            step_count += 1
-            if max_steps != 0 and max_steps <= step_count:
+            step_counts['all'] += 1
+            step_counts[production.priority] += 1
+            if max_steps['all'] != 0 and max_steps['all'] <= step_counts['all']:
                 break
         end_time = timer()
         dt = end_time - start_time
         log.info(f'Calculated {len(result_graphs)} derivations in {dt} seconds.')
         return result_graphs
 
-    def _find_matching_production(self, target_graph: Graph) \
-            -> Tuple[Production, List[Mapping]]:
+    def _find_matching_production(self, target_graph: Graph,
+                                  step_counts: Dict, max_steps: Dict
+                                  ) -> Tuple[Production, List[Mapping]]:
         """
         Find a single production that has at least one match against the target
         Graph.
@@ -91,12 +98,19 @@ class Grammar:
 
         :param target_graph: The target graph to find a matching production
             against.
+        :param step_counts: A dict containing the number of already performed
+            derivation steps, categorised by priority.
+        :param max_steps: A dict containing the maximum number derivation steps
+            to perform, categorised by priority.
         :return: One matching production along with all the possible matching
             subgraphs of the target graph. If no match is found returns
             (None,[]).
         """
         result = (None, [])
         for priority in sorted(self.grouped_productions.keys()):
+            if (priority in max_steps
+                    and step_counts[priority] >= max_steps[priority]):
+                continue
             for production in randomly(self.grouped_productions[priority]):
                 matching_mappings = production.match(target_graph)
                 if len(matching_mappings) == 0:
@@ -175,4 +189,4 @@ class GrammarInfo:
         self.global_vars: Dict[str, Any] = None
         self.options: Dict[str, Any] = None
         self.extra: Dict[str, Any] = None
-        self.svg_preamble: List[str] = None
+        self.svg_preamble: Dict = None

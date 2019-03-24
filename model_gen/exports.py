@@ -3,7 +3,8 @@ Contains export functions for graphs.
 """
 
 import svgwrite
-from svgwrite import cm, mm
+from svgwrite import cm
+from svgwrite.filters import Filter
 from functools import singledispatch
 from typing import List, Tuple, Union, Dict
 from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
@@ -11,34 +12,63 @@ from model_gen.graph import Graph, GraphElement, Vertex, Edge, \
 from model_gen.productions import Production
 
 
+mult = 35.43307
+
+
 def add_graphelement_to_svg_drawing(element: GraphElement,
-                                    drawing: svgwrite.Drawing) -> None:
+                                    drawing: svgwrite.Drawing,
+                                    filters: Dict[str, Filter]) -> None:
     args = {}
     for attr, value in element.attr.items():
         if attr.startswith('.svg_tag'):
             continue
         if attr.startswith('.svg_'):
-            args[attr[5:]] = value
+            name = attr[5:]
+            if name == 'filter':
+                args[name] = filters[value].get_funciri()
+            else:
+                args[name] = value
     if '.svg_tag' in element.attr:
-        if element.attr['.svg_tag'] == 'rect':
+        tag = element.attr['.svg_tag']
+        if tag == 'rect':
             x = float(element.attr['x'])
             y = -float(element.attr['y'])
             width = float(element.attr.get('.svg_width', 0.1))
             height = float(element.attr.get('.svg_height', 0.1))
             x = x - width / 2
             y = y - height / 2
-            drawing.add(drawing.rect((x*cm, y*cm), (width*cm, height*cm),
+            drawing.add(drawing.rect((x*mult, y*mult), (width*mult, height*mult),
                                      **args))
-        elif element.attr['.svg_tag'] == 'path':
+        elif tag == 'path':
             drawing.add(drawing.path(**args))
-        elif element.attr['.svg_tag'] == 'circle':
+        elif tag == 'circle':
             x = float(element.attr['x'])
             y = -float(element.attr['y'])
             args.setdefault('r', '1cm')
             args.setdefault('stroke_width', '0.1mm')
             args.setdefault('stroke', 'black')
             args.setdefault('fill', 'none')
-            drawing.add(drawing.circle(center=(x * cm, y * cm), **args))
+            drawing.add(drawing.circle(center=(x * mult, y * mult), **args))
+        elif tag == 'image':
+            x = float(element.attr['x'])
+            y = -float(element.attr['y'])
+            width = float(element.attr.pop('.svg_width', 5))
+            height = float(element.attr.pop('.svg_height', 5))
+            x = x - width / 2
+            y = y - height / 2
+            center = ((x + width / 2), (y + height / 2))
+            args.setdefault('insert', (x * mult, y * mult))
+            args.setdefault('size', (width * mult, height * mult))
+            if '.svgx_rotate' in element.attr:
+                rotation = float(element.attr['.svgx_rotate'])
+                args.setdefault('transform',
+                                f'translate({center[0]*mult}, {center[1]*mult}) '
+                                f'rotate({rotation}) '
+                                f'translate({-center[0]*mult}, {-center[1]*mult})'
+                                )
+            drawing.add(getattr(drawing, element.attr['.svg_tag'])(**args))
+        elif tag != 'None' and tag is not None:
+            drawing.add(getattr(drawing, element.attr['.svg_tag'])(**args))
     elif isinstance(element, Vertex):
         if '.helper_node' in element.attr and element.attr['.helper_node']:
             return
@@ -48,7 +78,7 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
         args.setdefault('stroke_width', '1mm')
         args.setdefault('stroke', 'black')
         args.setdefault('fill', 'none')
-        drawing.add(drawing.circle(center=(x*cm,y*cm), **args))
+        drawing.add(drawing.circle(center=(x*mult, y*mult), **args))
     elif isinstance(element, Edge):
         v1 = element.vertex1
         v2 = element.vertex2
@@ -58,24 +88,31 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
         y2 = -float(v2.attr['y'])
         args.setdefault('stroke_width', '1mm')
         args.setdefault('stroke', 'black')
-        drawing.add(drawing.line(start=(x1*cm, y1*cm), end=(x2*cm, y2*cm),
+        drawing.add(drawing.line(start=(x1*mult, y1*mult), end=(x2*mult, y2*mult),
                                  **args))
     else:
         raise ValueError
 
 
-def export_graph_to_svg(graph: Graph, filename: str) -> None:
+def export_graph_to_svg(graph: Graph, filename: str, preamble: Dict) -> None:
     min_point, max_point = get_min_max_points(get_positions(
         [x for x in graph.vertices if not x.attr.get('.helper_node', False)]
     ))
     size = (max_point[0] - min_point[0], max_point[1] - min_point[1])
-    view_box = f'{min_point[0]*100} {-max_point[1]*100} {size[0]*100} {size[1]*100}'
-    size = size[0] * cm, size[1] * cm
+    view_box = f'{min_point[0]*mult} {-max_point[1]*mult} ' \
+               f'{size[0]*mult} {size[1]*mult}'
+    size = size[0] * mult, size[1] * mult
     drawing = svgwrite.Drawing(filename=filename, debug=True,
                                profile='full', size=size, viewBox=view_box,
                                preserveAspectRatio='xMidYMid meet')
+    filters: Dict[str, Filter] = {}
+    for filter_name, filter_def in preamble.get('filter', {}).items():
+        new_filter = drawing.defs.add(drawing.filter(id=filter_name))
+        for effect_name, effect_args in filter_def.items():
+            getattr(new_filter, effect_name)(**effect_args)
+        filters[filter_name] = new_filter
     for element in graph:
-        add_graphelement_to_svg_drawing(element, drawing)
+        add_graphelement_to_svg_drawing(element, drawing, filters)
     drawing.save()
 
 
