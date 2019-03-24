@@ -7,14 +7,14 @@ import wx.lib.newevent
 import yaml
 
 from gui_elements import MainNotebook, EVT_RUN_GRAMMAR
-from model_gen.grammar import Grammar
+from model_gen.grammar import Grammar, GrammarInfo
 from model_gen.productions import Production
 from model_gen.utils import get_logger
 from model_gen.graph import Graph
 from model_gen.opts import Opts
+from model_gen.serialisation import from_yaml, to_yaml
 
 T = TypeVar('T')
-
 
 
 log = get_logger('model_gen')
@@ -36,13 +36,10 @@ class GraphUI(wx.Frame):
         self.Layout()
         self.Show()
 
-        self.host_graphs: Dict[str, Graph] = {}
-        self.productions: Dict[str, Production] = {}
-        self.result_graphs: Dict[str, Graph] = {}
-        self.global_vars: Dict[str, str] = {}
+        self.grammar_info: GrammarInfo = None
 
         if 'last_grammar_file_path' in opts:
-            self.load_graph_from_file(opts['last_grammar_file_path'])
+            self.load_grammar_from_file(opts['last_grammar_file_path'])
 
     # noinspection PyAttributeOutsideInit
     def _setup_menus(self) -> None:
@@ -91,16 +88,18 @@ class GraphUI(wx.Frame):
 
     def load_graphs(self, host_graphs: Dict[str, Graph],
                     productions: Dict[str, Production],
-                    result_graphs: Dict[str, Graph],
-                    global_vars: Dict[str, str]) -> None:
+                    result_graphs: Dict[str, Graph]) -> None:
+        """
+        Load the graphs in question into the displays in the GUI.
+
+        :param host_graphs: The host graphs to display.
+        :param productions: The productions to display.
+        :param result_graphs: The result graphs to display.
+        """
         log.info('Loading new graphs and productions.')
-        self.host_graphs = host_graphs
-        self.productions = productions
-        self.result_graphs = result_graphs
-        self.global_vars = global_vars
-        self.notebook.host_graph_panel.load_data(self.host_graphs)
-        self.notebook.production_panel.load_data(self.productions)
-        self.notebook.result_panel.load_data(self.result_graphs)
+        self.notebook.host_graph_panel.load_data(host_graphs)
+        self.notebook.production_panel.load_data(productions)
+        self.notebook.result_panel.load_data(result_graphs)
 
     def export_graphs(self, _) -> None:
         """
@@ -116,18 +115,13 @@ class GraphUI(wx.Frame):
             log.info('Exporting all graphs and productions.')
             path = file_dialog.GetPath()
             log.debug(f'Exporting to file »{path}«.')
-            host_graphs = self.notebook.host_graph_panel.list.get_data()
-            productions = self.notebook.production_panel.list.get_data()
-            result_graphs = self.notebook.result_panel.list.get_data()
-            data = {
-                'host_graphs': {k: v.to_yaml() for k, v in
-                                host_graphs.items()},
-                'productions': {k: v.to_yaml() for k, v in
-                                productions.items()},
-                'global_vars': self.global_vars,
-                'result_graphs': {k: v.to_yaml() for k, v in
-                                  result_graphs.items()}
-            }
+            self.grammar_info.host_graphs = \
+                self.notebook.host_graph_panel.list.get_data()
+            self.grammar_info.productions = \
+                self.notebook.production_panel.list.get_data()
+            self.grammar_info.result_graphs = \
+                self.notebook.result_panel.list.get_data()
+            data = to_yaml(self.grammar_info)
             try:
                 with open(path, 'w') as stream:
                     yaml.safe_dump(data, stream)
@@ -149,26 +143,22 @@ class GraphUI(wx.Frame):
             log.info('Importing graphs and productions.')
             path = file_dialog.GetPath()
             log.debug(f'Importing from file »{path}«.')
-            self.load_graph_from_file(path)
+            self.load_grammar_from_file(path)
             opts['last_grammar_file_path'] = path
 
-    def load_graph_from_file(self, file_path: str) -> None:
+    def load_grammar_from_file(self, file_path: str) -> None:
         """
-        Loads a graph saved in a yaml file and displays it in the gui.
+        Loads a grammar saved in a yaml file and displays it in the gui.
         :param file_path: Path to the file.
         """
         try:
             with open(file_path, 'r') as stream:
                 data = yaml.safe_load(stream)
-                mapping = {}
-                host_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
-                               data['host_graphs'].items()}
-                productions = {k: Production.from_yaml(v, mapping) for k, v
-                               in data['productions'].items()}
-                global_vars = data.get('global_vars', {})
-                result_graphs = {k: Graph.from_yaml(v, mapping) for k, v in
-                                 data['result_graphs'].items()}
-                self.load_graphs(host_graphs, productions, result_graphs, global_vars)
+                grammar_info: GrammarInfo = from_yaml(GrammarInfo(), data)
+                self.grammar_info = grammar_info
+                self.load_graphs(grammar_info.host_graphs,
+                                 grammar_info.productions,
+                                 grammar_info.result_graphs)
         except IOError:
             log.error(f'Cannon open/read from file »{file_path}«.')
             wx.LogError(f'Cannot open file {file_path}.')
@@ -179,7 +169,8 @@ class GraphUI(wx.Frame):
         hostgraph and add the result to result graphs.
         """
         log.info('Running grammar.')
-        grammar = Grammar(self.productions.values(), self.global_vars)
+        grammar = Grammar(self.grammar_info.productions.values(),
+                          self.grammar_info.global_vars)
         host_graph = self.notebook.host_graph_panel.get_active()
         if host_graph is None:
             log.error(
@@ -188,12 +179,13 @@ class GraphUI(wx.Frame):
             wx.LogError('Error: No host graphs loaded/defined.')
             return
         results = grammar.apply(host_graph, opts['max_derivations'])
+        offset = len(self.grammar_info.result_graphs)
         log.debug(
             f'There where {len(results)} derivations calculated.')
-        offset = len(self.result_graphs)
         for i, result in enumerate(results):
-            self.result_graphs[f'Result {i + offset}'] = result
-            self.notebook.result_panel.load_data(self.result_graphs)
+            self.grammar_info.result_graphs[f'Result {i + offset}'] = result
+            self.notebook.result_panel.load_data(
+                self.grammar_info.result_graphs)
 
     def switch_label_display(self, _) -> None:
         """

@@ -164,3 +164,15 @@ class Grammar:
         result.subgrammars = Grammar.from_yaml(data, mapping)
         mapping[data['id']] = result
         return result
+
+
+class GrammarInfo:
+
+    def __init__(self):
+        self.host_graphs: Dict[str, Graph] = None
+        self.productions: Dict[str, Production] = None
+        self.result_graphs: Dict[str, Graph] = None
+        self.global_vars: Dict[str, Any] = None
+        self.options: Dict[str, Any] = None
+        self.extra: Dict[str, Any] = None
+        self.svg_preamble: List[str] = None
