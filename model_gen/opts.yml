@@ -1,7 +1,11 @@
 gui:
+  arrows: {arrow_start_offset: 0.2, arrow_width: 0.01, color: black, head_length: 0.2,
+    head_width: 0.4}
   attrs:
     background_color: [5, 5, 5]
+    linewidth_offset: 0.1
     mask_color: [0, 0, 0]
+    vertex_radius: 0.5
 last_grammar_file_path: /media/new_data2/viktor/viktor/tu/bachelor/python_graphs/cescg_2019_examples/tree_painting.yml
 max_derivations: 500
 show_all_labels: false

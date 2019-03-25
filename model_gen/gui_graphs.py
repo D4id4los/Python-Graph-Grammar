@@ -8,7 +8,7 @@ from matplotlib.backends.backend_wx import \
     NavigationToolbar2Wx as NavigationToolbar
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.patches import ConnectionPatch
+from matplotlib.patches import ConnectionPatch, FancyArrow
 import matplotlib.patheffects as pe
 import matplotlib.backend_bases
 import matplotlib.artist
@@ -18,6 +18,7 @@ from model_gen.exceptions import ModelGenArgumentError
 from model_gen.graph import GraphElement, Graph, Vertex, Edge
 from model_gen.utils import Bidict, Mapping, get_logger
 from model_gen.opts import Opts
+from model_gen.geometry import Vec, normalize
 
 log = get_logger('model_gen.' + __name__)
 opts = Opts()
@@ -483,7 +484,7 @@ class GraphPanel(wx.Panel):
                 graph_vertex.attr['y'] = position[1]
                 add_new_free_spaces(position, free_spaces)
                 i += 1
-            figure_vertex = FigureVertex(graph_vertex, position, 0.5,
+            figure_vertex = FigureVertex(graph_vertex, position,
                                          color='w', ec='k', zorder=10)
             self.vertices.add(figure_vertex)
             self.graph_to_figure[graph_vertex] = figure_vertex
@@ -500,7 +501,7 @@ class GraphPanel(wx.Panel):
                 graph.add(new_vertex)
                 position = free_spaces[i]
                 add_new_free_spaces(position, free_spaces)
-                figure_vertex = FigureVertex(new_vertex, position, 0.5,
+                figure_vertex = FigureVertex(new_vertex, position,
                                               color='w', ec='w', zorder=10)
                 self.vertices.add(figure_vertex)
                 self.graph_to_figure[graph_vertex] = figure_vertex
@@ -515,6 +516,8 @@ class GraphPanel(wx.Panel):
             self.edges.add(figure_edge)
             self.graph_to_figure[graph_edge] = figure_edge
             axes.add_artist(figure_edge)
+            if figure_edge.arrow is not None:
+                axes.add_artist(figure_edge.arrow)
         if opts['show_all_labels']:
             for element in self.elements:
                 if element.get_hover_text() != '':
@@ -982,9 +985,11 @@ class ProductionGraphsPanel(GraphPanel):
         for graph_element1, graph_element2 in mapping.items():
             figure_element1 = self.graph_to_figure[graph_element1]
             figure_element2 = self.graph_to_figure[graph_element2]
+            p1, p2 = mapping_points_between_figure_elements(figure_element1,
+                                                            figure_element2)
             patch = ConnectionPatch(
-                xyA=figure_element1.get_center(),
-                xyB=figure_element2.get_center(),
+                xyA=(p1.x, p1.y),
+                xyB=(p2.x, p2.y),
                 coordsA="data",
                 coordsB="data",
                 axesA=self.subplot,
@@ -1113,6 +1118,7 @@ class FigureVertex(FigureElement, plt.Circle):
                  edges=None,
                  **kwargs):
         FigureElement.__init__(self, graph_element)
+        kwargs.setdefault('radius', opts['gui']['attrs']['vertex_radius'])
         plt.Circle.__init__(self, *args, **kwargs)
         self.edges: Set[FigureEdge] = set() if edges is None else edges
         """A set containing all Edges connected to this Vertex."""
@@ -1197,28 +1203,34 @@ class FigureEdge(FigureElement, plt.Line2D):
                  vertex1: FigureVertex = None,
                  vertex2: FigureVertex = None, **kwargs):
         FigureElement.__init__(self, graph_element)
-        if vertex1 is not None and vertex2 is not None:
-            center1 = vertex1.center
-            center2 = vertex2.center
-            plt.Line2D.__init__(self, (center1[0], center2[0]),
-                                (center1[1], center2[1]), *args, **kwargs)
-            vertex1.edges.add(self)
-            vertex2.edges.add(self)
-        else:
-            plt.Line2D.__init__(self, *args, **kwargs)
         self.vertex1: FigureVertex = vertex1
         """The first Vertex connected to this Edge."""
         self.vertex2: FigureVertex = vertex2
         """The second Vertex connected to this Edge."""
+        self.arrow = None
+        if vertex1 is not None and vertex2 is not None:
+            p1, p2 = connection_points_between_figure_elements(vertex1,
+                                                               vertex2)
+            log.debug(f'Adding line from {p1} to {p2}.')
+            plt.Line2D.__init__(self, (p1.x, p2.x),
+                                (p1.y, p2.y), *args, **kwargs)
+            self.arrow = create_directional_arrow(self)
+            vertex1.edges.add(self)
+            vertex2.edges.add(self)
+        else:
+            plt.Line2D.__init__(self, *args, **kwargs)
 
     def update_position(self):
         """
         Update the position of the Edge based on the connected Edges.
         """
-        center1 = self.vertex1.center
-        center2 = self.vertex2.center
-        self.set_xdata((center1[0], center2[0]))
-        self.set_ydata((center1[1], center2[1]))
+        p1, p2 = connection_points_between_figure_elements(self.vertex1,
+                                                           self.vertex2)
+        self.set_xdata((p1.x, p2.x))
+        self.set_ydata((p1.y, p2.y))
+        self.arrow.remove()
+        self.arrow = create_directional_arrow(self)
+        self.axes.add_patch(self.arrow)
 
     def get_center(self) -> Tuple[int, int]:
         x1, x2 = self.get_xdata()
@@ -1272,3 +1284,149 @@ class FigureEdge(FigureElement, plt.Line2D):
     def on_unhover(self):
         log.debug(f'Unsetting path effect on {self}')
         self.remove_extra_path_effect('hover')
+
+
+def connection_points_between_circles(center1: Vec, center2: Vec,
+                                      radius1: float, radius2: float
+                                      ) -> Tuple[Vec, Vec]:
+    """
+    Return the two points connecting the edges of two circles with
+    the shortest straight line between them.
+
+    :param center1: Center point of the first circle.
+    :param center2: Center point of the second circle.
+    :param radius1: Radius of the first circle.
+    :param radius2: Radius of the second circle.
+    :return: A tuple containing the two points on the circles
+        circumference connecting them with the shortest path.
+    """
+    dir_vec = normalize(Vec(vec1=center1, vec2=center2))
+    p1 = center1 + dir_vec * radius1
+    p2 = center2 - dir_vec * radius2
+    return p1, p2
+
+
+def connection_points_between_figure_elements(element1: FigureElement,
+                                              element2: FigureElement
+                                              ) -> Tuple[Vec, Vec]:
+    """
+    Returns the two points connecting the centers of the two elements
+    with a straight line, taking into account the circumference of
+    the figure elements.
+
+    :param element1: The first FigureElement.
+    :param element2: The second FigureElement.
+    :return: A tuple of vertices describing the two points drawing a
+        line between the two elements taking into account element
+        size.
+    """
+    if isinstance(element1, FigureVertex):
+        center1 = Vec(x1=element1.center[0], y1=element1.center[1])
+        radius1 = element1.get_radius() + opts['gui']['attrs']['linewidth_offset']
+    elif isinstance(element1, FigureEdge):
+        x, y = element1.get_center()
+        center1 = Vec(x1=x, y1=y)
+        radius1 = element1.get_linewidth()
+    else:
+        raise ValueError
+    if isinstance(element2, FigureVertex):
+        center2 = Vec(x1=element2.center[0], y1=element2.center[1])
+        radius2 = element2.get_radius() + opts['gui']['attrs']['linewidth_offset']
+    elif isinstance(element2, FigureEdge):
+        x, y = element2.get_center()
+        center2 = Vec(x1=x, y1=y)
+        radius2 = element2.get_linewidth()
+    else:
+        raise ValueError
+    p1, p2 = connection_points_between_circles(center1,
+                                               center2,
+                                               radius1,
+                                               radius2)
+    return p1, p2
+
+
+def mapping_points_between_figure_elements(element1: FigureElement,
+                                           element2: FigureElement
+                                           ) -> Tuple[Vec, Vec]:
+    """
+    This function is similar to the connection_points_between_figure_elements()
+    function, but takes two elements in different subplots and
+    calculates the connection points for mapping arrows between them.
+
+    Because each subplot has a different coordinate system the
+    calculations are more complicated.
+
+    :param element1: The first FigureElement, on the left side of the
+        production.
+    :param element2: The second FigureElement, on the right side of
+        the production.
+    :return: A tuple of vertices describing the two points drawing a
+        line between the two elements taking into account element
+        size.
+    """
+    if isinstance(element1, FigureVertex):
+        center1 = Vec(x1=element1.center[0], y1=element1.center[1])
+        radius1 = element1.get_radius()
+    elif isinstance(element1, FigureEdge):
+        x, y = element1.get_center()
+        center1 = Vec(x1=x, y1=y)
+        radius1 = element1.get_linewidth()
+    else:
+        raise ValueError
+    if isinstance(element2, FigureVertex):
+        center2 = Vec(x1=element2.center[0], y1=element2.center[1])
+        radius2 = element2.get_radius()
+    elif isinstance(element2, FigureEdge):
+        x, y = element2.get_center()
+        center2 = Vec(x1=x, y1=y)
+        radius2 = element2.get_linewidth()
+    else:
+        raise ValueError
+    # p1, p2 = connection_points_between_circles(center1,
+    #                                            center2,
+    #                                            radius1,
+    #                                            radius2)
+    p1, p2 = center1, center2
+    return p1, p2
+
+
+def calc_edge_arrow_data(edge: FigureEdge) -> Tuple[Vec, Vec]:
+    """
+    Calculates the starting point and the offset for an arrow placed
+    at the end of an edge.
+
+    :param edge: The FigureEdge to calculate the arrow position for.
+    :return: A tuple containing first the starting point and second a
+        vector with the offsets form the starting point to the end of
+        the arrow.
+    """
+    p1, p2 = connection_points_between_figure_elements(edge.vertex1,
+                                                       edge.vertex2)
+    arrow_offset = opts['gui']['arrows']['arrow_start_offset']
+    start = p2 - normalize(Vec(vec1=p1, vec2=p2)) * arrow_offset
+    offset = p2 - start
+    return start, offset
+
+
+def create_directional_arrow(edge: FigureEdge) -> FancyArrow:
+    """
+    Instantiates a new FancyArrow with the correct configuration for
+    adding a direction to a FigureEdge.
+
+    :param edge: The FigureEdge to decorate with an Arrow.
+    :return: A FancyArrow with the correct configuration for a
+        directional arrow of the edge.
+    """
+    arrow_start, arrow_offset = calc_edge_arrow_data(edge)
+    arrow_width = opts['gui']['arrows']['arrow_width']
+    arrow_head_width = opts['gui']['arrows']['head_width']
+    arrow_head_length = opts['gui']['arrows']['head_length']
+    arrow_color = opts['gui']['arrows']['color']
+    arrow = FancyArrow(arrow_start.x, arrow_start.y,
+                       arrow_offset.x, arrow_offset.y,
+                       color=arrow_color,
+                       width=arrow_width,
+                       head_width=arrow_head_width,
+                       head_length=arrow_head_length,
+                       length_includes_head=True)
+    return arrow
