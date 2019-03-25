@@ -1,10 +1,21 @@
 extra: {file_version: '1.1'}
-global_vars: {}
+global_vars:
+  trunk_contr: '0.75'
+  main_branch_contr: '0.9'
+  branch_contr: '0.6'
+  trunk_angle: '30 / 360 * pi'
+  trunk_angle_mul_min: '0.9'
+  trunk_angle_mul_max: '1.1'
+  branch_angle: '25 / 360 * pi'
+  branch_angle_mul_min: '0.8'
+  branch_angle_mul_max: '5'
+  width_decrease: '0.707'
+  brush_length_scale: '0.4'
 host_graphs:
   Axiom:
     edges:
     - attr: {.directed: true, .generation: '0', .svg_stroke_width: '10', .svg_tag: None,
-        label: Trunk, painted: false, section_height: '1'}
+        label: Trunk, painted: false, section_height: '1', width: '1'}
       id: 140403086168416
       vertex1: 140403086168248
       vertex2: 140403086168864
@@ -21,7 +32,8 @@ productions:
     conditions: {}
     id: 140403086168584
     mappings:
-    - attr_requirements: {}
+    - attr_requirements:
+        all: {branch: 140403086169032}
       conditions: {}
       daughter_graph:
         edges:
@@ -35,23 +47,23 @@ productions:
           id: 140403086169424
         - attr: {.generation: '0', x: '0', y: '5'}
           id: 140403086169088
-        - attr: {.generation: '0', .svg_filter: '''brown_filter3''', .svg_height: norm(v1)/4,
+        - attr: {.generation: '0', .svg_filter: '''brown_filter3''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
               pi if v1.x != 0 else 90) * random.uniform(0.9, 1.1)', x: '-0.022922636103153593',
-            y: '2.5530085959885405'}
+            y: '2.5530085959885405', .svg_preserveAspectRatio: '''none'''}
           id: 140403086169592
-        - attr: {.generation: 0, .svg_filter: '''brown_filter1''', .svg_height: norm(v1)/4,
+        - attr: {.generation: 0, .svg_filter: '''brown_filter1''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
               pi if v1.x != 0 else 90) * random.uniform(0.9, 1.1)', x: -0.022922636103153593,
-            y: 0.72492836676218}
+            y: 0.72492836676218, .svg_preserveAspectRatio: '''none'''}
           id: 140403086169536
-        - attr: {.generation: 0, .svg_filter: '''brown_filter2''', .svg_height: norm(v1)/4,
+        - attr: {.generation: 0, .svg_filter: '''brown_filter2''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
               pi if v1.x != 0 else 90) * random.uniform(0.9, 1.1)', x: 0.04011461318051346,
-            y: 4.3180515759312375}
+            y: 4.3180515759312375, .svg_preserveAspectRatio: '''none'''}
           id: 140403086169872
       id: 140403086169368
       mapping:
@@ -80,7 +92,8 @@ productions:
     conditions: {}
     id: 140403086169704
     mappings:
-    - attr_requirements: {}
+    - attr_requirements:
+        all: {branch: 140403086169928}
       conditions: {}
       daughter_graph:
         edges:
@@ -94,20 +107,20 @@ productions:
           id: 140403086169816
         - attr: {.generation: '0', painted: 'True', x: '0', y: '5'}
           id: 140403086170376
-        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: norm(v1)/4,
+        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
-              pi if v1.x != 0 else 90)', x: 0.04011461318050635, y: 5.957020057306593}
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+              pi if v1.x != 0 else 90)', x: 0.04011461318050635, y: 5.957020057306593, .svg_preserveAspectRatio: '''none'''}
           id: 140403086169984
-        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: norm(v1)/4,
+        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
-              pi if v1.x != 0 else 90) - 30', x: 0.8595988538681922, y: 5.326647564469919}
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+              pi if v1.x != 0 else 90) - 30', x: 0.8595988538681922, y: 5.326647564469919, .svg_preserveAspectRatio: '''none'''}
           id: 140403086170264
-        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: norm(v1)/4,
+        - attr: {.generation: '0', .svg_filter: '''green_filter1''', .svg_height: 'branch.attr[''width'']',
             .svg_href: '''brush2.png''', .svg_opacity: '0.8', .svg_tag: '''image''',
-            .svg_width: norm(v1)/2, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
-              pi if v1.x != 0 else 90) + 30', x: -0.7793696275071653, y: 5.389684813753588}
+            .svg_width: norm(v1) * brush_length_scale, .svgx_rotate: '(np.arctan2(v1.y, v1.x) * 180 /
+              pi if v1.x != 0 else 90) + 30', x: -0.7793696275071653, y: 5.389684813753588, .svg_preserveAspectRatio: '''none'''}
           id: 140403086170544
       id: 140403086169760
       mapping:
@@ -138,24 +151,22 @@ productions:
     id: 140403086170768
     mappings:
     - attr_requirements:
-        140403086170880: {trunk: 140403086170936}
-        140403086171160: {trunk: 140403086170936}
-        140403086171664: {trunk: 140403086170936}
+        all: {trunk: 140403086170936}
       conditions: {generation: oldest}
       daughter_graph:
         edges:
-        - attr: {.generation: '0', .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']',
+        - attr: {.generation: '0', .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']', width: 'trunk.attr[''width'']',
             .svg_tag: None, painted: 'False'}
           id: 140403086171160
           vertex1: 140403086171216
           vertex2: 140403086171104
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
-              * 0.7', .svg_tag: None, label: '''Branch''', painted: 'False'}
+              * width_decrease', width: 'float(trunk.attr[''width'']) * width_decrease', .svg_tag: None, label: '''Branch''', painted: 'False'}
           id: 140403086170880
           vertex1: 140403086171104
           vertex2: 140403086171048
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
-              * 0.7', .svg_tag: None, label: '''Branch''', painted: 'False'}
+              * width_decrease', width: 'float(trunk.attr[''width'']) * width_decrease', .svg_tag: None, label: '''Branch''', painted: 'False'}
           id: 140403086171664
           vertex1: 140403086171104
           vertex2: 140403086171384
@@ -165,11 +176,11 @@ productions:
           id: 140403086171216
         - attr: {.generation: '0', .new_pos: B, label: '''Inner''', x: '-1', y: '0.8194842406876806'}
           id: 140403086171104
-        - attr: {.generation: '0', .new_pos: B + v1 * 0.8, .svg_tag: None, label: '''Tip''',
+        - attr: {.generation: '0', .new_pos: B + v1 * main_branch_contr, .svg_tag: None, label: '''Tip''',
             painted: 'False', x: '-1.0', y: '4.916905444126076'}
           id: 140403086171048
-        - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, pi/2
-              * random.choice((-1,1)) * (random.random() / 3 + 0.3), A)) * 0.6', .svg_tag: None,
+        - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, branch_angle
+              * random.choice((-1,1)) * random.uniform(branch_angle_mul_min, branch_angle_mul_max), A)) * branch_contr', .svg_tag: None,
             label: '''Tip''', painted: 'False', x: '2.206303724928368', y: '3.340974212034382'}
           id: 140403086171384
       id: 140403086170488
@@ -201,24 +212,22 @@ productions:
     id: 140403086171496
     mappings:
     - attr_requirements:
-        140403086169480: {trunk: 140403086171328}
-        140403086171776: {trunk: 140403086171328}
-        140403086172000: {trunk: 140403086171328}
+        all: {trunk: 140403086171328}
       conditions: {generation: oldest}
       daughter_graph:
         edges:
-        - attr: {.generation: '0', .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']',
+        - attr: {.generation: '0', .svg_stroke_width: 'trunk.attr[''.svg_stroke_width'']', width: 'trunk.attr[''width'']',
             .svg_tag: None, painted: 'False'}
           id: 140403086171776
           vertex1: 140403086171888
           vertex2: 140403086171944
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
-              * 0.7', .svg_tag: None, label: '''Trunk''', painted: 'False', section_height: 'int(trunk.attr[''section_height''])+1'}
+              * width_decrease', width: 'float(trunk.attr[''width'']) * width_decrease', .svg_tag: None, label: '''Trunk''', painted: 'False', section_height: 'int(trunk.attr[''section_height''])+1'}
           id: 140403086169480
           vertex1: 140403086171944
           vertex2: 140403086172112
         - attr: {.generation: '0', .svg_stroke_width: 'float(trunk.attr[''.svg_stroke_width''])
-              * 0.7', .svg_tag: None, label: '''Branch''', painted: 'False'}
+              * width_decrease', width: 'float(trunk.attr[''width'']) * width_decrease', .svg_tag: None, label: '''Branch''', painted: 'False'}
           id: 140403086172000
           vertex1: 140403086171944
           vertex2: 140403086171720
@@ -228,11 +237,11 @@ productions:
           id: 140403086171888
         - attr: {.generation: '0', .new_pos: B, label: '''Inner''', x: '-1', y: '0.8194842406876806'}
           id: 140403086171944
-        - attr: {.generation: '0', .new_pos: B + v1 * 0.8, .svg_tag: None, label: '''Tip''',
+        - attr: {.generation: '0', .new_pos: B + v1 * trunk_contr, .svg_tag: None, label: '''Tip''',
             painted: 'False', x: '-1', y: '4.916905444126076'}
           id: 140403086172112
-        - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, pi/2
-              * random.choice((-1,1)) * (random.random() / 3 + 0.3), A)) * 0.6', .svg_tag: None,
+        - attr: {.generation: '0', .new_pos: 'B + Vec(vec1=A, vec2=rotate(B, trunk_angle
+              * random.choice((-1,1)) * random.uniform(trunk_angle_mul_min, trunk_angle_mul_max), A)) * branch_contr', .svg_tag: None,
             label: '''Tip''', painted: 'False', x: '2.206303724928368', y: '3.340974212034382'}
           id: 140403086171720
       id: 140403086172056
@@ -274,5 +283,5 @@ svg:
         feColorMatrix: {type: matrix, values: 0 0 0 0 0.85 0 0 0 0 0.41 0 0 0 0 0.03
             0 0 0 1 0}
       green_filter1:
-        feColorMatrix: {type: matrix, values: 0 0 0 0 0.24 0 0 0 0 0.73 0 0 0 0 0.07
+        feColorMatrix: {type: matrix, values: 0 0 0 0 0.14 0 0 0 0 0.53 0 0 0 0 0.06
             0 0 0 1 0}
