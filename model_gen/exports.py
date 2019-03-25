@@ -63,7 +63,7 @@ def add_graphelement_to_svg_drawing(element: GraphElement,
                 rotation = float(element.attr['.svgx_rotate'])
                 args.setdefault('transform',
                                 f'translate({center[0]*mult}, {center[1]*mult}) '
-                                f'rotate({rotation}) '
+                                f'rotate({-rotation}) '
                                 f'translate({-center[0]*mult}, {-center[1]*mult})'
                                 )
             drawing.add(getattr(drawing, element.attr['.svg_tag'])(**args))
