@@ -15,15 +15,15 @@ class Grammar:
     """
     A grammar is a collection of productions that can be applied on a graph.
     """
-    def __init__(self, productions: Iterable[Production]=None,
+    def __init__(self, productions: Dict[str, Production]=None,
                  global_vars: Dict[str, str]=None,
                  subgrammars: Iterable['Grammar']=None):
-        self.productions: Iterable[Production] = [
-            copy_without_meta_elements(production)
-            for production in productions
-        ]
+        self.productions: UniqueBidict[str, Production] = UniqueBidict({
+            name: copy_without_meta_elements(production)
+            for name, production in productions.items()
+        })
         self.grouped_productions = {}
-        for production in self.productions:
+        for production in self.productions.values():
             self.grouped_productions.setdefault(
                 production.priority, []
             ).append(production)
@@ -49,14 +49,13 @@ class Grammar:
         start_time = timer()
         log.info(f'Applying the grammar {self} to the target '
                  f'{id(target_graph)} for max {max_steps} steps.')
-        step_count = 0
         result_graphs = []
         global_var_results = {
             name: eval(instruction) for name, instruction
             in self.global_vars.items()
         }
         log.info(f'Global variables are: {global_var_results}.')
-        for prod in self.productions:
+        for prod in self.productions.values():
             prod.global_vars = global_var_results
             for prod_opt in prod.production_options:
                 prod_opt.vars = {**evaluate_per_run_vars(prod_opt, global_var_results),
@@ -66,7 +65,7 @@ class Grammar:
                        in self.grouped_productions.keys()}
         step_counts['all'] = 0
         while True:
-            log.info(f'Runnig derivation {step_count}.')
+            log.info(f'Runnig derivation {step_counts["all"]}.')
             production, matches = self._find_matching_production(
                 new_host_graph, step_counts, max_steps
             )
@@ -112,8 +111,12 @@ class Grammar:
                     and step_counts[priority] >= max_steps[priority]):
                 continue
             for production in randomly(self.grouped_productions[priority]):
+                log.info(f'Testing production '
+                         f'{self.productions.inverse[production]} for match.')
                 matching_mappings = production.match(target_graph)
                 if len(matching_mappings) == 0:
+                    log.info(f'No match found for production '
+                             f'{self.productions.inverse[production]}.')
                     continue
                 else:
                     result = (production, matching_mappings)
@@ -161,7 +164,7 @@ class Grammar:
         :return: The grammar as a list or dict.
         """
         data = {
-            'productions': [x.to_yaml() for x in self.productions],
+            'productions': [x.to_yaml() for x in self.productions.values()],
             'subgrammars': [x.to_yaml() for x in self.subgrammars],
             'id': id(self)
         }

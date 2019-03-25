@@ -179,7 +179,7 @@ class GraphUI(wx.Frame):
         hostgraph and add the result to result graphs.
         """
         log.info('Running grammar.')
-        grammar = Grammar(self.grammar_info.productions.values(),
+        grammar = Grammar(self.grammar_info.productions,
                           self.grammar_info.global_vars)
         host_graph = self.notebook.host_graph_panel.get_active()
         if host_graph is None:
